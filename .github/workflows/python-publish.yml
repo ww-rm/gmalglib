@@ -57,6 +57,6 @@ jobs:
     - name: Build package
       run: python -m build -w
     - name: Publish package
-      run: python -m twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }}
+      run: python -m twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} dist/*.whl
   
 
