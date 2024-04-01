@@ -89,7 +89,7 @@ static PyObject* PySM3_digest(PySM3Object* self, PyObject* Py_UNUSED(args))
     uint8_t digest[32] = { 0 };
     SM3_Digest(&self->sm3, digest);
 
-    return PyBytes_FromStringAndSize(digest, 32);
+    return PyBytes_FromStringAndSize((char*)digest, 32);
 }
 
 static PyObject* PySM3_reset(PySM3Object* self, PyObject* Py_UNUSED(args))
