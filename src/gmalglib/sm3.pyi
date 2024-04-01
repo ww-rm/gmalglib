@@ -1,4 +1,5 @@
 SM3_MAX_MSG_BITLEN: int
+SM3_DIGEST_LENGTH: int
 
 
 class SM3:

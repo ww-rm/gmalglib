@@ -86,10 +86,10 @@ static PyObject* PySM3_update(PySM3Object* self, PyObject* args, PyObject* kwarg
 
 static PyObject* PySM3_digest(PySM3Object* self, PyObject* Py_UNUSED(args))
 {
-    uint8_t digest[32] = { 0 };
+    uint8_t digest[SM3_DIGEST_LENGTH] = { 0 };
     SM3_Digest(&self->sm3, digest);
 
-    return PyBytes_FromStringAndSize((char*)digest, 32);
+    return PyBytes_FromStringAndSize((char*)digest, SM3_DIGEST_LENGTH);
 }
 
 static PyObject* PySM3_reset(PySM3Object* self, PyObject* Py_UNUSED(args))
@@ -110,33 +110,37 @@ static PyObject* PySM3_copy(PySM3Object* self, PyObject* Py_UNUSED(args))
 
 PyMODINIT_FUNC PyInit_sm3() {
     PyObject* py_module = NULL;
-    PyObject* py_long_const_1 = NULL;
+    PyObject* py_long_sm3_max_msg_bitlen = NULL;
+    PyObject* py_long_sm3_digest_length = NULL;
 
     if (PyType_Ready(&py_type_SM3) < 0)
         return NULL;
 
-    py_module = PyModule_Create(&py_module_def_sm3);
-    if (!py_module)
-        goto F0;
+    if (!(py_module = PyModule_Create(&py_module_def_sm3)))
+        return NULL;
 
     Py_INCREF(&py_type_SM3);
     if (PyModule_AddObject(py_module, "SM3", (PyObject*)&py_type_SM3) < 0)
-        goto F1;
+        goto error;
 
-    py_long_const_1 = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN);
-    if (!py_long_const_1)
-        goto F1;
+    if (!(py_long_sm3_max_msg_bitlen = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN)))
+        goto error;
 
-    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_const_1) < 0)
-        goto F2;
+    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_sm3_max_msg_bitlen) < 0)
+        goto error;
+
+    if (!(py_long_sm3_digest_length = PyLong_FromUnsignedLongLong(SM3_DIGEST_LENGTH)))
+        goto error;
+
+    if (PyModule_AddObject(py_module, "SM3_DIGEST_LENGTH", py_long_sm3_digest_length) < 0)
+        goto error;
 
     return py_module;
 
-F2:
-    Py_DECREF(py_long_const_1);
-F1:
+error:
+    Py_XDECREF(py_long_sm3_digest_length);
+    Py_XDECREF(py_long_sm3_max_msg_bitlen);
     Py_DECREF(&py_type_SM3);
     Py_DECREF(py_module);
-F0:    
     return NULL;
 }

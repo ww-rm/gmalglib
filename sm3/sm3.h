@@ -7,6 +7,7 @@ extern "C" {
 #include <stdint.h>
 
 #define SM3_MAX_MSG_BITLEN      0xffffffffffffffffULL  // (1 << 64 - 1)
+#define SM3_DIGEST_LENGTH       32
 
 #define SM3_ERR_OVERFLOW        -1
 
