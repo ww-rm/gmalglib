@@ -1,7 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>
-#include "sm3.h"
+#include <gmalglib/sm3.h>
 
 typedef struct _PySM3Object {
     PyObject_HEAD

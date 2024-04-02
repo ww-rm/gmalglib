@@ -8,7 +8,7 @@ authors = [
     {name = "ww-rm", email = "ww-rm@qq.com"},
 ]
 description = "GM algorithms C extension for python."
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: C",
     "Programming Language :: Python :: 3",
@@ -23,6 +23,13 @@ dynamic = ["version", "readme"]
 "Homepage" = "https://github.com/ww-rm/gmalglib"
 "Issues" = "https://github.com/ww-rm/gmalglib/issues"
 "Documentation" = "https://gmalglib.readthedocs.io"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["gmalglib"]
+
+[tool.setuptools.exclude-package-data]
+gmalglib = ["*.c"]
 
 [tool.setuptools.dynamic]
 version = {attr = "gmalglib.__version__"}

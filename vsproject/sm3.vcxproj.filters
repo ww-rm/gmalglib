@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="sm4.h">
+    <ClInclude Include="..\include\gmalglib\sm3.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sm4.c">
+    <ClCompile Include="..\src\gmalglib\sm3.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sm4module.c">
+    <ClCompile Include="..\src\gmalglib\sm3module.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

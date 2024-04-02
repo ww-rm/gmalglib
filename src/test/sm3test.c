@@ -1,8 +1,7 @@
-#ifdef _EXE
 #include <stdio.h>
-#include "sm3.h"
+#include <gmalglib/sm3.h>
 
-uint8_t digest[32] = { 0 };
+uint8_t digest[SM3_DIGEST_LENGTH] = { 0 };
 SM3 sm3 = { 0 };
 
 void test1()
@@ -18,18 +17,18 @@ void test1()
     SM3_Update(&sm3, NULL, 0);
 
     printf("========== SM3 Test #1 ==========\n");
-    printf("Message\t:\t<Empty>\n");
-    printf("Digest\t:\t");
+    //printf("Message\t:\t<Empty>\n");
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
     printf("Test #1\t:\t%s\n", ok ? "OK" : "Failed");
 }
 
@@ -55,34 +54,34 @@ void test2()
     SM3_Digest(&sm3, digest);
 
     printf("========== SM3 Test #2 ==========\n");
-    printf("Message\t:\t%s\n", msg);
-    printf("Digest\t:\t");
+    //printf("Message\t:\t%s\n", msg);
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     SM3_Update(&sm3, msg2, 61);
     SM3_Digest(&sm3, digest);
 
-    printf("Message\t:\t%s%s\n", msg, msg2);
-    printf("Digest\t:\t");
+    //printf("Message\t:\t%s%s\n", msg, msg2);
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans2[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     printf("Test #2\t:\t%s\n", ok ? "OK" : "Failed");
 }
@@ -104,18 +103,18 @@ void test3()
     SM3_Digest(&sm3, digest);
 
     printf("========== SM3 Test #3 ==========\n");
-    printf("Message\t:\t%s\n", msg);
-    printf("Digest\t:\t");
+    //printf("Message\t:\t%s\n", msg);
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     printf("Test #3\t:\t%s\n", ok ? "OK" : "Failed");
 }
@@ -137,18 +136,18 @@ void test4()
     SM3_Digest(&sm3, digest);
 
     printf("========== SM3 Test #4 ==========\n");
-    printf("Message\t:\t%s\n", msg);
-    printf("Digest\t:\t");
+    //printf("Message\t:\t%s\n", msg);
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     printf("Test #4\t:\t%s\n", ok ? "OK" : "Failed");
 }
@@ -175,34 +174,34 @@ void test5()
     SM3_Digest(&sm3, digest);
 
     printf("========== SM3 Test #5 ==========\n");
-    printf("Message\t:\t%s\n", msg);
-    printf("Digest\t:\t");
+    //printf("Message\t:\t%s\n", msg);
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     SM3_Update(&sm3, msg2, 64);
     SM3_Digest(&sm3, digest);
 
-    printf("Message\t:\t%s%s\n", msg, msg2);
-    printf("Digest\t:\t");
+    //printf("Message\t:\t%s%s\n", msg, msg2);
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans2[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     printf("Test #5\t:\t%s\n", ok ? "OK" : "Failed");
 }
@@ -224,18 +223,18 @@ void test6()
     SM3_Digest(&sm3, digest);
 
     printf("========== SM3 Test #6 ==========\n");
-    printf("Message\t:\t%s\n", msg);
-    printf("Digest\t:\t");
+    //printf("Message\t:\t%s\n", msg);
+    //printf("Digest\t:\t");
 
     for (int i = 0; i < 32; i++)
     {
-        printf("%02x", digest[i]);
+        //printf("%02x", digest[i]);
         if (digest[i] != ans[i])
         {
             ok = 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     printf("Test #6\t:\t%s\n", ok ? "OK" : "Failed");
 }
@@ -252,4 +251,3 @@ int main()
 
     return 0;
 }
-#endif // _DEBUG

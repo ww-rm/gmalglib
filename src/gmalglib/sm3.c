@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "sm3.h"
+#include <gmalglib/sm3.h>
 
 static const
 uint32_t ROL_T_TABLE[64] = {
