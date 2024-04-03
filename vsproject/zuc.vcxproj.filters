@@ -11,15 +11,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\gmalglib\sm3.h">
+    <ClInclude Include="..\include\gmalglib\zuc.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\gmalglib\sm3.c">
+    <ClCompile Include="..\src\gmalglib\zuc.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gmalglib\sm3module.c">
+    <ClCompile Include="..\src\gmalglib\zucmodule.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
