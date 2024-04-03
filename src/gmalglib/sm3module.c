@@ -25,10 +25,10 @@ static PyMethodDef py_methods_def_SM3[] = {
 static PyTypeObject py_type_SM3 = {
     .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "sm3.SM3",
-    .tp_doc = PyDoc_STR("SM3 Object"),
+    .tp_doc = PyDoc_STR("SM3 Object."),
     .tp_basicsize = sizeof(PySM3Object),
     .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)PySM3_init,
     .tp_methods = py_methods_def_SM3,
@@ -37,7 +37,7 @@ static PyTypeObject py_type_SM3 = {
 static PyModuleDef py_module_def_sm3 = {
     .m_base = PyModuleDef_HEAD_INIT,
     .m_name = "sm3",
-    .m_doc = PyDoc_STR("SM3 Algorithm Implemented in C"),
+    .m_doc = PyDoc_STR("SM3 Algorithm Implemented in C."),
     .m_size = 0,
 };
 
@@ -110,8 +110,8 @@ static PyObject* PySM3_copy(PySM3Object* self, PyObject* Py_UNUSED(args))
 
 PyMODINIT_FUNC PyInit_sm3() {
     PyObject* py_module = NULL;
-    PyObject* py_long_sm3_max_msg_bitlen = NULL;
-    PyObject* py_long_sm3_digest_length = NULL;
+    PyObject* py_long_SM3_MAX_MSG_BITLEN = NULL;
+    PyObject* py_long_SM3_DIGEST_LENGTH = NULL;
 
     if (PyType_Ready(&py_type_SM3) < 0)
         return NULL;
@@ -123,23 +123,23 @@ PyMODINIT_FUNC PyInit_sm3() {
     if (PyModule_AddObject(py_module, "SM3", (PyObject*)&py_type_SM3) < 0)
         goto error;
 
-    if (!(py_long_sm3_max_msg_bitlen = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN)))
+    if (!(py_long_SM3_MAX_MSG_BITLEN = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN)))
         goto error;
 
-    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_sm3_max_msg_bitlen) < 0)
+    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_SM3_MAX_MSG_BITLEN) < 0)
         goto error;
 
-    if (!(py_long_sm3_digest_length = PyLong_FromUnsignedLongLong(SM3_DIGEST_LENGTH)))
+    if (!(py_long_SM3_DIGEST_LENGTH = PyLong_FromUnsignedLongLong(SM3_DIGEST_LENGTH)))
         goto error;
 
-    if (PyModule_AddObject(py_module, "SM3_DIGEST_LENGTH", py_long_sm3_digest_length) < 0)
+    if (PyModule_AddObject(py_module, "SM3_DIGEST_LENGTH", py_long_SM3_DIGEST_LENGTH) < 0)
         goto error;
 
     return py_module;
 
 error:
-    Py_XDECREF(py_long_sm3_digest_length);
-    Py_XDECREF(py_long_sm3_max_msg_bitlen);
+    Py_XDECREF(py_long_SM3_DIGEST_LENGTH);
+    Py_XDECREF(py_long_SM3_MAX_MSG_BITLEN);
     Py_DECREF(&py_type_SM3);
     Py_DECREF(py_module);
     return NULL;

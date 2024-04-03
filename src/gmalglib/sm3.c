@@ -27,7 +27,10 @@ uint32_t ROL(uint32_t X, uint32_t count)
 static inline
 uint32_t FROM_BE(const uint8_t* bytes)
 {
-    return (((uint32_t)bytes[0]) << 24) | (((uint32_t)bytes[1]) << 16) | (((uint32_t)bytes[2]) << 8) | (((uint32_t)bytes[3]));
+    return ((uint32_t)bytes[0] << 24) | 
+           ((uint32_t)bytes[1] << 16) | 
+           ((uint32_t)bytes[2] << 8)  |
+           ((uint32_t)bytes[3]);
 }
 
 static inline
@@ -142,10 +145,6 @@ void SM3_Init(SM3* self)
     for (i = 0; i < 8; i++)
     {
         self->value[i] = INIT_TABLE[i];
-    }
-    for (i = 0; i < 64; i++)
-    {
-        self->msg_buffer[i] = 0;
     }
     self->msg_buffer_length = 0;
     self->msg_bitlen = 0;
