@@ -7,7 +7,7 @@ name = "gmalglib"
 authors = [
     {name = "ww-rm", email = "ww-rm@qq.com"},
 ]
-description = "GM algorithms C extension for python."
+description = "Python package implementing GM algorithms in C."
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: C",
