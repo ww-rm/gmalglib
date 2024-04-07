@@ -13,13 +13,13 @@ void test1()
     int ok = 1;
     printf("========== ZUC Test #1 ==========\n");
 
-    word = ZUC_generate(&zuc, NULL);
+    word = ZUC_Generate(&zuc, NULL);
     if (word != 0x27bede74)
     {
         ok = 0;
     }
 
-    word = ZUC_generate(&zuc, NULL);
+    word = ZUC_Generate(&zuc, NULL);
     if (word != 0x018082da)
     {
         ok = 0;
@@ -46,13 +46,13 @@ void test2()
     int ok = 1;
     printf("========== ZUC Test #2 ==========\n");
 
-    word = ZUC_generate(&zuc, NULL);
+    word = ZUC_Generate(&zuc, NULL);
     if (word != 0x0657cfa0)
     {
         ok = 0;
     }
 
-    word = ZUC_generate(&zuc, NULL);
+    word = ZUC_Generate(&zuc, NULL);
     if (word != 0x7096398b)
     {
         ok = 0;
@@ -79,13 +79,13 @@ void test3()
     int ok = 1;
     printf("========== ZUC Test #3 ==========\n");
 
-    word = ZUC_generate(&zuc, NULL);
+    word = ZUC_Generate(&zuc, NULL);
     if (word != 0x14f1c272)
     {
         ok = 0;
     }
 
-    word = ZUC_generate(&zuc, NULL);
+    word = ZUC_Generate(&zuc, NULL);
     if (word != 0x3279c419)
     {
         ok = 0;
