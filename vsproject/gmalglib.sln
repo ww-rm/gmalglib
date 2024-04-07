@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sm4test", "sm4test.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zuctest", "zuctest.vcxproj", "{BBB92A87-962F-4822-ACF8-524F2770E23D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "_core", "_core.vcxproj", "{D7C58743-142E-4A9A-AC7A-EEFF4EB3C92A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "core.vcxproj", "{D7C58743-142E-4A9A-AC7A-EEFF4EB3C92A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
