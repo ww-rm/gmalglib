@@ -24,12 +24,12 @@ dynamic = ["version", "readme"]
 "Issues" = "https://github.com/ww-rm/gmalglib/issues"
 "Documentation" = "https://gmalglib.readthedocs.io"
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["gmalglib"]
-
-[tool.setuptools.exclude-package-data]
-gmalglib = ["*.c"]
 
 [tool.setuptools.dynamic]
 version = {attr = "gmalglib.__version__"}

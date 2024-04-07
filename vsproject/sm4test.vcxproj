@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\gmalglib\sm4.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm4.c" />
     <ClCompile Include="..\src\test\sm4test.c" />
   </ItemGroup>
   <ItemGroup>

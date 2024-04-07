@@ -14,7 +14,7 @@
     <ClCompile Include="..\src\test\sm3test.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gmalglib\sm3.c">
+    <ClCompile Include="..\src\gmalglib\core\sm3.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
