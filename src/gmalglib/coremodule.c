@@ -256,20 +256,20 @@ error:
 }
 
 
-static PyModuleDef py_module_def__core = {
+static PyModuleDef py_module_def_core = {
     .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_core",
+    .m_name = "core",
     .m_doc = PyDoc_STR("GM Algorithm Implemented in C."),
     .m_size = 0,
 };
 
-PyMODINIT_FUNC PyInit__core() {
+PyMODINIT_FUNC PyInit_core() {
     PyObject* py_module = NULL;
 
     if (PyType_Ready(&py_type_SM3) < 0)
         return NULL;
 
-    if (!(py_module = PyModule_Create(&py_module_def__core)))
+    if (!(py_module = PyModule_Create(&py_module_def_core)))
         return NULL;
 
     if (!PyModule_AddSM3(py_module))

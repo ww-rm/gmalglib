@@ -20,16 +20,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\gmalglib\_coremodule.c">
+    <ClCompile Include="..\src\gmalglib\coremodule.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gmalglib\sm3.c">
+    <ClCompile Include="..\src\gmalglib\core\sm3.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gmalglib\sm4.c">
+    <ClCompile Include="..\src\gmalglib\core\sm4.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gmalglib\zuc.c">
+    <ClCompile Include="..\src\gmalglib\core\zuc.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

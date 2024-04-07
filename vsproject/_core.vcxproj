@@ -16,10 +16,10 @@
     <ClInclude Include="..\include\gmalglib\zuc.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\gmalglib\sm3.c" />
-    <ClCompile Include="..\src\gmalglib\sm4.c" />
-    <ClCompile Include="..\src\gmalglib\zuc.c" />
-    <ClCompile Include="..\src\gmalglib\_coremodule.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm3.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm4.c" />
+    <ClCompile Include="..\src\gmalglib\core\zuc.c" />
+    <ClCompile Include="..\src\gmalglib\coremodule.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -27,6 +27,7 @@
     <ProjectGuid>{D7C58743-142E-4A9A-AC7A-EEFF4EB3C92A}</ProjectGuid>
     <RootNamespace>_core</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>core</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

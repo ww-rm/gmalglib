@@ -1,11 +1,11 @@
 from setuptools import Extension, setup
 
-_core_module = Extension(
-    name="gmalglib._core",
+core_module = Extension(
+    name="gmalglib.core",
     sources=[
-        "src/gmalglib/_coremodule.c",
-        "src/gmalglib/sm3.c",
-        "src/gmalglib/sm4.c",
+        "src/gmalglib/coremodule.c",
+        "src/gmalglib/core/sm3.c",
+        "src/gmalglib/core/sm4.c",
     ],
     include_dirs=[
         "include",
@@ -19,6 +19,6 @@ _core_module = Extension(
 
 setup(
     ext_modules=[
-        _core_module
+        core_module
     ]
 )
