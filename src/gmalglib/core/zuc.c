@@ -142,7 +142,7 @@ void ZUC_Init(ZUC* self, const uint8_t* key, const uint8_t* iv)
         ZUC_LfsrWork(self, ZUC_F(self, X0, X1, X2) >> 1);
     }
 
-    ZUC_Generate(self, NULL);
+    ZUC_Generate(self, 0);
 }
 
 uint32_t ZUC_Generate(ZUC* self, uint8_t* word)
