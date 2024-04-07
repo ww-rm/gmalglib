@@ -3,6 +3,7 @@
 #include <Python.h>
 #include <gmalglib/sm3.h>
 #include <gmalglib/sm4.h>
+#include <gmalglib/zuc.h>
 
 typedef struct _PySM3Object {
     PyObject_HEAD
@@ -86,7 +87,7 @@ static PyMethodDef py_methods_def_SM3[] = {
 
 static PyTypeObject py_type_SM3 = {
     .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "sm3.SM3",
+    .tp_name = "gmalglib.core.SM3",
     .tp_doc = PyDoc_STR("SM3 Object."),
     .tp_basicsize = sizeof(PySM3Object),
     .tp_itemsize = 0,
@@ -213,7 +214,7 @@ static PyMethodDef py_methods_def_SM4[] = {
 
 static PyTypeObject py_type_SM4 = {
     .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "sm4.SM4",
+    .tp_name = "gmalglib.core.SM4",
     .tp_doc = PyDoc_STR("SM4 Object."),
     .tp_basicsize = sizeof(PySM4Object),
     .tp_itemsize = 0,
@@ -256,9 +257,120 @@ error:
 }
 
 
+typedef struct _PyZUCObject {
+    PyObject_HEAD
+    ZUC zuc;
+} PyZUCObject;
+
+static int PyZUC_init(PyZUCObject* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "key", "iv", NULL};
+    Py_buffer py_buffer_key = { 0 };
+    Py_buffer py_buffer_iv = { 0 };
+    int ret = -1;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*y*:__init__", keys, &py_buffer_key, &py_buffer_iv))
+        return -1;
+
+    if (py_buffer_key.len != ZUC_KEY_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect key length.");
+    }
+    else if (py_buffer_iv.len != ZUC_IV_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect iv length.");
+    }
+    else
+    {
+        ZUC_Init(&self->zuc, py_buffer_key.buf, py_buffer_iv.buf);
+        ret = 0;
+    }
+
+    PyBuffer_Release(&py_buffer_key);
+    PyBuffer_Release(&py_buffer_iv);
+    return ret;
+}
+
+static PyObject* PyZUC_generate(PyZUCObject* self, PyObject* Py_UNUSED(args))
+{
+    uint8_t word[ZUC_WORD_LENGTH] = { 0 };
+    ZUC_Generate(&self->zuc, word);
+
+    return PyBytes_FromStringAndSize((char*)word, ZUC_WORD_LENGTH);
+}
+
+static PyObject* PyZUC_copy(PyZUCObject* self, PyObject* Py_UNUSED(args))
+{
+    PyZUCObject* other = PyObject_New(PyZUCObject, Py_TYPE(self));
+    if (!other)
+        return NULL;
+
+    other->zuc = self->zuc;
+    return (PyObject*)other;
+}
+
+static PyMethodDef py_methods_def_ZUC[] = {
+    {"generate", (PyCFunction)PyZUC_generate, METH_NOARGS, PyDoc_STR("Generate a word (4 bytes).")},
+    {"copy", (PyCFunction)PyZUC_copy, METH_NOARGS, PyDoc_STR("Copy state to a new object.")},
+    {NULL}
+};
+
+static PyTypeObject py_type_ZUC = {
+    .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "gmalglib.core.ZUC",
+    .tp_doc = PyDoc_STR("ZUC Object."),
+    .tp_basicsize = sizeof(PyZUCObject),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = PyType_GenericNew,
+    .tp_init = (initproc)PyZUC_init,
+    .tp_methods = py_methods_def_ZUC,
+};
+
+static int PyModule_AddZUC(PyObject* py_module) {
+    PyObject* py_long_ZUC_KEY_LENGTH = NULL;
+    PyObject* py_long_ZUC_IV_LENGTH = NULL;
+    PyObject* py_long_ZUC_WORD_LENGTH = NULL;
+
+    if (PyType_Ready(&py_type_ZUC) < 0)
+        return 0;
+
+    Py_INCREF(&py_type_ZUC);
+    if (PyModule_AddObject(py_module, "ZUC", (PyObject*)&py_type_ZUC) < 0)
+        goto error;
+
+    if (!(py_long_ZUC_KEY_LENGTH = PyLong_FromUnsignedLongLong(ZUC_KEY_LENGTH)))
+        goto error;
+
+    if (PyModule_AddObject(py_module, "ZUC_KEY_LENGTH", py_long_ZUC_KEY_LENGTH) < 0)
+        goto error;
+
+    if (!(py_long_ZUC_IV_LENGTH = PyLong_FromUnsignedLongLong(ZUC_IV_LENGTH)))
+        goto error;
+
+    if (PyModule_AddObject(py_module, "ZUC_IV_LENGTH", py_long_ZUC_IV_LENGTH) < 0)
+        goto error;
+
+    if (!(py_long_ZUC_WORD_LENGTH = PyLong_FromUnsignedLongLong(ZUC_WORD_LENGTH)))
+        goto error;
+
+    if (PyModule_AddObject(py_module, "ZUC_WORD_LENGTH", py_long_ZUC_WORD_LENGTH) < 0)
+        goto error;
+
+    return 1;
+
+error:
+    Py_XDECREF(py_long_ZUC_WORD_LENGTH);
+    Py_XDECREF(py_long_ZUC_IV_LENGTH);
+    Py_XDECREF(py_long_ZUC_KEY_LENGTH);
+    Py_DECREF(&py_type_ZUC);
+    return 0;
+}
+
+
 static PyModuleDef py_module_def_core = {
     .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "core",
+    .m_name = "gmalglib.core",
     .m_doc = PyDoc_STR("GM Algorithm Implemented in C."),
     .m_size = 0,
 };
@@ -276,6 +388,9 @@ PyMODINIT_FUNC PyInit_core() {
         goto error;
 
     if (!PyModule_AddSM4(py_module))
+        goto error;
+
+    if (!PyModule_AddZUC(py_module))
         goto error;
 
     return py_module;

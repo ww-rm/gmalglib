@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\gmalglib\zuc.c" />
+    <ClCompile Include="..\src\gmalglib\core\zuc.c" />
     <ClCompile Include="..\src\test\zuctest.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

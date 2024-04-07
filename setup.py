@@ -6,6 +6,7 @@ core_module = Extension(
         "src/gmalglib/coremodule.c",
         "src/gmalglib/core/sm3.c",
         "src/gmalglib/core/sm4.c",
+        "src/gmalglib/core/zuc.c",
     ],
     include_dirs=[
         "include",
@@ -14,6 +15,7 @@ core_module = Extension(
     depends=[
         "include/gmalglib/sm3.h",
         "include/gmalglib/sm4.h",
+        "include/gmalglib/zuc.h",
     ]
 )
 
