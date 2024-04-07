@@ -1,8 +1,5 @@
 #ifndef GMALGLIB_SM3_H
 #define GMALGLIB_SM3_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdint.h>
 
@@ -18,6 +15,10 @@ typedef struct _SM3 {
     uint64_t msg_bitlen;
 } SM3;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void SM3_Init(SM3* self);
 
 int SM3_Update(SM3* self, const uint8_t* data, uint64_t data_len);
@@ -27,4 +28,5 @@ void SM3_Digest(SM3* self, uint8_t* digest);
 #ifdef __cplusplus
 }
 #endif
+
 #endif // !GMALGLIB_SM3_H

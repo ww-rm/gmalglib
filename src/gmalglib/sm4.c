@@ -91,7 +91,6 @@ void ExpandKey(const uint8_t* key, uint32_t* round_key)
         round_key[i + 1] = K1 = K1 ^ T1(K2 ^ K3 ^ K0 ^ CK[i + 1]);
         round_key[i + 2] = K2 = K2 ^ T1(K3 ^ K0 ^ K1 ^ CK[i + 2]);
         round_key[i + 3] = K3 = K3 ^ T1(K0 ^ K1 ^ K2 ^ CK[i + 3]);
-
     }
 }
 

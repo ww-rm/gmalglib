@@ -12,5 +12,8 @@
     <ClCompile Include="..\src\test\zuctest.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gmalglib\zuc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -14,6 +14,9 @@
     <ClCompile Include="..\src\gmalglib\sm4.c" />
     <ClCompile Include="..\src\test\sm4test.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\gmalglib\sm4.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
