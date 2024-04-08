@@ -13,7 +13,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "core.vcxproj", "{D7
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sm2test", "sm2test.vcxproj", "{964318D6-A4F6-455D-9D1A-E8533BD89E20}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "primefieldtest", "primefieldtest.vcxproj", "{062360DE-6D98-4850-B69F-1581C6FD4872}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sm2curvetest", "sm2curvetest.vcxproj", "{062360DE-6D98-4850-B69F-1581C6FD4872}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bignumtest", "bignumtest.vcxproj", "{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +73,14 @@ Global
 		{062360DE-6D98-4850-B69F-1581C6FD4872}.Release|x64.Build.0 = Release|x64
 		{062360DE-6D98-4850-B69F-1581C6FD4872}.Release|x86.ActiveCfg = Release|x64
 		{062360DE-6D98-4850-B69F-1581C6FD4872}.Release|x86.Build.0 = Release|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Debug|x64.ActiveCfg = Debug|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Debug|x64.Build.0 = Debug|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Debug|x86.ActiveCfg = Debug|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Debug|x86.Build.0 = Debug|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Release|x64.ActiveCfg = Release|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Release|x64.Build.0 = Release|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Release|x86.ActiveCfg = Release|x64
+		{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
