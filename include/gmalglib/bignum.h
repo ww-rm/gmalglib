@@ -3,8 +3,20 @@
 
 #include <stdint.h>
 
-typedef uint8_t UInt256[32];
-typedef uint8_t UInt512[64];
+typedef union _UInt256
+{
+    uint8_t u8[32];
+    uint32_t u32[8];
+    uint64_t u64[4];
+} UInt256;
+
+typedef union _UInt512
+{
+    uint8_t u8[64];
+    uint32_t u32[16];
+    uint64_t u64[8];
+} UInt512;
+
 
 #ifdef __cplusplus
 extern "C" {
