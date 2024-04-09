@@ -1,5 +1,13 @@
 #include <stdint.h>
+#include <gmalglib/bignum.h>
 #include <gmalglib/sm2curve.h>
+
+#ifdef _DEBUG
+
+#include <stdio.h>
+
+#endif // _DEBUG
+
 
 // 0xFFFFFFFE_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_00000000_FFFFFFFF_FFFFFFFF
 static const UInt256 _CONSTS_P = { .u32 = {
@@ -321,3 +329,25 @@ void SM2JacobPointMont_Sub(const SM2JacobPointMont* X, const SM2JacobPointMont* 
     SM2JacobPointMont_Neg(Y, &neg_Y);
     SM2JacobPointMont_Add(X, &neg_Y, Z);
 }
+
+#ifdef _DEBUG
+
+void SM2JacobPointMont_Print(const SM2JacobPointMont* X)
+{
+    SM2Point pt = { 0 };
+    SM2Point_FromJacobMont(X, &pt);
+    printf("{ ");
+    if (pt.is_inf)
+    {
+        printf("<INF>");
+    }
+    else
+    {
+        UInt256_Print(&pt.x, 4);
+        printf(", \n");
+        UInt256_Print(&pt.y, 4);
+    }
+    printf(" }\n");
+}
+
+#endif // _DEBUG
