@@ -1,6 +1,32 @@
 #include <stdint.h>
 #include <gmalglib/bignum.h>
 
+
+#ifdef _DEBUG
+
+#include <stdio.h>
+
+#endif // _DEBUG
+
+
+void UInt256_ToBE(const UInt256* x, uint8_t* bytes)
+{
+    uint32_t i;
+    for (i = 0; i < 32; i++)
+    {
+        bytes[i] = x->u8[31 - i];
+    }
+}
+
+void UInt256_FromBE(const uint8_t* bytes, UInt256* x)
+{
+    uint32_t i;
+    for (i = 0; i < 32; i++)
+    {
+        x->u8[i] = bytes[31 - i];
+    }
+}
+
 int UInt256_Cmp(const UInt256* x, const UInt256* y)
 {
     if (x->u64[3] > y->u64[3]) return  1;
@@ -82,3 +108,22 @@ uint8_t UInt512_Add(const UInt512* x, const UInt512* y, UInt512* z)
     }
     return (uint8_t)carry;
 }
+
+#ifdef _DEBUG
+
+void UInt256_Print(const UInt256* x, int sep)
+{
+    printf("0x");
+    for (int i = 0; i < 32; i++)
+    {
+        if (i > 0 && i % sep == 0)
+        {
+            printf("_");
+        }
+        printf("%02X", x->u8[31 - i]);
+    }
+    printf("\n");
+}
+
+#endif // _DEBUG
+
