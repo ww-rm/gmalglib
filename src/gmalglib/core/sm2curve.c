@@ -16,6 +16,7 @@ static const UInt256 _CONSTS_P = { .u32 = {
 } };
 static const UInt256* const CONSTS_P = &_CONSTS_P;
 
+// -3
 // 0xFFFFFFFE_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_00000000_FFFFFFFF_FFFFFFFC
 static const UInt256 _CONSTS_A = { .u32 = {
     0xFFFFFFFC, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 
@@ -31,18 +32,13 @@ static const UInt256 _CONSTS_B = { .u32 = {
 static const UInt256* const CONSTS_B = &_CONSTS_B;
 
 // 0x32C4AE2C_1F198119_5F990446_6A39C994_8FE30BBF_F2660BE1_715A4589_334C74C7
-static const SM2ModP _CONSTS_GX = { .u32 = {
-    0x334C74C7, 0x715A4589, 0xF2660BE1, 0x8FE30BBF, 
-    0x6A39C994, 0x5F990446, 0x1F198119, 0x32C4AE2C
-} };
-static const SM2ModP* const CONSTS_GX = &_CONSTS_GX;
-
 // 0xBC3736A2_F4F6779C_59BDCEE3_6B692153_D0A9877C_C62A4740_02DF32E5_2139F0A0
-static const SM2ModP _CONSTS_GY = { .u32 = {
-    0x2139F0A0, 0x02DF32E5, 0xC62A4740, 0xD0A9877C, 
-    0x6B692153, 0x59BDCEE3, 0xF4F6779C, 0xBC3736A2
-} };
-static const SM2ModP* const CONSTS_GY = &_CONSTS_GY;
+static const SM2Point _CONSTS_POINT_G = {
+    {.u32 = { 0x334C74C7, 0x715A4589, 0xF2660BE1, 0x8FE30BBF, 0x6A39C994, 0x5F990446, 0x1F198119, 0x32C4AE2C } },
+    {.u32 = { 0x2139F0A0, 0x02DF32E5, 0xC62A4740, 0xD0A9877C, 0x6B692153, 0x59BDCEE3, 0xF4F6779C, 0xBC3736A2 } },
+    0
+};
+static const SM2Point* const CONSTS_POINT_G = &_CONSTS_POINT_G;
 
 // 0xFFFFFFFE_FFFFFFFF_FFFFFFFF_FFFFFFFF_7203DF6B_21C6052B_53BBF409_39D54123
 static const UInt256 _CONSTS_N = { .u32 = {
@@ -54,9 +50,15 @@ static const UInt256* const CONSTS_N = &_CONSTS_N;
 const UInt256* const SM2_PARAMS_P = &_CONSTS_P;
 const UInt256* const SM2_PARAMS_A = &_CONSTS_A;
 const UInt256* const SM2_PARAMS_B = &_CONSTS_B;
-const UInt256* const SM2_PARAMS_GX = &_CONSTS_GX;
-const UInt256* const SM2_PARAMS_GY = &_CONSTS_GY;
+const SM2Point* const SM2_PARAMS_G = &_CONSTS_POINT_G;
 const UInt256* const SM2_PARAMS_N = &_CONSTS_N;
+
+// p = 4u + 3
+static const UInt256 _CONSTS_U_PLUS_ONE = { .u32 = {
+    0x00000000, 0x40000000, 0xC0000000, 0xFFFFFFFF, 
+    0xFFFFFFFF, 0xFFFFFFFF, 0xBFFFFFFF, 0x3FFFFFFF
+} };
+static const UInt256* const CONSTS_U_PLUS_ONE = &_CONSTS_U_PLUS_ONE;
 
 // p - 2
 static const UInt256 _CONSTS_P_MINUS_TWO = { .u32 = {
@@ -90,6 +92,28 @@ static const SM2ModP* const CONSTS_MODP_R2 = &_CONSTS_MODP_R2;
 // 1
 static const SM2ModP _CONSTS_MODP_ONE = { .u64 = {  1, 0, 0, 0 } };
 static const SM2ModP* const CONSTS_MODP_ONE = &_CONSTS_MODP_ONE;
+
+// aR
+static const SM2ModPMont _CONSTS_MODP_MONT_A = { .u32 = {
+    0xFFFFFFFC, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFC, 
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFB
+} };
+static const SM2ModPMont* const CONSTS_MODP_MONT_A = &_CONSTS_MODP_MONT_A;
+
+// bR
+static const SM2ModPMont _CONSTS_MODP_MONT_B = { .u32 = {
+    0x2BC0DD42, 0x90D23063, 0xE9B537AB, 0x71CF379A, 
+    0x5EA51C3C, 0x52798150, 0xBA20E2C8, 0x240FE188
+} };
+static const SM2ModPMont* const CONSTS_MODP_MONT_B = &_CONSTS_MODP_MONT_B;
+
+// G Point
+static const SM2JacobPointMont _CONSTS_JACOB_G = {
+    {.u32 = {0xF418029E, 0x61328990, 0xDCA6C050, 0x3E7981ED, 0xAC24C3C3, 0xD6A1ED99, 0xE1C13B05, 0x91167A5E} },
+    {.u32 = {0x3C2D0DDD, 0xC1354E59, 0x8D3295FA, 0xC1F5E578, 0x6E2A48F8, 0x8D4CFB06, 0x81D735BD, 0x63CD65D4} },
+    {.u32 = {0x00000001, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001} }
+};
+static const SM2JacobPointMont* const CONSTS_JACOB_G = &_CONSTS_JACOB_G;
 
 void SM2ModP_Add(const SM2ModP* x, const SM2ModP* y, SM2ModP* z)
 {
@@ -181,9 +205,26 @@ void SM2ModP_MontPow(const SM2ModPMont* x, const UInt256* e, SM2ModPMont* y)
     *y = *y_tmp;
 }
 
+int SM2ModP_MontHasSqrt(const SM2ModPMont* x, SM2ModPMont* y)
+{
+    int ret = 0;
+    SM2ModPMont y_tmp = { 0 };
+    SM2ModPMont ysqr = { 0 };
+
+    SM2ModP_MontPow(x, CONSTS_U_PLUS_ONE, &y_tmp);
+    SM2ModP_MontMul(&y_tmp, &y_tmp, &ysqr);
+    ret = UInt256_Cmp(x, &ysqr) == 0;
+
+    *y = y_tmp;
+    return ret;
+}
+
 void SM2ModP_MontNeg(const SM2ModPMont* x, SM2ModPMont* y)
 {
-    SM2ModP_MontSub(CONSTS_P, x, y);
+    if (UInt256_Sub(CONSTS_P, x, y))
+    {
+        UInt256_Sub(y, CONSTS_NEG_P, y);
+    }
 }
 
 void SM2ModP_MontInv(const SM2ModPMont* x, SM2ModPMont* y)
@@ -234,6 +275,98 @@ void SM2Point_FromJacobMont(const SM2JacobPointMont* X, SM2Point* Y)
     }
 }
 
+uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, uint8_t* bytes, int pc_mode)
+{
+    SM2Point pt = { 0 };
+    SM2Point_FromJacobMont(X, &pt);
+
+    if (pt.is_inf)
+    {
+        bytes[0] = 0x00;
+        return 1;
+    }
+
+    if (pc_mode == SM2_PCMODE_COMPRESS)
+    {
+        if (pt.y.u8[0] & 0x1)
+            bytes[0] = 0x03;
+        else
+            bytes[0] = 0x02;
+        UInt256_ToBytes(&pt.x, bytes + 1);
+        return 33;
+    }
+    else if (pc_mode == SM2_PCMODE_MIX)
+    {
+        if (pt.y.u8[0] & 0x1)
+            bytes[0] = 0x07;
+        else
+            bytes[0] = 0x06;
+        UInt256_ToBytes(&pt.x, bytes + 1);
+        UInt256_ToBytes(&pt.x, bytes + 33);
+        return 65;
+    }
+    else
+    {
+        bytes[0] = 0x04;
+        UInt256_ToBytes(&pt.x, bytes + 1);
+        UInt256_ToBytes(&pt.x, bytes + 33);
+        return 65;
+    }
+
+    return 0;
+}
+
+int SM2JacobPointMont_FromBytes(const uint8_t* bytes, SM2JacobPointMont* X)
+{
+    SM2Point pt = { 0 };
+    uint8_t pc = bytes[0];
+    int ylsb = 0;
+
+    if (pc == 0x00)
+    {
+        SM2JacobPointMont_SetInf(X);
+    }
+    else if (pc == 0x04 || pc == 0x06 || pc == 0x07)
+    {
+        UInt256_FromBytes(bytes + 1, &pt.x);
+        UInt256_FromBytes(bytes + 33, &pt.y);
+        pt.is_inf = 0;
+        SM2Point_ToJacobMont(&pt, X);
+        if (!SM2JacobPointMont_IsOnCurve(X))
+            return SM2CURVE_ERR_NOTONCURVE;
+    }
+    else if (pc == 0x02 || pc == 0x03)
+    {
+        UInt256_FromBytes(bytes + 1, &pt.x);
+        if (UInt256_Cmp(&pt.x, CONSTS_P) >= 0)
+            return SM2CURVE_ERR_NOTONCURVE;
+
+        SM2ModP_ToMont(&pt.x, &X->x);
+        X->z = *CONSTS_MODP_MONT_ONE;
+
+        // compute y
+        SM2ModP_MontMul(&X->x, &X->x, &X->y);
+        SM2ModP_MontAdd(&X->y, CONSTS_MODP_MONT_A, &X->y);
+        SM2ModP_MontMul(&X->x, &X->y, &X->y);
+        SM2ModP_MontAdd(&X->y, CONSTS_MODP_MONT_B, &X->y);
+        if (!SM2ModP_MontHasSqrt(&X->y, &X->y))
+            return SM2CURVE_ERR_NOTONCURVE;
+
+        SM2ModP_FromMont(&X->y, &pt.y);
+        ylsb = pt.y.u8[0] & 0x1;
+        if (pc == 0x02 && ylsb || pc == 0x03 && !ylsb)
+        {
+            SM2ModP_MontNeg(&X->y, &X->y);
+        }
+    }
+    else
+    {
+        return SM2CURVE_ERR_INVALIDPC;
+    }
+
+    return 0;
+}
+
 int SM2JacobPointMont_IsInf(const SM2JacobPointMont* X)
 {
     return X->z.u64[0] == 0 && X->z.u64[1] == 0 && X->z.u64[2] == 0 && X->z.u64[3] == 0;
@@ -244,6 +377,48 @@ void SM2JacobPointMont_SetInf(SM2JacobPointMont* X)
     X->x = *CONSTS_MODP_MONT_ONE;
     X->y = *CONSTS_MODP_MONT_ONE;
     X->z.u64[0] = X->z.u64[1] = X->z.u64[2] = X->z.u64[3] = 0;
+}
+
+int SM2JacobPointMont_IsOnCurve(const SM2JacobPointMont* X)
+{
+    SM2ModPMont left = { 0 };
+    SM2ModPMont right = { 0 };
+    SM2ModPMont tmp = { 0 };
+
+    if (UInt256_Cmp(&X->z, CONSTS_MODP_MONT_ONE) == 0)
+    {
+        // left = y^2 + 3x
+        SM2ModP_MontMul(&X->y, &X->y, &left);
+        SM2ModP_MontAdd(&left, &X->x, &left);
+        SM2ModP_MontAdd(&left, &X->x, &left);
+        SM2ModP_MontAdd(&left, &X->x, &left);
+
+        // right = x^3 + b
+        SM2ModP_MontMul(&X->x, &X->x, &right);
+        SM2ModP_MontMul(&right, &X->x, &right);
+        SM2ModP_MontAdd(&right, CONSTS_MODP_MONT_B, &right);
+    }
+    else
+    {
+        SM2ModP_MontMul(&X->z, &X->z, &tmp);                    // z^2
+        SM2ModP_MontMul(&tmp, &tmp, &left);                     // z^4
+        SM2ModP_MontMul(&left, &tmp, &right);                   // z^6
+
+        // left = y^2 + 3xz^4
+        SM2ModP_MontMul(&X->x, &left, &tmp);                    // xz^4
+        SM2ModP_MontAdd(&tmp, &tmp, &left);                     // 2xz^4
+        SM2ModP_MontAdd(&left, &tmp, &left);                    // 3xz^4
+        SM2ModP_MontMul(&X->y, &X->y, &tmp);                    // y^2
+        SM2ModP_MontAdd(&tmp, &left, &left);                    // y^2 + 3xz^4
+
+        // right = x^3 + bz^6
+        SM2ModP_MontMul(&X->x, &X->x, &tmp);                    // x^2
+        SM2ModP_MontMul(&tmp, &X->x, &tmp);                     // x^3
+        SM2ModP_MontMul(&right, CONSTS_MODP_MONT_B, &right);    // bz^6
+        SM2ModP_MontAdd(&tmp, &right, &right);                  // x^3 + bz^6
+    }
+
+    return UInt256_Cmp(&left, &right) == 0;
 }
 
 int SM2JacobPointMont_IsEqual(const SM2JacobPointMont* X, const SM2JacobPointMont* Y)
@@ -437,6 +612,11 @@ void SM2JacobPointMont_Sub(const SM2JacobPointMont* X, const SM2JacobPointMont* 
     SM2JacobPointMont_Add(X, &neg_Y, Z);
 }
 
+void SM2JacobPointMont_MulG(const UInt256* k, SM2JacobPointMont* X)
+{
+    SM2JacobPointMont_Mul(k, CONSTS_JACOB_G, X);
+}
+
 #ifdef _DEBUG
 
 void SM2Point_Print(const SM2Point* X)
@@ -461,21 +641,14 @@ void SM2JacobPointMont_Print(const SM2JacobPointMont* X)
 {
     SM2Point t = { 0 };
     printf("{ ");
-    if (SM2JacobPointMont_IsInf(X))
-    {
-        printf("<INF>");
-    }
-    else
-    {
-        printf("x: ");
-        UInt256_Print(&X->x, 4);
-        printf(", \n");
-        printf("  y: ");
-        UInt256_Print(&X->y, 4);
-        printf(", \n");
-        printf("  z: ");
-        UInt256_Print(&X->z, 4);
-    }
+    printf("x: ");
+    UInt256_Print(&X->x, 4);
+    printf(", \n");
+    printf("  y: ");
+    UInt256_Print(&X->y, 4);
+    printf(", \n");
+    printf("  z: ");
+    UInt256_Print(&X->z, 4);
     printf(" }\n");
 
     SM2Point_FromJacobMont(X, &t);

@@ -12,7 +12,7 @@
 void UInt256_ToBytes(const UInt256* x, uint8_t* bytes)
 {
     uint32_t i;
-    uint8_t tmp[32];
+    uint8_t tmp[32] = { 0 };
     for (i = 0; i < 32; i++)
     {
         tmp[i] = x->u8[31 - i];
@@ -26,7 +26,7 @@ void UInt256_ToBytes(const UInt256* x, uint8_t* bytes)
 void UInt256_FromBytes(const uint8_t* bytes, UInt256* x)
 {
     uint32_t i;
-    uint8_t tmp[32];
+    uint8_t tmp[32] = { 0 };
     for (i = 0; i < 32; i++)
     {
         tmp[i] = bytes[31 - i];

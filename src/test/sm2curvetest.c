@@ -1,39 +1,75 @@
 #include <stdio.h>
+#include <assert.h>
 #include <gmalglib/sm2curve.h>
 
-void test_add()
+void test_curve()
 {
-    SM2Point G = { *SM2_PARAMS_GX, *SM2_PARAMS_GY };
+    SM2Point _G = *SM2_PARAMS_G;
+    SM2JacobPointMont G = { 0 };
+    SM2JacobPointMont R = { 
+        {.u32 = {0xE63C48D6, 0x2EDA8381, 0xD5B614A6, 0x03243D78, 0x26014409, 0x7AEF3E86, 0x76A3B1F7, 0x398874C4}},
+        {.u32 = {0xC1A73E40, 0x28385681, 0xF6CF4DC1, 0x29F04A88, 0x64921D48, 0x5A86A7AE, 0xDAF4FD47, 0x1FBBDFDD}},
+        {.u32 = {0x785A1BBA, 0x826A9CB2, 0x1A652BF5, 0x83EBCAF1, 0xDC5491F1, 0x1A99F60C, 0x03AE6B7B, 0xC79ACBA9}}
+    };
+    SM2JacobPointMont A = { 0 };
+    SM2JacobPointMont B = { 0 };
+    SM2JacobPointMont C = { 0 };
+    UInt256 e = { 7 };
 
-    SM2JacobPointMont G_mont = { 0 };
-    SM2Point_ToJacobMont(&G, &G_mont);
-    SM2JacobPointMont_Print(&G_mont); printf("\n");
+    SM2Point_ToJacobMont(&_G, &G);
+    assert(SM2JacobPointMont_IsOnCurve(&G));
 
-    UInt256 e = { 4 };
-    SM2JacobPointMont H = G_mont;
-    SM2JacobPointMont K = G_mont;
-    SM2JacobPointMont S = G_mont;
+    A = G;
+    SM2JacobPointMont_Add(&G, &A, &A);
+    assert(SM2JacobPointMont_IsEqual(&A, &R));
 
-    SM2JacobPointMont_Add(&H, &H, &H);
-    SM2JacobPointMont_Add(&H, &H, &H);
-    SM2JacobPointMont_Print(&H); printf("\n");
+    SM2JacobPointMont_Add(&G, &A, &A);
+    SM2JacobPointMont_Add(&G, &A, &A);
+    SM2JacobPointMont_Add(&G, &A, &A);
+    SM2JacobPointMont_Add(&G, &A, &A);
+    SM2JacobPointMont_Add(&G, &A, &A);
 
-    SM2JacobPointMont_Add(&K, &K, &K);
-    SM2JacobPointMont_Add(&K, &G_mont, &K);
-    SM2JacobPointMont_Add(&K, &G_mont, &K);
-    SM2JacobPointMont_Print(&K); printf("\n");
+    SM2JacobPointMont_MulG(&e, &B);
 
-    SM2JacobPointMont_Mul(SM2_PARAMS_N, &S, &S);
-    SM2JacobPointMont_Print(&S); printf("\n");
+    assert(SM2JacobPointMont_IsEqual(&A, &B));
 
-    printf("");
+    SM2JacobPointMont_Neg(&A, &B);
+    SM2JacobPointMont_Add(&A, &B, &B);
+    assert(SM2JacobPointMont_IsInf(&B));
+
+    SM2JacobPointMont_Mul(SM2_PARAMS_N, &A, &C);
+    assert(SM2JacobPointMont_IsInf(&C));
+
+    printf("SM2 Curve Test OK.\n");
+}
+
+void test_convert()
+{
+    UInt256 x = { .u32 = {0x56F35020, 0x6BB08FF3, 0x1833FC07, 0x72179FAD, 0x1E4BC5C6, 0x50DD7D16, 0x1E5421A1, 0x09F9DF31} };
+    UInt256 y = { .u32 = {0x2DA9AD13, 0x6632F607, 0xF35E084A, 0x0AED05FB, 0x8CC1AA60, 0x2DC6EA71, 0xE26775A5, 0xCCEA490C} };
+    uint8_t pk[SM2_POINTBYTES_MAX_LENGTH] = { 0x04 };
+    UInt256_ToBytes(&x, pk + 1);
+    UInt256_ToBytes(&y, pk + 33);
+
+    SM2JacobPointMont PK = { 0 };
+    SM2Point PKK = { 0 };
+    assert(SM2JacobPointMont_FromBytes(pk, &PK) == 0);
+
+    pk[0] = 0x03;
+    assert(SM2JacobPointMont_FromBytes(pk, &PK) == 0);
+
+    SM2Point_FromJacobMont(&PK, &PKK);
+    assert(UInt256_Cmp(&y, &PKK.y) == 0);
+
+    printf("SM2 Convert Test OK.\n");
 }
 
 int main()
 {
     printf("========== SM2Curve Test ==========\n");
 
-    test_add();
+    test_curve();
+    test_convert();
 
     return 0;
 }
