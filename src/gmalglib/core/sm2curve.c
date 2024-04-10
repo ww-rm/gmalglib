@@ -174,8 +174,8 @@ void SM2ModP_MontPow(const SM2ModPMont* x, const UInt256* e, SM2ModPMont* y)
             {
                 SM2ModP_MontMul(y_tmp, x, y_tmp);
             }
+            tmp <<= 1;
         }
-        tmp <<= 1;
     }
 
     *y = *y_tmp;
@@ -189,7 +189,6 @@ void SM2ModP_MontNeg(const SM2ModPMont* x, SM2ModPMont* y)
 void SM2ModP_MontInv(const SM2ModPMont* x, SM2ModPMont* y)
 {
     SM2ModP_MontPow(x, CONSTS_P_MINUS_TWO, y);
-
 }
 
 void SM2Point_ToJacobMont(const SM2Point* X, SM2JacobPointMont* Y)
@@ -227,7 +226,7 @@ void SM2Point_FromJacobMont(const SM2JacobPointMont* X, SM2Point* Y)
             SM2ModP_MontMul(&X->y, &z_inv, &Y->y);
             SM2ModP_MontMul(&z_inv, &z_inv, &z_inv);
             SM2ModP_MontMul(&X->x, &z_inv, &Y->x);
-            SM2ModP_MontMul(&X->y, &z_inv, &Y->y);
+            SM2ModP_MontMul(&Y->y, &z_inv, &Y->y);
 
             SM2ModP_FromMont(&Y->x, &Y->x);
             SM2ModP_FromMont(&Y->y, &Y->y);
