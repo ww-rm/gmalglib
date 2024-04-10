@@ -29,6 +29,8 @@ void UInt256_FromBytes(const uint8_t* bytes, UInt256* x);
 
 int UInt256_Cmp(const UInt256* x, const UInt256* y);
 
+int UInt256_IsZero(const UInt256* x);
+
 uint8_t UInt256_Add(const UInt256* x, const UInt256* y, UInt256* z);
 
 uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z);

@@ -53,6 +53,10 @@ const UInt256* const SM2_PARAMS_B = &_CONSTS_B;
 const SM2Point* const SM2_PARAMS_G = &_CONSTS_POINT_G;
 const UInt256* const SM2_PARAMS_N = &_CONSTS_N;
 
+// 1
+static const UInt256 _CONSTS_ONE = { .u64 = {  1, 0, 0, 0 } };
+static const SM2ModP* const CONSTS_MODP_ONE = &_CONSTS_ONE;
+
 // p = 4u + 3
 static const UInt256 _CONSTS_U_PLUS_ONE = { .u32 = {
     0x00000000, 0x40000000, 0xC0000000, 0xFFFFFFFF, 
@@ -88,10 +92,6 @@ static const SM2ModP _CONSTS_MODP_R2 = { .u32 = {
     0x00000001, 0x00000001, 0x00000002, 0x00000004
 } };
 static const SM2ModP* const CONSTS_MODP_R2 = &_CONSTS_MODP_R2;
-
-// 1
-static const SM2ModP _CONSTS_MODP_ONE = { .u64 = {  1, 0, 0, 0 } };
-static const SM2ModP* const CONSTS_MODP_ONE = &_CONSTS_MODP_ONE;
 
 // aR
 static const SM2ModPMont _CONSTS_MODP_MONT_A = { .u32 = {
@@ -369,7 +369,7 @@ int SM2JacobPointMont_FromBytes(const uint8_t* bytes, SM2JacobPointMont* X)
 
 int SM2JacobPointMont_IsInf(const SM2JacobPointMont* X)
 {
-    return X->z.u64[0] == 0 && X->z.u64[1] == 0 && X->z.u64[2] == 0 && X->z.u64[3] == 0;
+    return UInt256_IsZero(&X->z);
 }
 
 void SM2JacobPointMont_SetInf(SM2JacobPointMont* X)

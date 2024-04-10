@@ -15,9 +15,7 @@
 #define SM2CURVE_ERR_INVALIDPC          -2
 
 typedef UInt256 SM2ModP;
-typedef UInt256 SM2ModN;
 typedef SM2ModP SM2ModPMont;
-typedef SM2ModP SM2ModNMont;
 
 typedef struct _SM2Point {
     SM2ModP x;

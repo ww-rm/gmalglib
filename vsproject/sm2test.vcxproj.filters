@@ -23,6 +23,9 @@
     <ClInclude Include="..\include\gmalglib\random.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gmalglib\sm3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gmalglib\core\sm2.c">
@@ -38,6 +41,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gmalglib\core\random.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\sm3.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -51,6 +51,11 @@ int UInt256_Cmp(const UInt256* x, const UInt256* y)
     return 0;
 }
 
+int UInt256_IsZero(const UInt256* x)
+{
+    return x->u64[0] == 0 && x->u64[1] == 0 && x->u64[2] == 0 && x->u64[3] == 0;
+}
+
 uint8_t UInt256_Add(const UInt256* x, const UInt256* y, UInt256* z)
 {
     uint32_t i = 0;

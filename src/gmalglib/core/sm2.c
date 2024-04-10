@@ -1,4 +1,7 @@
 #include <stdint.h>
+#include <gmalglib/random.h>
+#include <gmalglib/sm2curve.h>
+#include <gmalglib/sm3.h>
 #include <gmalglib/sm2.h>
 
 static const uint8_t _SM2_DEFAULT_UID[SM2_DEFAULT_UID_LENGTH] = {
@@ -7,33 +10,230 @@ static const uint8_t _SM2_DEFAULT_UID[SM2_DEFAULT_UID_LENGTH] = {
 };
 const uint8_t* const SM2_DEFAULT_UID = _SM2_DEFAULT_UID;
 
-static inline
-int _SM2_EntityInfo(const uint8_t* uid, uint16_t* uid_len, const SM2JacobPointMont* pk, uint8_t* entity_info)
+static const UInt256 _CONSTS_N = { .u32 = {
+    0x39D54123, 0x53BBF409, 0x21C6052B, 0x7203DF6B,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE
+} };
+static const UInt256* const CONSTS_N = &_CONSTS_N;
+
+// -n
+static const UInt256 _CONSTS_NEG_N = { .u32 = {
+    0xC62ABEDD, 0xAC440BF6, 0xDE39FAD4, 0x8DFC2094, 
+    0x00000000, 0x00000000, 0x00000000, 0x00000001
+} };
+static const UInt256* const CONSTS_NEG_N = &_CONSTS_NEG_N;
+static const SM2ModNMont* const CONSTS_MODN_MONT_ONE = &_CONSTS_NEG_N;
+
+// 1
+static const UInt256 _CONSTS_ONE = { .u64 = {  1, 0, 0, 0 } };
+static const UInt256* const CONSTS_ONE = &_CONSTS_ONE;
+static const SM2ModN* const CONSTS_MODN_ONE = &_CONSTS_ONE;
+
+// n - 1
+static const UInt256 _CONSTS_N_MINUS_ONE = { .u32 = {
+    0x39D54122, 0x53BBF409, 0x21C6052B, 0x7203DF6B,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE
+} };
+static const UInt256* const CONSTS_N_MINUS_ONE = &_CONSTS_N_MINUS_ONE;
+
+// n - 2
+static const UInt256 _CONSTS_N_MINUS_TWO = { .u32 = {
+    0x39D54121, 0x53BBF409, 0x21C6052B, 0x7203DF6B,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE
+} };
+static const UInt256* const CONSTS_N_MINUS_TWO = &_CONSTS_N_MINUS_TWO;
+
+// -1 / n
+static const UInt256 _CONSTS_N_PRIME = { .u32 = {
+    0x72350975, 0x327F9E88, 0xFC8319A5, 0xDF1E8D34, 
+    0xB08941D4, 0x2B0068D3, 0x82E4C7BC, 0x6F39132F
+} };
+static const UInt256* const CONSTS_N_PRIME = &_CONSTS_N_PRIME;
+
+// (2^256)^2
+static const SM2ModP _CONSTS_MODN_R2 = { .u32 = {
+    0x7C114F20, 0x901192AF, 0xDE6FA2FA, 0x3464504A, 
+    0x3AFFE0D4, 0x620FC84C, 0xA22B3D3B, 0x1EB5E412
+} };
+static const SM2ModP* const CONSTS_MODN_R2 = &_CONSTS_MODN_R2;
+
+static
+void SM2ModN_Add(const SM2ModN* x, const SM2ModN* y, SM2ModN* z)
 {
-    
+    if (UInt256_Add(x, y, z))
+    {
+        UInt256_Add(z, CONSTS_NEG_N, z);
+    }
+    else if (UInt256_Cmp(z, CONSTS_N) >= 0)
+    {
+        UInt256_Sub(z, CONSTS_N, z);
+    }
 }
 
-int SM2_Init(
-    SM2* self,
-    const uint8_t* sk,
-    const uint8_t* pk,
-    const uint8_t* uid,
-    uint16_t uid_len,
-    int pc_mode,
-    RandomBytesFunction rand_func,
-    void* rand_obj
-)
+static
+void SM2ModN_Sub(const SM2ModN* x, const SM2ModN* y, SM2ModN* z)
 {
-    uint32_t i;
+    if (UInt256_Sub(x, y, z))
+    {
+        UInt256_Sub(z, CONSTS_NEG_N, z);
+    }
+}
+
+static
+void SM2ModN_MontMul(const SM2ModNMont* x, const SM2ModNMont* y, SM2ModNMont* z)
+{
+    UInt512 _xy = { 0 };
+    UInt512* xy = &_xy;
+    UInt512 _z_tmp = { 0 };
+    UInt512* z_tmp = &_z_tmp;
+    uint8_t carry = 0;
+
+    UInt256_Mul(x, y, xy);
+    UInt256_Mul(xy->u256, CONSTS_N_PRIME, z_tmp);
+    UInt256_Mul(z_tmp->u256, CONSTS_N, z_tmp);
+
+    carry = UInt512_Add(xy, z_tmp, z_tmp);
+    (*z) = z_tmp->u256[1];
+
+    if (carry)
+    {
+        UInt256_Add(z, CONSTS_NEG_N, z);
+    }
+    else if (UInt256_Cmp(z, CONSTS_N) >= 0)
+    {
+        UInt256_Sub(z, CONSTS_N, z);
+    }
+}
+
+static
+void SM2ModN_ToMont(const SM2ModN* x, SM2ModNMont* y)
+{
+    SM2ModN_MontMul(x, CONSTS_MODN_R2, y);
+}
+
+static
+void SM2ModN_FromMont(const SM2ModNMont* x, SM2ModN* y)
+{
+    SM2ModN_MontMul(x, CONSTS_MODN_ONE, y);
+}
+
+static
+void SM2ModN_MontAdd(const SM2ModNMont* x, const SM2ModNMont* y, SM2ModNMont* z)
+{
+    SM2ModN_Add(x, y, z);
+}
+
+static
+void SM2ModN_MontSub(const SM2ModNMont* x, const SM2ModNMont* y, SM2ModNMont* z)
+{
+    SM2ModN_Sub(x, y, z);
+}
+
+static
+void SM2ModN_MontPow(const SM2ModNMont* x, const UInt256* e, SM2ModNMont* y)
+{
+    int32_t i;
+    uint32_t j;
+    uint64_t tmp = 0;
+    SM2ModNMont _y_tmp = *CONSTS_MODN_MONT_ONE;
+    SM2ModNMont* y_tmp = &_y_tmp;
+
+    for (i = 3; i >= 0; i--)
+    {
+        tmp = e->u64[i];
+        for (j = 0; j < 64; j++)
+        {
+            SM2ModN_MontMul(y_tmp, y_tmp, y_tmp);
+            if (tmp & 0x8000000000000000)
+            {
+                SM2ModN_MontMul(y_tmp, x, y_tmp);
+            }
+            tmp <<= 1;
+        }
+    }
+
+    *y = *y_tmp;
+}
+
+static
+void SM2ModN_MontInv(const SM2ModNMont* x, SM2ModNMont* y)
+{
+    SM2ModN_MontPow(x, CONSTS_N_MINUS_TWO, y);
+}
+
+
+static inline
+void _SM2_GetPk(const UInt256* sk, SM2JacobPointMont* pk)
+{
+    SM2JacobPointMont_MulG(sk, pk);
+}
+
+static inline
+void _SM2_EntityInfo(const uint8_t* uid, uint16_t uid_len, const SM2JacobPointMont* pk, uint8_t* entity_info)
+{
+    SM2Point P = { 0 };
+    uint8_t buffer[32] = { 0 };
+    SM3 sm3 = { 0 };
+
+    SM3_Init(&sm3);
+
+    buffer[0] = (uint8_t)(uid_len << 3 >> 8);
+    buffer[1] = (uint8_t)(uid_len << 3);
+    SM3_Update(&sm3, buffer, 2);
+    SM3_Update(&sm3, uid, uid_len);
+
+    UInt256_ToBytes(SM2_PARAMS_A, buffer);
+    SM3_Update(&sm3, buffer, 32);
+    UInt256_ToBytes(SM2_PARAMS_B, buffer);
+    SM3_Update(&sm3, buffer, 32);
+
+    UInt256_ToBytes(&SM2_PARAMS_G->x, buffer);
+    SM3_Update(&sm3, buffer, 32);
+    UInt256_ToBytes(&SM2_PARAMS_G->y, buffer);
+    SM3_Update(&sm3, buffer, 32);
+
+    SM2Point_FromJacobMont(pk, &P);
+    UInt256_ToBytes(&P.x, buffer);
+    SM3_Update(&sm3, buffer, 32);
+    UInt256_ToBytes(&P.y, buffer);
+    SM3_Update(&sm3, buffer, 32);
+
+    SM3_Digest(&sm3, entity_info);
+}
+
+int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid, uint16_t uid_len, int pc_mode, RandomAlg* rand_alg)
+{
+    UInt256 one = { 1 };
 
     // check and parse sk
-    // self->sk;
+    self->has_sk = 0;
+    if (sk)
+    {
+        UInt256_FromBytes(sk, &self->sk);
+        if (UInt256_Cmp(&self->sk, CONSTS_ONE) < 0 || UInt256_Cmp(&self->sk, CONSTS_N_MINUS_TWO) > 0)
+            return SM2_ERR_INVALID_SK;
+        self->has_sk = 1;
 
+        SM2ModN_ToMont(&self->sk, &self->sk_modn_mont);
+        SM2ModN_MontAdd(CONSTS_MODN_MONT_ONE, &self->sk_modn_mont, &self->inv_1_plus_sk_modn_mont);
+        SM2ModN_MontInv(&self->inv_1_plus_sk_modn_mont, &self->inv_1_plus_sk_modn_mont);
+    }
+    
     // check and parse pk
-    // self.pk
+    self->has_pk = 0;
+    if (pk)
+    {
+        if (SM2JacobPointMont_FromBytes(pk, &self->pk) != 0)
+            return SM2_ERR_INVALID_PK;
+        self->has_pk = 1;
+    }
+    else if (self->has_sk)
+    {
+        _SM2_GetPk(&self->sk, &self->pk);
+        self->has_pk = 1;
+    }
 
     // check and get entity_info
-    // TODO: check return value
     if (!uid)
     {
         uid = SM2_DEFAULT_UID;
@@ -42,26 +242,87 @@ int SM2_Init(
     if (uid_len > SM2_UID_MAX_LENGTH)
         return SM2_ERR_UID_OVERFLOW;
 
-    _SM2_EntityInfo(uid, uid_len, &self->pk, self->entity_info);
+    self->has_entity_info = 0;
+    if (self->has_pk)
+    {
+        _SM2_EntityInfo(uid, uid_len, &self->pk, self->entity_info);
+        self->has_entity_info = 1;
+    }
 
-    // check and parse pc_mode
-    if (pc_mode != SM2_PCMODE_RAW && pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
-        return SM2_ERR_INVALID_PCMODE;
+    // check and parse pc_mode, default to RAW
+    if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
+        pc_mode = SM2_PCMODE_RAW;
     self->pc_mode = pc_mode;
 
     // store rand function and rand obj
-    if (!rand_func)
-    {
-        rand_func = DefaultRandomBytes;
-        rand_obj = NULL;
-    }
-    self->rand_func = rand_func;
-    self->rand_obj = rand_obj;
+    if (!rand_alg)
+        self->rand_alg = *DEFAULT_RANDOM_ALGORITHM;
+    else
+        self->rand_alg = *rand_alg;
 
     return 0;
 }
 
-int SM2_Sign()
+static
+int _SM2_SignDigest(SM2* self, const uint8_t* digest, UInt256* r, UInt256* s)
 {
+    UInt256 _e = { 0 };
+    const UInt256* e = &_e;
+    UInt256 k = { 0 };
+    SM2ModNMont r_modn_mont = { 0 };
 
+    SM2JacobPointMont kG_mont = { 0 };
+    SM2Point kG = { 0 };
+
+    UInt256_FromBytes(digest, &_e);
+    if (UInt256_Cmp(&_e, CONSTS_N) >= 0)
+        UInt256_Sub(&_e, CONSTS_N, &_e);
+
+    do
+    {
+        if (!RandomUInt256(&self->rand_alg, CONSTS_ONE, CONSTS_N_MINUS_ONE, &k))
+            return SM2_ERR_RANDOM_FAILED;
+
+        SM2JacobPointMont_MulG(&k, &kG_mont);
+        SM2Point_FromJacobMont(&kG_mont, &kG);
+
+        if (UInt256_Cmp(&kG.x, CONSTS_N) >= 0)
+            UInt256_Sub(&kG.x, CONSTS_N, &kG.x);
+
+        SM2ModN_Add(e, &kG.x, r);
+        if (UInt256_IsZero(r))
+            continue;
+
+        SM2ModN_Add(r, &k, &r_modn_mont);
+        if (UInt256_IsZero(&r_modn_mont))
+            continue;
+
+        // convert to ModNMont
+        SM2ModN_ToMont(r, &r_modn_mont);
+        SM2ModN_ToMont(&k, &k);
+        SM2ModN_MontMul(&r_modn_mont, &self->sk_modn_mont, s);
+        SM2ModN_MontSub(&k, s, s);
+        SM2ModN_MontMul(s, &self->inv_1_plus_sk_modn_mont, s);
+        if (UInt256_IsZero(s))
+            continue;
+
+        SM2ModN_FromMont(s, s);
+    } while (0);
+
+    return 0;
 }
+
+int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s)
+{
+    int has_err = 0;
+    UInt256 r_num = { 0 };
+    UInt256 s_num = { 0 };
+    has_err = _SM2_SignDigest(self, digest, &r_num, &s_num);
+    if (has_err)
+        return has_err;
+
+    UInt256_ToBytes(&r_num, r);
+    UInt256_ToBytes(&s_num, s);
+    return 0;
+}
+
