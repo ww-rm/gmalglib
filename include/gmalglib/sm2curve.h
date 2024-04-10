@@ -65,6 +65,7 @@ void SM2JacobPointMont_Sub(const SM2JacobPointMont* X, const SM2JacobPointMont* 
 
 #ifdef _DEBUG
 
+void SM2Point_Print(const SM2Point* X);
 void SM2JacobPointMont_Print(const SM2JacobPointMont* X);
 
 #endif // _DEBUG

@@ -73,7 +73,8 @@ uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z)
 
 void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
 {
-    UInt512 z_tmp = { 0 };
+    UInt512 _z_tmp = { 0 };
+    UInt512* z_tmp = &_z_tmp;
     uint64_t carry = 0;
 
     uint32_t i;
@@ -84,14 +85,14 @@ void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
         carry = 0;
         for (j = 0; j < 8; j++)
         {
-            carry += (uint64_t)z_tmp.u32[i + j] + (uint64_t)x->u32[i] * (uint64_t)y->u32[j];
-            z_tmp.u32[i + j] = (uint32_t)carry;
+            carry += (uint64_t)z_tmp->u32[i + j] + (uint64_t)x->u32[i] * (uint64_t)y->u32[j];
+            z_tmp->u32[i + j] = (uint32_t)carry;
             carry >>= 32;
         }
-        z_tmp.u32[i + 8] = (uint32_t)carry;
+        z_tmp->u32[i + 8] = (uint32_t)carry;
     }
 
-    *z = z_tmp;
+    *z = *z_tmp;
 }
 
 uint8_t UInt512_Add(const UInt512* x, const UInt512* y, UInt512* z)
@@ -122,7 +123,6 @@ void UInt256_Print(const UInt256* x, int sep)
         }
         printf("%02X", x->u8[31 - i]);
     }
-    printf("\n");
 }
 
 #endif // _DEBUG

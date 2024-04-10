@@ -133,16 +133,18 @@ void SM2ModP_MontSub(const SM2ModPMont* x, const SM2ModPMont* y, SM2ModPMont* z)
 
 void SM2ModP_MontMul(const SM2ModPMont* x, const SM2ModPMont* y, SM2ModPMont* z)
 {
-    UInt512 xy = { 0 };
-    UInt512 z_tmp = { 0 };
+    UInt512 _xy = { 0 };
+    UInt512* xy = &_xy;
+    UInt512 _z_tmp = { 0 };
+    UInt512* z_tmp = &_z_tmp;
     uint8_t carry = 0;
 
-    UInt256_Mul(x, y, &xy);
-    UInt256_Mul(&xy, CONSTS_P_PRIME, &z_tmp);
-    UInt256_Mul(&z_tmp, CONSTS_P, &z_tmp);
+    UInt256_Mul(x, y, xy);
+    UInt256_Mul(xy->u256, CONSTS_P_PRIME, z_tmp);
+    UInt256_Mul(z_tmp->u256, CONSTS_P, z_tmp);
 
-    carry = UInt512_Add(&xy, &z_tmp, &z_tmp);
-    (*z) = z_tmp.u256[1];
+    carry = UInt512_Add(xy, z_tmp, z_tmp);
+    (*z) = z_tmp->u256[1];
     
     if (carry)
     {
@@ -159,24 +161,24 @@ void SM2ModP_MontPow(const SM2ModPMont* x, const UInt256* e, SM2ModPMont* y)
     int32_t i;
     uint32_t j;
     uint64_t tmp = 0;
-    SM2ModPMont y_tmp = { 0 };
-    y_tmp = *CONSTS_MODP_MONT_ONE;
+    SM2ModPMont _y_tmp = *CONSTS_MODP_MONT_ONE;
+    SM2ModPMont* y_tmp = &_y_tmp;
 
     for (i = 3; i >= 0; i--)
     {
         tmp = e->u64[i];
         for (j = 0; j < 64; j++)
         {
-            SM2ModP_MontMul(&y_tmp, &y_tmp, &y_tmp);
+            SM2ModP_MontMul(y_tmp, y_tmp, y_tmp);
             if (tmp & 0x8000000000000000)
             {
-                SM2ModP_MontMul(&y_tmp, x, &y_tmp);
+                SM2ModP_MontMul(y_tmp, x, y_tmp);
             }
         }
         tmp <<= 1;
     }
 
-    *y = y_tmp;
+    *y = *y_tmp;
 }
 
 void SM2ModP_MontNeg(const SM2ModPMont* x, SM2ModPMont* y)
@@ -187,6 +189,7 @@ void SM2ModP_MontNeg(const SM2ModPMont* x, SM2ModPMont* y)
 void SM2ModP_MontInv(const SM2ModPMont* x, SM2ModPMont* y)
 {
     SM2ModP_MontPow(x, CONSTS_P_MINUS_TWO, y);
+
 }
 
 void SM2Point_ToJacobMont(const SM2Point* X, SM2JacobPointMont* Y)
@@ -274,21 +277,21 @@ void SM2JacobPointMont_Dbl(const SM2JacobPointMont* X, SM2JacobPointMont* Y)
     SM2ModP_MontMul(&X->x, &lambda2, &lambda2);     // 4xy^2
 
     // lambda3 = 8y^4
-    SM2ModP_MontAdd(&X->y, &lambda3, &lambda3);     // 8y^4
+    SM2ModP_MontMul(&X->y, &lambda3, &lambda3);     // 8y^4
 
     // z' = 2yz
     SM2ModP_MontMul(&X->y, &X->z, &Y->z);
     SM2ModP_MontAdd(&Y->z, &Y->z, &Y->z);
 
+    // x' = lambda1^2 - 2lambda2
+    SM2ModP_MontMul(&lambda1, &lambda1, &Y->x);
+    SM2ModP_MontSub(&Y->x, &lambda2, &Y->x);
+    SM2ModP_MontSub(&Y->x, &lambda2, &Y->x);
+
     // y' = lambda1(lambda2 - x') - lambda3
     SM2ModP_MontSub(&lambda2, &Y->x, &Y->y);
     SM2ModP_MontMul(&lambda1, &Y->y, &Y->y);
     SM2ModP_MontSub(&Y->y, &lambda3, &Y->y);
-
-    // x' = lambda1^2 - 2lambda2
-    SM2ModP_MontMul(&lambda1, &lambda1, &Y->x);
-    SM2ModP_MontAdd(&lambda2, &lambda2, &lambda1);
-    SM2ModP_MontSub(&Y->x, &lambda1, &Y->x);
 }
 
 void SM2JacobPointMont_Mul(const UInt256* k, const SM2JacobPointMont* X, SM2JacobPointMont* Y)
@@ -304,10 +307,10 @@ void SM2JacobPointMont_Mul(const UInt256* k, const SM2JacobPointMont* X, SM2Jaco
         tmp = k->u64[i];
         for (j = 0; j < 64; j++)
         {
-            SM2JacobPointMont_Dbl(&Y_tmp, &Y_tmp, &Y_tmp);
+            SM2JacobPointMont_Dbl(&Y_tmp, &Y_tmp);
             if (tmp & 0x8000000000000000)
             {
-                SM2JacobPointMont_Add(&Y_tmp, &X, &Y_tmp);
+                SM2JacobPointMont_Add(&Y_tmp, X, &Y_tmp);
             }
         }
         tmp <<= 1;
@@ -332,22 +335,43 @@ void SM2JacobPointMont_Sub(const SM2JacobPointMont* X, const SM2JacobPointMont* 
 
 #ifdef _DEBUG
 
-void SM2JacobPointMont_Print(const SM2JacobPointMont* X)
+void SM2Point_Print(const SM2Point* X)
 {
-    SM2Point pt = { 0 };
-    SM2Point_FromJacobMont(X, &pt);
     printf("{ ");
-    if (pt.is_inf)
+    if (X->is_inf)
     {
         printf("<INF>");
     }
     else
     {
-        UInt256_Print(&pt.x, 4);
+        printf("x: ");
+        UInt256_Print(&X->x, 4);
         printf(", \n");
-        UInt256_Print(&pt.y, 4);
+        printf("  y: ");
+        UInt256_Print(&X->y, 4);
     }
-    printf(" }\n");
+    printf("  }\n");
+}
+
+void SM2JacobPointMont_Print(const SM2JacobPointMont* X)
+{
+    printf("{ ");
+    if (SM2JacobPointMont_IsInf(X))
+    {
+        printf("<INF>");
+    }
+    else
+    {
+        printf("x: ");
+        UInt256_Print(&X->x, 4);
+        printf(", \n");
+        printf("  y: ");
+        UInt256_Print(&X->y, 4);
+        printf(", \n");
+        printf("  z: ");
+        UInt256_Print(&X->z, 4);
+    }
+    printf("  }\n");
 }
 
 #endif // _DEBUG

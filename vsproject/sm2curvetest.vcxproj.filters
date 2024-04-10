@@ -12,7 +12,7 @@
     <ClInclude Include="..\include\gmalglib\sm2curve.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gmalglib\curvetypes.h">
+    <ClInclude Include="..\include\gmalglib\bignum.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -21,6 +21,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\test\sm2curvetest.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\bignum.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

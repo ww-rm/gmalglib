@@ -11,9 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\gmalglib\bignum.h" />
     <ClInclude Include="..\include\gmalglib\sm2curve.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\gmalglib\core\bignum.c" />
     <ClCompile Include="..\src\gmalglib\core\sm2curve.c" />
     <ClCompile Include="..\src\test\sm2curvetest.c" />
   </ItemGroup>
