@@ -9,21 +9,31 @@
 #endif // _DEBUG
 
 
-void UInt256_ToBE(const UInt256* x, uint8_t* bytes)
+void UInt256_ToBytes(const UInt256* x, uint8_t* bytes)
 {
     uint32_t i;
+    uint8_t tmp[32];
     for (i = 0; i < 32; i++)
     {
-        bytes[i] = x->u8[31 - i];
+        tmp[i] = x->u8[31 - i];
+    }
+    for (i = 0; i < 32; i++)
+    {
+        bytes[i] = tmp[i];
     }
 }
 
-void UInt256_FromBE(const uint8_t* bytes, UInt256* x)
+void UInt256_FromBytes(const uint8_t* bytes, UInt256* x)
 {
     uint32_t i;
+    uint8_t tmp[32];
     for (i = 0; i < 32; i++)
     {
-        x->u8[i] = bytes[31 - i];
+        tmp[i] = bytes[31 - i];
+    }
+    for (i = 0; i < 32; i++)
+    {
+        x->u8[i] = tmp[i];
     }
 }
 

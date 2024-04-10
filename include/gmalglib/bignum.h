@@ -23,9 +23,9 @@ typedef union _UInt512
 extern "C" {
 #endif
 
-void UInt256_ToBE(const UInt256* x, uint8_t* bytes);
+void UInt256_ToBytes(const UInt256* x, uint8_t* bytes);
 
-void UInt256_FromBE(const uint8_t* bytes, UInt256* x);
+void UInt256_FromBytes(const uint8_t* bytes, UInt256* x);
 
 int UInt256_Cmp(const UInt256* x, const UInt256* y);
 

@@ -40,6 +40,7 @@ extern const UInt256* const SM2_PARAMS_N;
 
 void SM2ModP_Add(const SM2ModP* x, const SM2ModP* y, SM2ModP* z);
 void SM2ModP_Sub(const SM2ModP* x, const SM2ModP* y, SM2ModP* z);
+
 void SM2ModP_ToMont(const SM2ModP* x, SM2ModPMont* y);
 void SM2ModP_FromMont(const SM2ModPMont* x, SM2ModP* y);
 
@@ -52,13 +53,14 @@ void SM2ModP_MontInv(const SM2ModPMont* x, SM2ModPMont* y);
 
 uint64_t SM2Point_ToBytes(const SM2Point* X, uint8_t* bytes, int pc_mode);
 void SM2Point_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM2Point* X);
+
 void SM2Point_ToJacobMont(const SM2Point* X, SM2JacobPointMont* Y);
 void SM2Point_FromJacobMont(const SM2JacobPointMont* X, SM2Point* Y);
 
 int SM2JacobPointMont_IsInf(const SM2JacobPointMont* X);
 void SM2JacobPointMont_SetInf(SM2JacobPointMont* X);
+int SM2JacobPointMont_IsEqual(const SM2JacobPointMont* X, const SM2JacobPointMont* Y);
 void SM2JacobPointMont_Add(const SM2JacobPointMont* X, const SM2JacobPointMont* Y, SM2JacobPointMont* Z);
-void SM2JacobPointMont_Dbl(const SM2JacobPointMont* X, SM2JacobPointMont* Y);
 void SM2JacobPointMont_Mul(const UInt256* k, const SM2JacobPointMont* X, SM2JacobPointMont* Y);
 void SM2JacobPointMont_Neg(const SM2JacobPointMont* X, SM2JacobPointMont* Y);
 void SM2JacobPointMont_Sub(const SM2JacobPointMont* X, const SM2JacobPointMont* Y, SM2JacobPointMont* Z);
