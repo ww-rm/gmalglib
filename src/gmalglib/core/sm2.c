@@ -162,13 +162,13 @@ void SM2ModN_MontInv(const SM2ModNMont* x, SM2ModNMont* y)
 }
 
 
-static inline
+static
 void _SM2_GetPk(const UInt256* sk, SM2JacobPointMont* pk)
 {
     SM2JacobPointMont_MulG(sk, pk);
 }
 
-static inline
+static
 void _SM2_EntityInfo(const uint8_t* uid, uint16_t uid_len, const SM2JacobPointMont* pk, uint8_t* entity_info)
 {
     SM2Point P = { 0 };
@@ -212,11 +212,11 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid
         UInt256_FromBytes(sk, &self->sk);
         if (UInt256_Cmp(&self->sk, CONSTS_ONE) < 0 || UInt256_Cmp(&self->sk, CONSTS_N_MINUS_TWO) > 0)
             return SM2_ERR_INVALID_SK;
-        self->has_sk = 1;
 
         SM2ModN_ToMont(&self->sk, &self->sk_modn_mont);
         SM2ModN_MontAdd(CONSTS_MODN_MONT_ONE, &self->sk_modn_mont, &self->inv_1_plus_sk_modn_mont);
         SM2ModN_MontInv(&self->inv_1_plus_sk_modn_mont, &self->inv_1_plus_sk_modn_mont);
+        self->has_sk = 1;
     }
     
     // check and parse pk
@@ -234,19 +234,17 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid
     }
 
     // check and get entity_info
-    if (!uid)
-    {
-        uid = SM2_DEFAULT_UID;
-        uid_len = SM2_DEFAULT_UID_LENGTH;
-    }
-    if (uid_len > SM2_UID_MAX_LENGTH)
-        return SM2_ERR_UID_OVERFLOW;
-
-    self->has_entity_info = 0;
     if (self->has_pk)
     {
+        if (!uid)
+        {
+            uid = SM2_DEFAULT_UID;
+            uid_len = SM2_DEFAULT_UID_LENGTH;
+        }
+        if (uid_len > SM2_UID_MAX_LENGTH)
+            return SM2_ERR_UID_OVERFLOW;
+
         _SM2_EntityInfo(uid, uid_len, &self->pk, self->entity_info);
-        self->has_entity_info = 1;
     }
 
     // check and parse pc_mode, default to RAW
@@ -266,8 +264,8 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid
 static
 int _SM2_SignDigest(SM2* self, const uint8_t* digest, UInt256* r, UInt256* s)
 {
-    UInt256 _e = { 0 };
-    const UInt256* e = &_e;
+    SM2ModN _e = { 0 };
+    const SM2ModN* e = &_e;
     UInt256 k = { 0 };
     SM2ModNMont r_modn_mont = { 0 };
 
@@ -280,7 +278,7 @@ int _SM2_SignDigest(SM2* self, const uint8_t* digest, UInt256* r, UInt256* s)
 
     do
     {
-        if (!RandomUInt256(&self->rand_alg, CONSTS_ONE, CONSTS_N_MINUS_ONE, &k))
+        if (!RandomUInt256(&self->rand_alg, CONSTS_N_MINUS_ONE, &k))
             return SM2_ERR_RANDOM_FAILED;
 
         SM2JacobPointMont_MulG(&k, &kG_mont);
@@ -317,6 +315,10 @@ int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s)
     int has_err = 0;
     UInt256 r_num = { 0 };
     UInt256 s_num = { 0 };
+
+    if (!self->has_sk)
+        return SM2_ERR_NEED_SK;
+
     has_err = _SM2_SignDigest(self, digest, &r_num, &s_num);
     if (has_err)
         return has_err;
@@ -326,3 +328,53 @@ int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s)
     return 0;
 }
 
+static
+int _SM2_VerifyDigest(SM2* self, const uint8_t* digest, const UInt256* r, const UInt256* s)
+{
+    SM2ModN t = { 0 };
+    UInt256 e = { 0 };
+    SM2JacobPointMont tP_mont = { 0 };
+    SM2JacobPointMont kG_mont = { 0 };
+    SM2Point kG = { 0 };
+
+    if (UInt256_IsZero(r) || UInt256_Cmp(r, CONSTS_N_MINUS_ONE) > 0)
+        return SM2_ERR_INVALID_SIGN;
+
+    if (UInt256_IsZero(s) || UInt256_Cmp(s, CONSTS_N_MINUS_ONE) > 0)
+        return SM2_ERR_INVALID_SIGN;
+
+    SM2ModN_Add(r, s, &t);
+    if (UInt256_IsZero(&t))
+        return SM2_ERR_INVALID_SIGN;
+
+    UInt256_FromBytes(digest, &e);
+    if (UInt256_Cmp(&e, CONSTS_N) >= 0)
+        UInt256_Sub(&e, CONSTS_N, &e);
+
+    SM2JacobPointMont_Mul(&t, &self->pk, &tP_mont);
+    SM2JacobPointMont_MulG(s, &kG_mont);
+    SM2JacobPointMont_Add(&kG_mont, &tP_mont, &kG_mont);
+    SM2Point_FromJacobMont(&kG_mont, &kG);
+    if (UInt256_Cmp(&kG.x, CONSTS_N) >= 0)
+        UInt256_Sub(&kG.x, CONSTS_N, &kG.x);
+
+    SM2ModN_Add(&e, &kG.x, &t);
+    if (UInt256_Cmp(&t, r) != 0)
+        return SM2_ERR_INVALID_SIGN;
+
+    return 0;
+}
+
+int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const uint8_t* s)
+{
+    int has_err = 0;
+    UInt256 r_num = { 0 };
+    UInt256 s_num = { 0 };
+
+    if (!self->has_pk)
+        return SM2_ERR_NEED_PK;
+
+    UInt256_FromBytes(r, &r_num);
+    UInt256_FromBytes(s, &s_num);
+    return _SM2_VerifyDigest(self, digest, &r_num, &s_num);
+}

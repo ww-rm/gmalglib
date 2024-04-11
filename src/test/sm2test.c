@@ -36,7 +36,7 @@ UInt256 test_sign_s = { .u32 = {
     0x85BBC1AA, 0x840B69C4, 0x1F7F42D4, 0xBB9038FD, 0x0D421CA1, 0x763182BC, 0xDF212FD8, 0xB1B6AA29
 } };
 
-void test_sign()
+void test_sign_digest()
 {
     uint8_t sk[SM2_SK_LENGTH] = { 0 };
     UInt256_ToBytes(&sm2_sk, sk);
@@ -62,14 +62,16 @@ void test_sign()
     assert(UInt256_Cmp(&r_num, &test_sign_r) == 0);
     assert(UInt256_Cmp(&s_num, &test_sign_s) == 0);
 
-    printf("SM2 Sign Test OK.\n");
+    assert(SM2_VerifyDigest(&sm2, digest, r, s) == 0);
+
+    printf("SM2 Sign Digest Test OK.\n");
 }
 
 int main()
 {
     printf("========== SM2 Test ==========\n");
 
-    test_sign();
+    test_sign_digest();
 
     return 0;
 }

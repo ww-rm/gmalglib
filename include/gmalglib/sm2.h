@@ -23,25 +23,25 @@
 #define SM2_ERR_MSG_OVERFLOW            -4
 #define SM2_ERR_NEED_SK                 -5
 #define SM2_ERR_RANDOM_FAILED           -6
-
+#define SM2_ERR_INVALID_SIGN            -7
+#define SM2_ERR_NEED_PK                 -8
 
 typedef UInt256 SM2ModN;
 typedef SM2ModN SM2ModNMont;
 
 typedef struct _SM2 {
-    UInt256 sk;
-    SM2ModNMont sk_modn_mont;
-    SM2ModNMont inv_1_plus_sk_modn_mont; // used for sign
     int has_sk;
+    UInt256 sk;
 
-    SM2JacobPointMont pk;
     int has_pk;
-
-    uint8_t entity_info[SM2_ENTITYINFO_LENGTH];
-    int has_entity_info;
+    SM2JacobPointMont pk;
 
     int pc_mode;
     RandomAlg rand_alg;
+
+    SM2ModNMont sk_modn_mont;
+    SM2ModNMont inv_1_plus_sk_modn_mont;        // used for sign
+    uint8_t entity_info[SM2_ENTITYINFO_LENGTH];
 } SM2;
 
 #ifdef __cplusplus
@@ -54,7 +54,7 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid
 
 int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s);
 
-
+int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const uint8_t* s);
 
 
 #ifdef __cplusplus

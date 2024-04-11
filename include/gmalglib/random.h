@@ -22,8 +22,8 @@ extern const RandomAlg* const DEFAULT_RANDOM_ALGORITHM;
 // return specified length bytes
 int RandomBytes(RandomAlg* self, uint64_t bytes_len, uint8_t* bytes);
 
-// return a big num between min and max, including both ending
-int RandomUInt256(RandomAlg* self, const UInt256* min, const UInt256* max, UInt256* num);
+// return a big num between 1 and max, including both ending
+int RandomUInt256(RandomAlg* self, const UInt256* max, UInt256* num);
 
 #ifdef __cplusplus
 }

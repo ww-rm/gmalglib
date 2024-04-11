@@ -39,20 +39,6 @@ extern const UInt256* const SM2_PARAMS_B;
 extern const SM2Point* const SM2_PARAMS_G;
 extern const UInt256* const SM2_PARAMS_N;
 
-void SM2ModP_Add(const SM2ModP* x, const SM2ModP* y, SM2ModP* z);
-void SM2ModP_Sub(const SM2ModP* x, const SM2ModP* y, SM2ModP* z);
-
-void SM2ModP_ToMont(const SM2ModP* x, SM2ModPMont* y);
-void SM2ModP_FromMont(const SM2ModPMont* x, SM2ModP* y);
-
-void SM2ModP_MontAdd(const SM2ModPMont* x, const SM2ModPMont* y, SM2ModPMont* z);
-void SM2ModP_MontSub(const SM2ModPMont* x, const SM2ModPMont* y, SM2ModPMont* z);
-void SM2ModP_MontMul(const SM2ModPMont* x, const SM2ModPMont* y, SM2ModPMont* z);
-void SM2ModP_MontPow(const SM2ModPMont* x, const UInt256* e, SM2ModPMont* y);
-int SM2ModP_MontHasSqrt(const SM2ModPMont* x, SM2ModPMont* y);
-void SM2ModP_MontNeg(const SM2ModPMont* x, SM2ModPMont* y);
-void SM2ModP_MontInv(const SM2ModPMont* x, SM2ModPMont* y);
-
 void SM2Point_ToJacobMont(const SM2Point* X, SM2JacobPointMont* Y);
 void SM2Point_FromJacobMont(const SM2JacobPointMont* X, SM2Point* Y);
 
