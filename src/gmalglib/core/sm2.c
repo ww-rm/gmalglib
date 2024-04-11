@@ -192,7 +192,7 @@ void _SM2_EntityInfo(const uint8_t* uid, uint16_t uid_len, const SM2JacobPointMo
     UInt256_ToBytes(&SM2_PARAMS_G->y, buffer);
     SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
 
-    SM2Point_FromJacobMont(pk, &P);
+    SM2JacobPointMont_ToPoint(pk, &P);
     UInt256_ToBytes(&P.x, buffer);
     SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
     UInt256_ToBytes(&P.y, buffer);
@@ -282,7 +282,7 @@ int _SM2_SignDigest(SM2* self, const uint8_t* digest, UInt256* r, UInt256* s)
             return SM2_ERR_RANDOM_FAILED;
 
         SM2JacobPointMont_MulG(&k, &kG_mont);
-        SM2Point_FromJacobMont(&kG_mont, &kG);
+        SM2JacobPointMont_ToPoint(&kG_mont, &kG);
 
         if (UInt256_Cmp(&kG.x, CONSTS_N) >= 0)
             UInt256_Sub(&kG.x, CONSTS_N, &kG.x);
@@ -354,7 +354,7 @@ int _SM2_VerifyDigest(SM2* self, const uint8_t* digest, const UInt256* r, const 
     SM2JacobPointMont_Mul(&t, &self->pk, &tP_mont);
     SM2JacobPointMont_MulG(s, &kG_mont);
     SM2JacobPointMont_Add(&kG_mont, &tP_mont, &kG_mont);
-    SM2Point_FromJacobMont(&kG_mont, &kG);
+    SM2JacobPointMont_ToPoint(&kG_mont, &kG);
     if (UInt256_Cmp(&kG.x, CONSTS_N) >= 0)
         UInt256_Sub(&kG.x, CONSTS_N, &kG.x);
 

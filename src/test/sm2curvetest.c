@@ -16,7 +16,7 @@ void test_curve()
     SM2JacobPointMont C = { 0 };
     UInt256 e = { 7 };
 
-    SM2Point_ToJacobMont(&_G, &G);
+    SM2JacobPointMont_FromPoint(&_G, &G);
     assert(SM2JacobPointMont_IsOnCurve(&G));
 
     A = G;
@@ -58,7 +58,7 @@ void test_convert()
     pk[0] = 0x03;
     assert(SM2JacobPointMont_FromBytes(pk, &PK) == 0);
 
-    SM2Point_FromJacobMont(&PK, &PKK);
+    SM2JacobPointMont_ToPoint(&PK, &PKK);
     assert(UInt256_Cmp(&y, &PKK.y) == 0);
 
     printf("SM2 Convert Test OK.\n");
