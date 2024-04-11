@@ -4,6 +4,9 @@
 #include <gmalglib/sm3.h>
 #include <gmalglib/sm4.h>
 #include <gmalglib/zuc.h>
+#include <gmalglib/sm2.h>
+
+/****************************** SM3 Object Begin ******************************/
 
 typedef struct _PySM3Object {
     PyObject_HEAD
@@ -129,6 +132,9 @@ error:
     return 0;
 }
 
+/****************************** SM3 Object End ******************************/
+
+/****************************** SM4 Object Begin ******************************/
 
 typedef struct _PySM4Object {
     PyObject_HEAD
@@ -256,6 +262,9 @@ error:
     return 0;
 }
 
+/****************************** SM4 Object End ******************************/
+
+/****************************** ZUC Object Begin ******************************/
 
 typedef struct _PyZUCObject {
     PyObject_HEAD
@@ -367,6 +376,252 @@ error:
     return 0;
 }
 
+/****************************** ZUC Object End ******************************/
+
+static int PyRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
+{
+    PyObject* py_callable_rand_func = (PyObject*)rand_obj;
+    PyObject* py_bytes = NULL;
+    PyObject* args = NULL;
+
+    py_bytes = PyObject_Call(py_callable_rand_func, args, NULL);
+
+    return 1;
+}
+
+/****************************** SM2 Object Begin ******************************/
+
+typedef struct _PySM2Object {
+    PyObject_HEAD
+    SM2 sm2;
+    PyObject* py_callable_rand_func;
+} PySM2Object;
+
+static void PySM2_dealloc(PySM2Object* self)
+{
+    Py_XDECREF(self->py_callable_rand_func);
+    Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+static int PySM2_init(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "sk", "pk", "uid", "pc_mode", "rnd_fn", NULL};
+    Py_buffer py_buffer_sk = { 0 };
+    Py_buffer py_buffer_pk = { 0 };
+    Py_buffer py_buffer_uid = { 0 };
+    int pc_mode = 0;
+    PyObject* py_callable_rnd_fn = NULL;
+    RandomAlg _rnd_alg = { 0 };
+    RandomAlg* rnd_alg = NULL;
+
+    int ret = -1;
+    int sm2_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(
+        args, kwargs, "|y*y*y*$iO:__init__", keys,
+        &py_buffer_sk,
+        &py_buffer_pk,
+        &py_buffer_uid,
+        &pc_mode,
+        &py_callable_rnd_fn))
+        return -1;
+
+    // Get strong ref to rnd_fn
+    Py_XINCREF(py_callable_rnd_fn);
+
+    // check args
+    if (py_buffer_sk.buf && py_buffer_sk.len != SM2_SK_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect secret key length.");
+        goto cleanup;
+    }
+    if (py_buffer_pk.buf && py_buffer_pk.len != SM2_PK_HALF_LENGTH && py_buffer_pk.len != SM2_PK_FULL_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect public key length.");
+        goto cleanup;
+    }
+    // NOTE: no check for uid here, checked in SM2_Init
+    if (py_callable_rnd_fn)
+    {
+        if (!PyCallable_Check(py_callable_rnd_fn))
+        {
+            PyErr_SetString(PyExc_TypeError, "rnd_fn is not callable.");
+            goto cleanup;
+        }
+        rnd_alg = &_rnd_alg;
+        rnd_alg->rand_obj = py_callable_rnd_fn;
+        rnd_alg->rand_proc = PyRandomProc;
+    }
+
+    sm2_ret = SM2_Init(
+        &self->sm2, 
+        py_buffer_sk.buf, 
+        py_buffer_pk.buf, py_buffer_pk.len, 
+        py_buffer_uid.buf, py_buffer_uid.len,
+        pc_mode, 
+        rnd_alg
+    );
+
+    if (sm2_ret == SM2_ERR_INVALID_SK)
+    {
+        PyErr_SetString(PyExc_ValueError, "Invalid secret key.");
+        goto cleanup;
+    }
+    if (sm2_ret == SM2_ERR_INVALID_PK)
+    {
+        PyErr_SetString(PyExc_ValueError, "Invalid public key.");
+        goto cleanup;
+    }
+    if (sm2_ret == SM2_ERR_UID_OVERFLOW)
+    {
+        PyErr_SetString(PyExc_OverflowError, "uid too long.");
+        goto cleanup;
+    }
+
+    ret = 0;
+
+cleanup:
+    PyBuffer_Release(&py_buffer_sk);
+    PyBuffer_Release(&py_buffer_pk);
+    PyBuffer_Release(&py_buffer_uid);
+    Py_XDECREF(py_callable_rnd_fn);
+    return ret;
+}
+
+static PyObject* PySM2_is_sk_valid(PyObject* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "sk", NULL };
+    Py_buffer py_buffer_sk = { 0 };
+    int is_valid = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:is_sk_valid", keys, &py_buffer_sk))
+        return NULL;
+
+    if (py_buffer_sk.len != SM2_SK_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect secret key length.");
+        PyBuffer_Release(&py_buffer_sk);
+        return NULL;
+    }
+
+    is_valid = SM2_IsSkValid(py_buffer_sk.buf);
+    PyBuffer_Release(&py_buffer_sk);
+
+    if (is_valid)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
+static PyObject* PySM2_is_pk_valid(PyObject* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "pk", NULL };
+    Py_buffer py_buffer_pk = { 0 };
+
+    int is_valid = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:is_pk_valid", keys, &py_buffer_pk))
+        return NULL;
+
+    if (py_buffer_pk.len != SM2_PK_HALF_LENGTH && py_buffer_pk.len != SM2_PK_FULL_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect public key length.");
+        PyBuffer_Release(&py_buffer_pk);
+        return NULL;
+    }
+
+    is_valid = SM2_IsPkValid(py_buffer_pk.buf, py_buffer_pk.len);
+    PyBuffer_Release(&py_buffer_pk);
+
+    if (is_valid)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
+static PyObject* PySM2_get_pk(PyObject* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "sk", "pc_mode", NULL};
+    Py_buffer py_buffer_sk = { 0 };
+    int pc_mode = 0;
+    uint8_t pk[SM2_PK_MAX_LENGTH] = { 0 };
+    uint64_t pk_len = 0;
+
+    int sm2_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*$i:get_pk", keys, &py_buffer_sk, &pc_mode))
+        return NULL;
+
+    if (py_buffer_sk.len != SM2_SK_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect secret key length.");
+        PyBuffer_Release(&py_buffer_sk);
+        return NULL;
+    }
+
+    if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
+        pc_mode = SM2_PCMODE_RAW;
+    pk_len = (pc_mode == SM2_PCMODE_COMPRESS) ? SM2_PK_HALF_LENGTH : SM2_PK_FULL_LENGTH;
+
+    sm2_ret = SM2_GetPk(py_buffer_sk.buf, pk, pc_mode);
+    PyBuffer_Release(&py_buffer_sk);
+
+    if (sm2_ret != 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Invalid secret key.");
+        return NULL;
+    }
+
+    return PyBytes_FromStringAndSize((char*)pk, pk_len);
+}
+
+static PyObject* PySM2_get_entity_info(PySM2Object* self, PyObject* Py_UNUSED(args))
+{
+    uint8_t entity_info[SM2_ENTITYINFO_LENGTH] = { 0 };
+    if (SM2_GetEntityInfo(&self->sm2, entity_info) != 0)
+        Py_RETURN_NONE;
+
+    return PyBytes_FromStringAndSize((char*)entity_info, SM2_ENTITYINFO_LENGTH);
+}
+
+static PyMethodDef py_methods_def_SM2[] = {
+    {"is_sk_valid", (PyCFunction)PySM2_is_sk_valid, METH_VARARGS | METH_KEYWORDS | METH_STATIC, PyDoc_STR("Check sk is valid.")},
+    {"is_pk_valid", (PyCFunction)PySM2_is_pk_valid, METH_VARARGS | METH_KEYWORDS | METH_STATIC, PyDoc_STR("Check pk is valid.")},
+    {"get_pk", (PyCFunction)PySM2_get_pk, METH_VARARGS | METH_KEYWORDS | METH_STATIC, PyDoc_STR("Get public key bytes.")},
+    {"get_entity_info", (PyCFunction)PySM2_get_entity_info, METH_NOARGS, PyDoc_STR("Get entity info.")},
+    {NULL}
+};
+
+static PyTypeObject py_type_SM2 = {
+    .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "gmalglib.core.SM2",
+    .tp_doc = PyDoc_STR("SM2 Object."),
+    .tp_basicsize = sizeof(PySM2Object),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = PyType_GenericNew,
+    .tp_init = (initproc)PySM2_init,
+    .tp_dealloc = (destructor)PySM2_dealloc,
+    .tp_methods = py_methods_def_SM2,
+};
+
+static int PyModule_AddSM2(PyObject* py_module) {
+
+    if (PyType_Ready(&py_type_SM2) < 0)
+        return 0;
+
+    Py_INCREF(&py_type_SM2);
+    if (PyModule_AddObject(py_module, "SM2", (PyObject*)&py_type_SM2) < 0)
+        goto error;
+
+    return 1;
+
+error:
+    return 0;
+}
+
+
+/****************************** SM2 Object End ******************************/
+
+/****************************** core Module Begin ******************************/
 
 static PyModuleDef py_module_def_core = {
     .m_base = PyModuleDef_HEAD_INIT,
@@ -393,9 +648,14 @@ PyMODINIT_FUNC PyInit_core() {
     if (!PyModule_AddZUC(py_module))
         goto error;
 
+    if (!PyModule_AddSM2(py_module))
+        goto error;
+
     return py_module;
 
 error:
     Py_DECREF(py_module);
     return NULL;
 }
+
+/****************************** core Module End ******************************/

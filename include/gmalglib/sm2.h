@@ -33,7 +33,7 @@ typedef SM2ModN SM2ModNMont;
 
 typedef struct _SM2 {
     int has_sk;
-    UInt256 sk;
+    SM2ModN sk;
 
     int has_pk;
     SM2JacobPointMont pk;
@@ -52,14 +52,16 @@ extern "C" {
 
 extern const uint8_t* const SM2_DEFAULT_UID;
 
+int SM2_IsSkValid(const uint8_t* sk);
+int SM2_IsPkValid(const uint8_t* pk, uint64_t pk_len);
+int SM2_GetPk(const uint8_t* sk, uint8_t* pk, int pc_mode);
+
 int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int pc_mode, RandomAlg* rand_alg);
-
+int SM2_GenerateKeyPair(SM2* self, uint8_t* sk, uint8_t* pk);
+int SM2_GetEntityInfo(SM2* self, uint8_t* entity_info);
 int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s);
-
 int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const uint8_t* s);
-
 int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* r, uint8_t* s);
-
 int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* r, const uint8_t* s);
 
 #ifdef __cplusplus

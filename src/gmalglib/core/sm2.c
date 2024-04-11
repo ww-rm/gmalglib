@@ -161,15 +161,45 @@ void SM2ModN_MontInv(const SM2ModNMont* x, SM2ModNMont* y)
     SM2ModN_MontPow(x, CONSTS_N_MINUS_TWO, y);
 }
 
-
 static
-void _SM2_GetPk(const UInt256* sk, SM2JacobPointMont* pk)
+int _SM2_IsSkValid(const SM2ModN* sk)
 {
-    SM2JacobPointMont_MulG(sk, pk);
+    return !UInt256_IsZero(sk) && UInt256_Cmp(sk, CONSTS_N_MINUS_TWO) <= 0;
+}
+
+int SM2_IsSkValid(const uint8_t* sk)
+{
+    SM2ModN sk_num = { 0 };
+    UInt256_FromBytes(sk, &sk_num);
+    return _SM2_IsSkValid(&sk_num);
+}
+
+int SM2_IsPkValid(const uint8_t* pk, uint64_t pk_len)
+{
+    SM2JacobPointMont P = { 0 };
+    return pk_len > 1 && SM2JacobPointMont_FromBytes(pk, pk_len, &P) == 0;
+}
+
+int SM2_GetPk(const uint8_t* sk, uint8_t* pk, int pc_mode)
+{
+    SM2ModN sk_num = { 0 };
+    SM2JacobPointMont P = { 0 };
+    UInt256_FromBytes(sk, &sk_num);
+
+    if (!_SM2_IsSkValid(&sk_num))
+        return SM2_ERR_INVALID_SK;
+
+    SM2JacobPointMont_MulG(&sk_num, &P);
+
+    if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
+        pc_mode = SM2_PCMODE_RAW;
+
+    SM2JacobPointMont_ToBytes(&P, pk, pc_mode);
+    return 0;
 }
 
 static
-void _SM2_EntityInfo(const uint8_t* uid, uint64_t uid_len, const SM2JacobPointMont* pk, uint8_t* entity_info)
+void _SM2_GetEntityInfo(const SM2JacobPointMont* pk, const uint8_t* uid, uint64_t uid_len, uint8_t* entity_info)
 {
     SM2Point P = { 0 };
     uint8_t buffer[SM2_PARAMS_LENGTH] = { 0 };
@@ -210,7 +240,7 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, c
     if (sk)
     {
         UInt256_FromBytes(sk, &self->sk);
-        if (UInt256_IsZero(&self->sk) || UInt256_Cmp(&self->sk, CONSTS_N_MINUS_TWO) > 0)
+        if (!_SM2_IsSkValid(&self->sk))
             return SM2_ERR_INVALID_SK;
 
         SM2ModN_ToMont(&self->sk, &self->sk_modn_mont);
@@ -223,13 +253,14 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, c
     self->has_pk = 0;
     if (pk)
     {
-        if (SM2JacobPointMont_FromBytes(pk, pk_len, &self->pk) != 0)
+        if (pk_len <= 1 || SM2JacobPointMont_FromBytes(pk, pk_len, &self->pk) != 0)
             return SM2_ERR_INVALID_PK;
+
         self->has_pk = 1;
     }
     else if (self->has_sk)
     {
-        _SM2_GetPk(&self->sk, &self->pk);
+        SM2JacobPointMont_MulG(&self->sk, &self->pk);
         self->has_pk = 1;
     }
 
@@ -244,7 +275,7 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, c
         if (uid_len > SM2_UID_MAX_LENGTH)
             return SM2_ERR_UID_OVERFLOW;
 
-        _SM2_EntityInfo(uid, uid_len, &self->pk, self->entity_info);
+        _SM2_GetEntityInfo( &self->pk, uid, uid_len,self->entity_info);
     }
 
     // check and parse pc_mode, default to RAW
@@ -258,6 +289,35 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, c
     else
         self->rand_alg = *rand_alg;
 
+    return 0;
+}
+
+int SM2_GenerateKeyPair(SM2* self, uint8_t* sk, uint8_t* pk)
+{
+    SM2ModN sk_num = { 0 };
+    SM2JacobPointMont P = { 0 };
+
+    if (!RandomUInt256(&self->rand_alg, CONSTS_N_MINUS_TWO, &sk_num))
+        return SM2_ERR_RANDOM_FAILED;
+
+    SM2JacobPointMont_MulG(&sk_num, &P);
+
+    UInt256_ToBytes(&sk_num, sk);
+    SM2JacobPointMont_ToBytes(&P, pk, self->pc_mode);
+    return 0;
+}
+
+int SM2_GetEntityInfo(SM2* self, uint8_t* entity_info)
+{
+    uint32_t i = 0;
+
+    if (!self->has_pk)
+        return SM2_ERR_NEED_PK;
+
+    for (i = 0; i < SM2_ENTITYINFO_LENGTH; i++)
+    {
+        entity_info[i] = self->entity_info[i];
+    }
     return 0;
 }
 
