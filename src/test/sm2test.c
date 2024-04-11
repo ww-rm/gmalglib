@@ -67,11 +67,42 @@ void test_sign_digest()
     printf("SM2 Sign Digest Test OK.\n");
 }
 
+void test_sign()
+{
+    uint8_t sk[SM2_SK_LENGTH] = { 0 };
+    UInt256_ToBytes(&sm2_sk, sk);
+
+    uint8_t pk[SM2_PK_MAX_LENGTH] = { 0x03 };
+    UInt256_ToBytes(&sm2_pk.x, pk + 1);
+
+    uint8_t msg[15] = "message digest";
+    uint64_t msg_len = 14;
+    uint8_t r[SM2_SIGN_R_LENGTH] = { 0 };
+    uint8_t s[SM2_SIGN_S_LENGTH] = { 0 };
+    UInt256 r_num = { 0 };
+    UInt256 s_num = { 0 };
+
+    SM2 sm2 = { 0 };
+    assert(SM2_Init(&sm2, sk, pk, NULL, 0, SM2_PCMODE_RAW, &test_sign_rnd_alg) == 0);
+
+    assert(SM2_Sign(&sm2, msg, msg_len, r, s) == 0);
+    UInt256_FromBytes(r, &r_num);
+    UInt256_FromBytes(s, &s_num);
+
+    assert(UInt256_Cmp(&r_num, &test_sign_r) == 0);
+    assert(UInt256_Cmp(&s_num, &test_sign_s) == 0);
+
+    assert(SM2_Verify(&sm2, msg, msg_len, r, s) == 0);
+
+    printf("SM2 Sign Test OK.\n");
+}
+
 int main()
 {
     printf("========== SM2 Test ==========\n");
 
     test_sign_digest();
+    test_sign();
 
     return 0;
 }

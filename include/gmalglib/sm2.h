@@ -7,7 +7,7 @@
 #include <gmalglib/sm2curve.h>
 #include <gmalglib/sm3.h>
 
-#define SM2_UID_MAX_LENGTH              8192  // (1 << 16 >> 3)
+#define SM2_UID_MAX_LENGTH              8191  // (0xFFFF >> 3)
 #define SM2_ENTITYINFO_LENGTH           SM3_DIGEST_LENGTH
 #define SM2_MSG_MAX_LENGTH              ((SM3_MAX_MSG_BITLEN >> 3) - SM2_ENTITYINFO_LENGTH)
 #define SM2_SK_LENGTH                   SM2_PARAMS_LENGTH
@@ -56,6 +56,9 @@ int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s);
 
 int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const uint8_t* s);
 
+int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* r, uint8_t* s);
+
+int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* r, const uint8_t* s);
 
 #ifdef __cplusplus
 }

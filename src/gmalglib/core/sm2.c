@@ -172,7 +172,7 @@ static
 void _SM2_EntityInfo(const uint8_t* uid, uint16_t uid_len, const SM2JacobPointMont* pk, uint8_t* entity_info)
 {
     SM2Point P = { 0 };
-    uint8_t buffer[32] = { 0 };
+    uint8_t buffer[SM2_PARAMS_LENGTH] = { 0 };
     SM3 sm3 = { 0 };
 
     SM3_Init(&sm3);
@@ -183,20 +183,20 @@ void _SM2_EntityInfo(const uint8_t* uid, uint16_t uid_len, const SM2JacobPointMo
     SM3_Update(&sm3, uid, uid_len);
 
     UInt256_ToBytes(SM2_PARAMS_A, buffer);
-    SM3_Update(&sm3, buffer, 32);
+    SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
     UInt256_ToBytes(SM2_PARAMS_B, buffer);
-    SM3_Update(&sm3, buffer, 32);
+    SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
 
     UInt256_ToBytes(&SM2_PARAMS_G->x, buffer);
-    SM3_Update(&sm3, buffer, 32);
+    SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
     UInt256_ToBytes(&SM2_PARAMS_G->y, buffer);
-    SM3_Update(&sm3, buffer, 32);
+    SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
 
     SM2Point_FromJacobMont(pk, &P);
     UInt256_ToBytes(&P.x, buffer);
-    SM3_Update(&sm3, buffer, 32);
+    SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
     UInt256_ToBytes(&P.y, buffer);
-    SM3_Update(&sm3, buffer, 32);
+    SM3_Update(&sm3, buffer, SM2_PARAMS_LENGTH);
 
     SM3_Digest(&sm3, entity_info);
 }
@@ -377,4 +377,45 @@ int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const u
     UInt256_FromBytes(r, &r_num);
     UInt256_FromBytes(s, &s_num);
     return _SM2_VerifyDigest(self, digest, &r_num, &s_num);
+}
+
+int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* r, uint8_t* s)
+{
+    uint8_t digest[SM3_DIGEST_LENGTH] = { 0 };
+    SM3 sm3 = { 0 };
+
+    if (!self->has_sk)
+        return SM2_ERR_NEED_SK;
+
+    if (!self->has_pk)
+        return SM2_ERR_NEED_PK;
+
+    if (msg_len > SM2_MSG_MAX_LENGTH)
+        return SM2_ERR_MSG_OVERFLOW;
+
+    SM3_Init(&sm3);
+    SM3_Update(&sm3, self->entity_info, SM2_ENTITYINFO_LENGTH);
+    SM3_Update(&sm3, msg, msg_len);
+    SM3_Digest(&sm3, digest);
+
+    return SM2_SignDigest(self, digest, r, s);
+}
+
+int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* r, const uint8_t* s)
+{
+    uint8_t digest[SM3_DIGEST_LENGTH] = { 0 };
+    SM3 sm3 = { 0 };
+
+    if (!self->has_pk)
+        return SM2_ERR_NEED_PK;
+
+    if (msg_len > SM2_MSG_MAX_LENGTH)
+        return SM2_ERR_MSG_OVERFLOW;
+
+    SM3_Init(&sm3);
+    SM3_Update(&sm3, self->entity_info, SM2_ENTITYINFO_LENGTH);
+    SM3_Update(&sm3, msg, msg_len);
+    SM3_Digest(&sm3, digest);
+
+    return SM2_VerifyDigest(self, digest, r, s);
 }
