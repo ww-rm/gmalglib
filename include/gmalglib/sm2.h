@@ -11,7 +11,9 @@
 #define SM2_ENTITYINFO_LENGTH           SM3_DIGEST_LENGTH
 #define SM2_MSG_MAX_LENGTH              ((SM3_MAX_MSG_BITLEN >> 3) - SM2_ENTITYINFO_LENGTH)
 #define SM2_SK_LENGTH                   SM2_PARAMS_LENGTH
-#define SM2_PK_MAX_LENGTH               SM2_POINTBYTES_MAX_LENGTH
+#define SM2_PK_FULL_LENGTH              SM2_POINTBYTES_FULL_LENGTH
+#define SM2_PK_HALF_LENGTH              SM2_POINTBYTES_HALF_LENGTH
+#define SM2_PK_MAX_LENGTH               SM2_PK_FULL_LENGTH
 #define SM2_SIGN_R_LENGTH               SM2_PARAMS_LENGTH
 #define SM2_SIGN_S_LENGTH               SM2_PARAMS_LENGTH
 
@@ -50,7 +52,7 @@ extern "C" {
 
 extern const uint8_t* const SM2_DEFAULT_UID;
 
-int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid, uint16_t uid_len, int pc_mode, RandomAlg* rand_alg);
+int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int pc_mode, RandomAlg* rand_alg);
 
 int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s);
 

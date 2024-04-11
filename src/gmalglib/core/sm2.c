@@ -169,7 +169,7 @@ void _SM2_GetPk(const UInt256* sk, SM2JacobPointMont* pk)
 }
 
 static
-void _SM2_EntityInfo(const uint8_t* uid, uint16_t uid_len, const SM2JacobPointMont* pk, uint8_t* entity_info)
+void _SM2_EntityInfo(const uint8_t* uid, uint64_t uid_len, const SM2JacobPointMont* pk, uint8_t* entity_info)
 {
     SM2Point P = { 0 };
     uint8_t buffer[SM2_PARAMS_LENGTH] = { 0 };
@@ -201,7 +201,7 @@ void _SM2_EntityInfo(const uint8_t* uid, uint16_t uid_len, const SM2JacobPointMo
     SM3_Digest(&sm3, entity_info);
 }
 
-int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid, uint16_t uid_len, int pc_mode, RandomAlg* rand_alg)
+int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int pc_mode, RandomAlg* rand_alg)
 {
     UInt256 one = { 1 };
 
@@ -210,7 +210,7 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid
     if (sk)
     {
         UInt256_FromBytes(sk, &self->sk);
-        if (UInt256_Cmp(&self->sk, CONSTS_ONE) < 0 || UInt256_Cmp(&self->sk, CONSTS_N_MINUS_TWO) > 0)
+        if (UInt256_IsZero(&self->sk) || UInt256_Cmp(&self->sk, CONSTS_N_MINUS_TWO) > 0)
             return SM2_ERR_INVALID_SK;
 
         SM2ModN_ToMont(&self->sk, &self->sk_modn_mont);
@@ -223,7 +223,7 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, const uint8_t* uid
     self->has_pk = 0;
     if (pk)
     {
-        if (SM2JacobPointMont_FromBytes(pk, &self->pk) != 0)
+        if (SM2JacobPointMont_FromBytes(pk, pk_len, &self->pk) != 0)
             return SM2_ERR_INVALID_PK;
         self->has_pk = 1;
     }

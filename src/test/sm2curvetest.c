@@ -53,10 +53,10 @@ void test_convert()
 
     SM2JacobPointMont PK = { 0 };
     SM2Point PKK = { 0 };
-    assert(SM2JacobPointMont_FromBytes(pk, &PK) == 0);
+    assert(SM2JacobPointMont_FromBytes(pk, 65, &PK) == 0);
 
     pk[0] = 0x03;
-    assert(SM2JacobPointMont_FromBytes(pk, &PK) == 0);
+    assert(SM2JacobPointMont_FromBytes(pk, 33, &PK) == 0);
 
     SM2JacobPointMont_ToPoint(&PK, &PKK);
     assert(UInt256_Cmp(&y, &PKK.y) == 0);

@@ -4,15 +4,17 @@
 #include <stdint.h>
 #include <gmalglib/bignum.h>
 
-#define SM2_PARAMS_LENGTH               32
+#define SM2_PARAMS_LENGTH                           32
 
-#define SM2_POINTBYTES_MAX_LENGTH       (1 + SM2_PARAMS_LENGTH + SM2_PARAMS_LENGTH)
-#define SM2_PCMODE_RAW                  0
-#define SM2_PCMODE_COMPRESS             1
-#define SM2_PCMODE_MIX                  2
+#define SM2_PCMODE_RAW                              0
+#define SM2_PCMODE_COMPRESS                         1
+#define SM2_PCMODE_MIX                              2
+#define SM2_POINTBYTES_FULL_LENGTH                  (1 + SM2_PARAMS_LENGTH + SM2_PARAMS_LENGTH)
+#define SM2_POINTBYTES_HALF_LENGTH                  (1 + SM2_PARAMS_LENGTH)
+#define SM2_POINTBYTES_MAX_LENGTH                   SM2_POINTBYTES_FULL_LENGTH
 
-#define SM2CURVE_ERR_NOTONCURVE         -1
-#define SM2CURVE_ERR_INVALIDPC          -2
+#define SM2CURVE_ERR_NOTONCURVE                     -1
+#define SM2CURVE_ERR_INVALIDPC                      -2
 
 typedef UInt256 SM2ModP;
 typedef SM2ModP SM2ModPMont;
@@ -43,7 +45,7 @@ void SM2JacobPointMont_ToPoint(const SM2JacobPointMont* X, SM2Point* Y);
 void SM2JacobPointMont_FromPoint(const SM2Point* X, SM2JacobPointMont* Y);
 
 uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, uint8_t* bytes, int pc_mode);
-int SM2JacobPointMont_FromBytes(const uint8_t* bytes, SM2JacobPointMont* X);
+int SM2JacobPointMont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM2JacobPointMont* X);
 
 int SM2JacobPointMont_IsInf(const SM2JacobPointMont* X);
 void SM2JacobPointMont_SetInf(SM2JacobPointMont* X);

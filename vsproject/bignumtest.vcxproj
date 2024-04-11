@@ -15,7 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gmalglib\core\bignum.c" />
-    <ClCompile Include="..\src\gmalglib\core\bignumtest.c" />
+    <ClCompile Include="..\src\test\bignumtest.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

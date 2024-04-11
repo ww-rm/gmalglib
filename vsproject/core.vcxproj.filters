@@ -18,6 +18,18 @@
     <ClInclude Include="..\include\gmalglib\zuc.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gmalglib\bignum.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gmalglib\random.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gmalglib\sm2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gmalglib\sm2curve.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gmalglib\coremodule.c">
@@ -30,6 +42,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gmalglib\core\zuc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\bignum.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\random.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\sm2.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\sm2curve.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

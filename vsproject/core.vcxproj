@@ -11,11 +11,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\gmalglib\bignum.h" />
+    <ClInclude Include="..\include\gmalglib\random.h" />
+    <ClInclude Include="..\include\gmalglib\sm2.h" />
+    <ClInclude Include="..\include\gmalglib\sm2curve.h" />
     <ClInclude Include="..\include\gmalglib\sm3.h" />
     <ClInclude Include="..\include\gmalglib\sm4.h" />
     <ClInclude Include="..\include\gmalglib\zuc.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\gmalglib\core\bignum.c" />
+    <ClCompile Include="..\src\gmalglib\core\random.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm2.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm2curve.c" />
     <ClCompile Include="..\src\gmalglib\core\sm3.c" />
     <ClCompile Include="..\src\gmalglib\core\sm4.c" />
     <ClCompile Include="..\src\gmalglib\core\zuc.c" />

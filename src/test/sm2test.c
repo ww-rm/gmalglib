@@ -52,7 +52,7 @@ void test_sign_digest()
     UInt256 s_num = { 0 };
 
     SM2 sm2 = { 0 };
-    assert(SM2_Init(&sm2, sk, pk, NULL, 0, SM2_PCMODE_RAW, &test_sign_rnd_alg) == 0);
+    assert(SM2_Init(&sm2, sk, pk, 65, NULL, 0, SM2_PCMODE_RAW, &test_sign_rnd_alg) == 0);
 
     UInt256_ToBytes(&test_sign_e, digest);
     assert(SM2_SignDigest(&sm2, digest, r, s) == 0);
@@ -83,7 +83,7 @@ void test_sign()
     UInt256 s_num = { 0 };
 
     SM2 sm2 = { 0 };
-    assert(SM2_Init(&sm2, sk, pk, NULL, 0, SM2_PCMODE_RAW, &test_sign_rnd_alg) == 0);
+    assert(SM2_Init(&sm2, sk, pk, 33, NULL, 0, SM2_PCMODE_RAW, &test_sign_rnd_alg) == 0);
 
     assert(SM2_Sign(&sm2, msg, msg_len, r, s) == 0);
     UInt256_FromBytes(r, &r_num);

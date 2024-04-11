@@ -17,7 +17,7 @@
     <ClCompile Include="..\src\gmalglib\core\bignum.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gmalglib\core\bignumtest.c">
+    <ClCompile Include="..\src\test\bignumtest.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

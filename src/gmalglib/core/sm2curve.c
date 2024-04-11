@@ -416,7 +416,7 @@ uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, uint8_t* bytes, i
     return 0;
 }
 
-int SM2JacobPointMont_FromBytes(const uint8_t* bytes, SM2JacobPointMont* X)
+int SM2JacobPointMont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM2JacobPointMont* X)
 {
     SM2Point pt = { 0 };
     uint8_t pc = bytes[0];
@@ -424,10 +424,16 @@ int SM2JacobPointMont_FromBytes(const uint8_t* bytes, SM2JacobPointMont* X)
 
     if (pc == 0x00)
     {
+        if (bytes_len != 1)
+            return SM2CURVE_ERR_INVALIDPC;
+
         SM2JacobPointMont_SetInf(X);
     }
     else if (pc == 0x04 || pc == 0x06 || pc == 0x07)
     {
+        if (bytes_len != SM2_POINTBYTES_FULL_LENGTH)
+            return SM2CURVE_ERR_INVALIDPC;
+
         UInt256_FromBytes(bytes + 1, &pt.x);
         UInt256_FromBytes(bytes + 33, &pt.y);
         pt.is_inf = 0;
@@ -437,6 +443,9 @@ int SM2JacobPointMont_FromBytes(const uint8_t* bytes, SM2JacobPointMont* X)
     }
     else if (pc == 0x02 || pc == 0x03)
     {
+        if (bytes_len != SM2_POINTBYTES_HALF_LENGTH)
+            return SM2CURVE_ERR_INVALIDPC;
+
         UInt256_FromBytes(bytes + 1, &pt.x);
         if (UInt256_Cmp(&pt.x, CONSTS_P) >= 0)
             return SM2CURVE_ERR_NOTONCURVE;
