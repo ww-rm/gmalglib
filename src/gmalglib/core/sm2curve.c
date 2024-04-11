@@ -402,14 +402,14 @@ uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, uint8_t* bytes, i
         else
             bytes[0] = 0x06;
         UInt256_ToBytes(&pt.x, bytes + 1);
-        UInt256_ToBytes(&pt.x, bytes + 33);
+        UInt256_ToBytes(&pt.y, bytes + 33);
         return 65;
     }
     else
     {
         bytes[0] = 0x04;
         UInt256_ToBytes(&pt.x, bytes + 1);
-        UInt256_ToBytes(&pt.x, bytes + 33);
+        UInt256_ToBytes(&pt.y, bytes + 33);
         return 65;
     }
 

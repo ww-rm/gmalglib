@@ -9,6 +9,7 @@
 #define SM2_PCMODE_RAW                              0
 #define SM2_PCMODE_COMPRESS                         1
 #define SM2_PCMODE_MIX                              2
+#define SM2_POINTBYTES_INF_LENGTH                   1
 #define SM2_POINTBYTES_FULL_LENGTH                  (1 + SM2_PARAMS_LENGTH + SM2_PARAMS_LENGTH)
 #define SM2_POINTBYTES_HALF_LENGTH                  (1 + SM2_PARAMS_LENGTH)
 #define SM2_POINTBYTES_MAX_LENGTH                   SM2_POINTBYTES_FULL_LENGTH
