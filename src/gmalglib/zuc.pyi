@@ -4,26 +4,18 @@ ZUC_WORD_LENGTH: int
 
 
 class ZUC:
-    """ZUC Algorithm."""
+    """ZUC 算法对象."""
 
     def __init__(self, key: bytes, iv: bytes) -> None:
-        """ZUC Algorithm.
+        """ZUC 算法对象.
 
         Args:
-            key: Key.
-            iv: Initial vector.
+            key: 密钥.
+            iv: 初始化向量.
         """
 
     def generate(self) -> bytes:
-        """Generate a word.
-
-        Returns:
-            word: 4 bytes word.
-        """
+        """生成伪随机字"""
 
     def copy(self) -> ZUC:
-        """Copy a new ZUC object with identical state.
-
-        Returns:
-            zuc_obj: A new ZUC object.
-        """
+        """拷贝当前对象及其内部状态."""

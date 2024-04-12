@@ -4,28 +4,14 @@ SM4_BLOCK_LENGTH: int
 
 class SM4:
     def __init__(self, key: bytes) -> None:
-        """SM4 Algorithm.
+        """SM4 算法对象.
 
         Args:
-            key: SM4 key.
+            key: 密钥.
         """
 
     def encrypt(self, block: bytes) -> bytes:
-        """Encrypt.
-
-        Args:
-            block: Block data to be encrypted.
-
-        Returns:
-            cipher: Encrypted block data.
-        """
+        """加密数据块."""
 
     def decrypt(self, block: bytes) -> bytes:
-        """Decrypt.
-
-        Args:
-            block: Block data to be decrypted.
-
-        Returns:
-            plain: Decrypted block data.
-        """
+        """解密数据块."""

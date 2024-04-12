@@ -3,35 +3,23 @@ SM3_DIGEST_LENGTH: int
 
 
 class SM3:
-    """SM3 Algorithm."""
+    """SM3 算法对象."""
 
     def __init__(self, data: bytes = b"") -> None:
-        """SM3 Algorithm.
+        """SM3 算法对象.
 
         Args:
-            data: Initial data.
+            data: 初始化数据.
         """
 
     def update(self, data: bytes) -> None:
-        """Update state.
-
-        Args:
-            data: Bytes data.
-        """
+        """更新内部状态."""
 
     def digest(self) -> bytes:
-        """Get digest.
-
-        Returns:
-            digest: Digest in bytes.
-        """
+        """获取当前状态哈希值."""
 
     def reset(self) -> None:
-        """Reset internal state."""
+        """重置内部状态."""
 
     def copy(self) -> SM3:
-        """Copy a new SM3 object with identical state.
-
-        Returns:
-            sm3_obj: A new SM3 object.
-        """
+        """拷贝当前对象及其内部状态."""
