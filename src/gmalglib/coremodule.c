@@ -100,33 +100,21 @@ static PyTypeObject py_type_SM3 = {
     .tp_methods = py_methods_def_SM3,
 };
 
-static int PyModule_AddSM3(PyObject* py_module) {
+static int PyModule_AddSM3(PyObject* py_module) 
+{
     PyObject* py_long_SM3_MAX_MSG_BITLEN = NULL;
-    PyObject* py_long_SM3_DIGEST_LENGTH = NULL;
 
-    if (PyType_Ready(&py_type_SM3) < 0)
-        return 0;
+    if (PyType_Ready(&py_type_SM3) < 0) return 0;
 
     Py_INCREF(&py_type_SM3);
-    if (PyModule_AddObject(py_module, "SM3", (PyObject*)&py_type_SM3) < 0)
-        goto error;
-
-    if (!(py_long_SM3_MAX_MSG_BITLEN = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN)))
-        goto error;
-
-    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_SM3_MAX_MSG_BITLEN) < 0)
-        goto error;
-
-    if (!(py_long_SM3_DIGEST_LENGTH = PyLong_FromUnsignedLongLong(SM3_DIGEST_LENGTH)))
-        goto error;
-
-    if (PyModule_AddObject(py_module, "SM3_DIGEST_LENGTH", py_long_SM3_DIGEST_LENGTH) < 0)
-        goto error;
+    if (PyModule_AddObject(py_module, "SM3", (PyObject*)&py_type_SM3) < 0) goto error;
+    if (!(py_long_SM3_MAX_MSG_BITLEN = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN))) goto error;
+    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_SM3_MAX_MSG_BITLEN) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM3_DIGEST_LENGTH) < 0) goto error;
 
     return 1;
 
 error:
-    Py_XDECREF(py_long_SM3_DIGEST_LENGTH);
     Py_XDECREF(py_long_SM3_MAX_MSG_BITLEN);
     Py_DECREF(&py_type_SM3);
     return 0;
@@ -230,34 +218,18 @@ static PyTypeObject py_type_SM4 = {
     .tp_methods = py_methods_def_SM4,
 };
 
-static int PyModule_AddSM4(PyObject* py_module) {
-    PyObject* py_long_SM4_KEY_LENGTH = NULL;
-    PyObject* py_long_SM4_BLOCK_LENGTH = NULL;
-
-    if (PyType_Ready(&py_type_SM4) < 0)
-        return 0;
+static int PyModule_AddSM4(PyObject* py_module) 
+{
+    if (PyType_Ready(&py_type_SM4) < 0) return 0;
 
     Py_INCREF(&py_type_SM4);
-    if (PyModule_AddObject(py_module, "SM4", (PyObject*)&py_type_SM4) < 0)
-        goto error;
-
-    if (!(py_long_SM4_KEY_LENGTH = PyLong_FromUnsignedLongLong(SM4_KEY_LENGTH)))
-        goto error;
-
-    if (PyModule_AddObject(py_module, "SM4_KEY_LENGTH", py_long_SM4_KEY_LENGTH) < 0)
-        goto error;
-
-    if (!(py_long_SM4_BLOCK_LENGTH = PyLong_FromUnsignedLongLong(SM4_BLOCK_LENGTH)))
-        goto error;
-
-    if (PyModule_AddObject(py_module, "SM4_BLOCK_LENGTH", py_long_SM4_BLOCK_LENGTH) < 0)
-        goto error;
+    if (PyModule_AddObject(py_module, "SM4", (PyObject*)&py_type_SM4) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM4_KEY_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM4_BLOCK_LENGTH) < 0) goto error;
 
     return 1;
 
 error:
-    Py_XDECREF(py_long_SM4_BLOCK_LENGTH);
-    Py_XDECREF(py_long_SM4_KEY_LENGTH);
     Py_DECREF(&py_type_SM4);
     return 0;
 }
@@ -336,42 +308,19 @@ static PyTypeObject py_type_ZUC = {
     .tp_methods = py_methods_def_ZUC,
 };
 
-static int PyModule_AddZUC(PyObject* py_module) {
-    PyObject* py_long_ZUC_KEY_LENGTH = NULL;
-    PyObject* py_long_ZUC_IV_LENGTH = NULL;
-    PyObject* py_long_ZUC_WORD_LENGTH = NULL;
-
-    if (PyType_Ready(&py_type_ZUC) < 0)
-        return 0;
+static int PyModule_AddZUC(PyObject* py_module) 
+{
+    if (PyType_Ready(&py_type_ZUC) < 0) return 0;
 
     Py_INCREF(&py_type_ZUC);
-    if (PyModule_AddObject(py_module, "ZUC", (PyObject*)&py_type_ZUC) < 0)
-        goto error;
-
-    if (!(py_long_ZUC_KEY_LENGTH = PyLong_FromUnsignedLongLong(ZUC_KEY_LENGTH)))
-        goto error;
-
-    if (PyModule_AddObject(py_module, "ZUC_KEY_LENGTH", py_long_ZUC_KEY_LENGTH) < 0)
-        goto error;
-
-    if (!(py_long_ZUC_IV_LENGTH = PyLong_FromUnsignedLongLong(ZUC_IV_LENGTH)))
-        goto error;
-
-    if (PyModule_AddObject(py_module, "ZUC_IV_LENGTH", py_long_ZUC_IV_LENGTH) < 0)
-        goto error;
-
-    if (!(py_long_ZUC_WORD_LENGTH = PyLong_FromUnsignedLongLong(ZUC_WORD_LENGTH)))
-        goto error;
-
-    if (PyModule_AddObject(py_module, "ZUC_WORD_LENGTH", py_long_ZUC_WORD_LENGTH) < 0)
-        goto error;
+    if (PyModule_AddObject(py_module, "ZUC", (PyObject*)&py_type_ZUC) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, ZUC_KEY_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, ZUC_IV_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, ZUC_WORD_LENGTH) < 0) goto error;
 
     return 1;
 
 error:
-    Py_XDECREF(py_long_ZUC_WORD_LENGTH);
-    Py_XDECREF(py_long_ZUC_IV_LENGTH);
-    Py_XDECREF(py_long_ZUC_KEY_LENGTH);
     Py_DECREF(&py_type_ZUC);
     return 0;
 }
@@ -588,8 +537,7 @@ static PyObject* PySM2_get_pk(PySM2Object* self, PyObject* args, PyObject* kwarg
     char* keys[] = { "sk", "pc_mode", NULL};
     Py_buffer py_buffer_sk = { 0 };
     int pc_mode = 0;
-    uint8_t pk[SM2_PK_MAX_LENGTH] = { 0 };
-    uint64_t pk_len = 0;
+    uint8_t pk[SM2_PK_FULL_LENGTH] = { 0 };
 
     int sm2_ret = 0;
 
@@ -605,7 +553,6 @@ static PyObject* PySM2_get_pk(PySM2Object* self, PyObject* args, PyObject* kwarg
 
     if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
         pc_mode = SM2_PCMODE_RAW;
-    pk_len = (pc_mode == SM2_PCMODE_COMPRESS) ? SM2_PK_HALF_LENGTH : SM2_PK_FULL_LENGTH;
 
     sm2_ret = SM2_GetPk(py_buffer_sk.buf, pk, pc_mode);
     PyBuffer_Release(&py_buffer_sk);
@@ -616,14 +563,13 @@ static PyObject* PySM2_get_pk(PySM2Object* self, PyObject* args, PyObject* kwarg
         return NULL;
     }
 
-    return PyBytes_FromStringAndSize((char*)pk, pk_len);
+    return PyBytes_FromStringAndSize((char*)pk, SM2_GET_PK_LENGTH(pc_mode));
 }
 
 static PyObject* PySM2_generate_keypair(PySM2Object* self, PyObject* Py_UNUSED(args))
 {
     uint8_t sk[SM2_SK_LENGTH] = { 0 };
-    uint8_t pk[SM2_PK_MAX_LENGTH] = { 0 };
-    uint64_t pk_len = (self->sm2.pc_mode == SM2_PCMODE_COMPRESS) ? SM2_PK_HALF_LENGTH : SM2_PK_FULL_LENGTH;
+    uint8_t pk[SM2_PK_FULL_LENGTH] = { 0 };
 
     if (SM2_GenerateKeyPair(&self->sm2, sk, pk) == SM2_ERR_RANDOM_FAILED)
     {
@@ -631,7 +577,7 @@ static PyObject* PySM2_generate_keypair(PySM2Object* self, PyObject* Py_UNUSED(a
         return NULL;
     }
 
-    return Py_BuildValue("y#y#", sk, SM2_SK_LENGTH, pk, pk_len);
+    return Py_BuildValue("y#y#", sk, (Py_ssize_t)SM2_SK_LENGTH, pk, (Py_ssize_t)SM2_GET_PK_LENGTH(self->sm2.pc_mode));
 }
 
 static PyObject* PySM2_get_entity_info(PySM2Object* self, PyObject* Py_UNUSED(args))
@@ -643,12 +589,175 @@ static PyObject* PySM2_get_entity_info(PySM2Object* self, PyObject* Py_UNUSED(ar
     return PyBytes_FromStringAndSize((char*)entity_info, SM2_ENTITYINFO_LENGTH);
 }
 
+static PyObject* PySM2_sign_digest(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "digest", NULL };
+    Py_buffer py_buffer_digest = { 0 };
+    uint8_t signature[SM2_SIGNATURE_LENGTH] = { 0 };
+    PyObject* ret = NULL;
+    int sm2_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:sign_digest", keys, &py_buffer_digest))
+        return NULL;
+
+    if (py_buffer_digest.len != SM3_DIGEST_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect digest length.");
+        goto cleanup;
+    }
+
+    sm2_ret = SM2_SignDigest(&self->sm2, py_buffer_digest.buf, signature);
+    if (sm2_ret == SM2_ERR_NEED_SK)
+    {
+        PyErr_SetString(PyExc_AttributeError, "Need secret key.");
+        goto cleanup;
+    }
+    if (sm2_ret == SM2_ERR_RANDOM_FAILED)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");
+        goto cleanup;
+    }
+
+    ret = PyBytes_FromStringAndSize((char*)signature, SM2_SIGNATURE_LENGTH);
+
+cleanup:
+    PyBuffer_Release(&py_buffer_digest);
+    return ret;
+}
+
+static PyObject* PySM2_verify_digest(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "digest", "signature", NULL };
+    Py_buffer py_buffer_digest = { 0 };
+    Py_buffer py_buffer_signature = { 0 };
+    int sm2_ret = -1;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*y*:verify_digest", keys, &py_buffer_digest, &py_buffer_signature))
+        return NULL;
+
+    if (py_buffer_digest.len != SM3_DIGEST_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect digest length.");
+        PyBuffer_Release(&py_buffer_digest);
+        PyBuffer_Release(&py_buffer_signature);
+        return NULL;
+    }
+    if (py_buffer_signature.len != SM2_SIGNATURE_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect signature length.");
+        PyBuffer_Release(&py_buffer_digest);
+        PyBuffer_Release(&py_buffer_signature);
+        return NULL;
+    }
+
+    sm2_ret = SM2_VerifyDigest(&self->sm2, py_buffer_digest.buf, py_buffer_signature.buf);
+    PyBuffer_Release(&py_buffer_digest);
+    PyBuffer_Release(&py_buffer_signature);
+
+    if (sm2_ret == SM2_ERR_NEED_PK)
+    {
+        PyErr_SetString(PyExc_AttributeError, "Need public key.");
+        return NULL;
+    }
+    if (sm2_ret == SM2_ERR_INVALID_SIGN)
+    {
+        Py_RETURN_FALSE;
+    }
+
+    Py_RETURN_TRUE;
+}
+
+static PyObject* PySM2_sign(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "message", NULL };
+    Py_buffer py_buffer_message = { 0 };
+    uint8_t signature[SM2_SIGNATURE_LENGTH] = { 0 };
+    PyObject* ret = NULL;
+    int sm2_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:sign", keys, &py_buffer_message))
+        return NULL;
+
+    sm2_ret = SM2_Sign(&self->sm2, py_buffer_message.buf, py_buffer_message.len, signature);
+    if (sm2_ret == SM2_ERR_NEED_SK)
+    {
+        PyErr_SetString(PyExc_AttributeError, "Need secret key.");
+        goto cleanup;
+    }
+    if (sm2_ret == SM2_ERR_NEED_PK)
+    {
+        PyErr_SetString(PyExc_AttributeError, "Need public key.");
+        goto cleanup;
+    }
+    if (sm2_ret == SM2_ERR_MSG_OVERFLOW)
+    {
+        PyErr_SetString(PyExc_OverflowError, "Message too long.");
+        goto cleanup;
+    }
+    if (sm2_ret == SM2_ERR_RANDOM_FAILED)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");
+        goto cleanup;
+    }
+
+    ret = PyBytes_FromStringAndSize((char*)signature, SM2_SIGNATURE_LENGTH);
+
+cleanup:
+    PyBuffer_Release(&py_buffer_message);
+    return ret;
+}
+
+static PyObject* PySM2_verify(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "message", "signature", NULL };
+    Py_buffer py_buffer_message = { 0 };
+    Py_buffer py_buffer_signature = { 0 };
+    int sm2_ret = -1;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*y*:verify", keys, &py_buffer_message, &py_buffer_signature))
+        return NULL;
+
+    if (py_buffer_signature.len != SM2_SIGNATURE_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect signature length.");
+        PyBuffer_Release(&py_buffer_message);
+        PyBuffer_Release(&py_buffer_signature);
+        return NULL;
+    }
+
+    sm2_ret = SM2_Verify(&self->sm2, py_buffer_message.buf, py_buffer_message.len, py_buffer_signature.buf);
+    PyBuffer_Release(&py_buffer_message);
+    PyBuffer_Release(&py_buffer_signature);
+
+    if (sm2_ret == SM2_ERR_NEED_PK)
+    {
+        PyErr_SetString(PyExc_AttributeError, "Need public key.");
+        return NULL;
+    }
+    if (sm2_ret == SM2_ERR_MSG_OVERFLOW)
+    {
+        PyErr_SetString(PyExc_OverflowError, "Message too long.");
+        return NULL;
+    }
+
+    if (sm2_ret == SM2_ERR_INVALID_SIGN)
+    {
+        Py_RETURN_FALSE;
+    }
+
+    Py_RETURN_TRUE;
+}
+
 static PyMethodDef py_methods_def_SM2[] = {
-    {"is_sk_valid", (PyCFunction)PySM2_is_sk_valid, METH_VARARGS | METH_KEYWORDS | METH_STATIC, PyDoc_STR("Check sk is valid.")},
-    {"is_pk_valid", (PyCFunction)PySM2_is_pk_valid, METH_VARARGS | METH_KEYWORDS | METH_STATIC, PyDoc_STR("Check pk is valid.")},
-    {"get_pk", (PyCFunction)PySM2_get_pk, METH_VARARGS | METH_KEYWORDS | METH_STATIC, PyDoc_STR("Get public key bytes.")},
-    {"generate_keypair", (PyCFunction)PySM2_generate_keypair, METH_NOARGS, PyDoc_STR("Generate key pair.")},
-    {"get_entity_info", (PyCFunction)PySM2_get_entity_info, METH_NOARGS, PyDoc_STR("Get entity info.")},
+    {"is_sk_valid",         (PyCFunction)PySM2_is_sk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check sk is valid.")},
+    {"is_pk_valid",         (PyCFunction)PySM2_is_pk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check pk is valid.")},
+    {"get_pk",              (PyCFunction)PySM2_get_pk,              METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Get public key bytes.")},
+    {"generate_keypair",    (PyCFunction)PySM2_generate_keypair,    METH_NOARGS,                                    PyDoc_STR("Generate key pair.")},
+    {"get_entity_info",     (PyCFunction)PySM2_get_entity_info,     METH_NOARGS,                                    PyDoc_STR("Get entity info.")},
+    {"sign_digest",         (PyCFunction)PySM2_sign_digest,         METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Sign on digest.")},
+    {"verify_digest",       (PyCFunction)PySM2_verify_digest,       METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Verify on digest.")},
+    {"sign",                (PyCFunction)PySM2_sign,                METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Sign on full message.")},
+    {"verify",              (PyCFunction)PySM2_verify,              METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Verify on full message.")},
     {NULL}
 };
 
@@ -667,18 +776,77 @@ static PyTypeObject py_type_SM2 = {
     .tp_methods = py_methods_def_SM2,
 };
 
-static int PyModule_AddSM2(PyObject* py_module) {
+static int PyModule_AddSM2(PyObject* py_module) 
+{
+    PyObject* py_bytes_SM2_PARAMS_P = NULL;
+    PyObject* py_bytes_SM2_PARAMS_A = NULL;
+    PyObject* py_bytes_SM2_PARAMS_B = NULL;
+    PyObject* py_tuple_SM2_PARAMS_G = NULL;
+    PyObject* py_bytes_SM2_PARAMS_N = NULL;
+    PyObject* py_bytes_SM2_DEFAULT_UID = NULL;
+    PyObject* py_long_SM2_MSG_MAX_LENGTH = NULL;
 
-    if (PyType_Ready(&py_type_SM2) < 0)
-        return 0;
+    uint8_t buffer[SM2_PARAMS_LENGTH * 2 + 1] = { 0 };
+    
+    if (PyType_Ready(&py_type_SM2) < 0) return 0;
 
     Py_INCREF(&py_type_SM2);
-    if (PyModule_AddObject(py_module, "SM2", (PyObject*)&py_type_SM2) < 0)
-        goto error;
+    if (PyModule_AddObject(py_module, "SM2", (PyObject*)&py_type_SM2) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_PARAMS_LENGTH) < 0) goto error;
+    
+    UInt256_ToBytes(SM2_PARAMS_P, buffer);
+    if (!(py_bytes_SM2_PARAMS_P = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM2_PARAMS_P", py_bytes_SM2_PARAMS_P) < 0) goto error;
+
+    UInt256_ToBytes(SM2_PARAMS_A, buffer);
+    if (!(py_bytes_SM2_PARAMS_A = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM2_PARAMS_A", py_bytes_SM2_PARAMS_A) < 0) goto error;
+
+    UInt256_ToBytes(SM2_PARAMS_B, buffer);
+    if (!(py_bytes_SM2_PARAMS_B = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM2_PARAMS_B", py_bytes_SM2_PARAMS_B) < 0) goto error;
+
+    UInt256_ToBytes(&SM2_PARAMS_G->x, buffer);
+    UInt256_ToBytes(&SM2_PARAMS_G->y, buffer + SM2_PARAMS_LENGTH);
+    if (!(py_tuple_SM2_PARAMS_G = Py_BuildValue("y#y#", buffer, (Py_ssize_t)SM2_PARAMS_LENGTH, buffer + SM2_PARAMS_LENGTH, (Py_ssize_t)SM2_PARAMS_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM2_PARAMS_G", py_tuple_SM2_PARAMS_G) < 0) goto error;
+
+    UInt256_ToBytes(SM2_PARAMS_N, buffer);
+    if (!(py_bytes_SM2_PARAMS_N = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM2_PARAMS_N", py_bytes_SM2_PARAMS_N) < 0) goto error;
+
+    if (PyModule_AddIntMacro(py_module, SM2_PCMODE_RAW) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_PCMODE_COMPRESS) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_PCMODE_MIX) < 0) goto error;
+    
+    if (!(py_bytes_SM2_DEFAULT_UID = PyBytes_FromStringAndSize(SM2_DEFAULT_UID, SM2_DEFAULT_UID_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM2_DEFAULT_UID", py_bytes_SM2_DEFAULT_UID) < 0) goto error;
+
+    if (PyModule_AddIntMacro(py_module, SM2_UID_MAX_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_ENTITYINFO_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_SK_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_PK_HALF_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_PK_FULL_LENGTH) < 0) goto error;
+    if (!(py_long_SM2_MSG_MAX_LENGTH = PyLong_FromUnsignedLongLong(SM2_MSG_MAX_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM2_MSG_MAX_LENGTH", py_long_SM2_MSG_MAX_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_SIGN_R_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_SIGN_S_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_SIGNATURE_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_ENCRYPT_C1_HALF_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_ENCRYPT_C1_FULL_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM2_ENCRYPT_C3_LENGTH) < 0) goto error;
 
     return 1;
 
 error:
+    Py_XDECREF(py_bytes_SM2_PARAMS_P);
+    Py_XDECREF(py_bytes_SM2_PARAMS_A);
+    Py_XDECREF(py_bytes_SM2_PARAMS_B);
+    Py_XDECREF(py_tuple_SM2_PARAMS_G);
+    Py_XDECREF(py_bytes_SM2_PARAMS_N);
+    Py_XDECREF(py_bytes_SM2_DEFAULT_UID);
+    Py_XDECREF(py_long_SM2_MSG_MAX_LENGTH);
+    Py_DECREF(&py_type_SM2);
     return 0;
 }
 
@@ -697,23 +865,11 @@ static PyModuleDef py_module_def_core = {
 PyMODINIT_FUNC PyInit_core() {
     PyObject* py_module = NULL;
 
-    if (PyType_Ready(&py_type_SM3) < 0)
-        return NULL;
-
-    if (!(py_module = PyModule_Create(&py_module_def_core)))
-        return NULL;
-
-    if (!PyModule_AddSM3(py_module))
-        goto error;
-
-    if (!PyModule_AddSM4(py_module))
-        goto error;
-
-    if (!PyModule_AddZUC(py_module))
-        goto error;
-
-    if (!PyModule_AddSM2(py_module))
-        goto error;
+    if (!(py_module = PyModule_Create(&py_module_def_core))) return NULL;
+    if (!PyModule_AddSM3(py_module)) goto error;
+    if (!PyModule_AddSM4(py_module)) goto error;
+    if (!PyModule_AddZUC(py_module)) goto error;
+    if (!PyModule_AddSM2(py_module)) goto error;
 
     return py_module;
 

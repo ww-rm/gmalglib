@@ -14,7 +14,6 @@
 #define SM2_SK_LENGTH                           SM2_PARAMS_LENGTH
 #define SM2_PK_HALF_LENGTH                      SM2_POINTBYTES_HALF_LENGTH
 #define SM2_PK_FULL_LENGTH                      SM2_POINTBYTES_FULL_LENGTH
-#define SM2_PK_MAX_LENGTH                       SM2_PK_FULL_LENGTH
 #define SM2_GET_PK_LENGTH(pc_mode)              SM2_GET_POINTBYTES_LENGTH(pc_mode)
 
 #define SM2_MSG_MAX_LENGTH                      ((SM3_MAX_MSG_BITLEN >> 3) - SM2_ENTITYINFO_LENGTH)

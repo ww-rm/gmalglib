@@ -41,7 +41,7 @@ void test_sign_digest()
     uint8_t sk[SM2_SK_LENGTH] = { 0 };
     UInt256_ToBytes(&sm2_sk, sk);
 
-    uint8_t pk[SM2_PK_MAX_LENGTH] = { 0x04 };
+    uint8_t pk[SM2_PK_FULL_LENGTH] = { 0x04 };
     UInt256_ToBytes(&sm2_pk.x, pk + 1);
     UInt256_ToBytes(&sm2_pk.y, pk + 33);
 
@@ -73,7 +73,7 @@ void test_sign()
     uint8_t sk[SM2_SK_LENGTH] = { 0 };
     UInt256_ToBytes(&sm2_sk, sk);
 
-    uint8_t pk[SM2_PK_MAX_LENGTH] = { 0x03 };
+    uint8_t pk[SM2_PK_FULL_LENGTH] = { 0x03 };
     UInt256_ToBytes(&sm2_pk.x, pk + 1);
 
     uint8_t msg[15] = "message digest";
