@@ -284,6 +284,7 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, c
     self->pc_mode = pc_mode;
 
     // store rand function and rand obj
+    // if init failed, rand_alg should be untouched
     if (!rand_alg)
         self->rand_alg = *DEFAULT_RANDOM_ALGORITHM;
     else
