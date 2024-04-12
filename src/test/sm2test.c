@@ -46,8 +46,9 @@ void test_sign_digest()
     UInt256_ToBytes(&sm2_pk.y, pk + 33);
 
     uint8_t digest[SM3_DIGEST_LENGTH] = { 0 };
-    uint8_t r[SM2_SIGN_R_LENGTH] = { 0 };
-    uint8_t s[SM2_SIGN_S_LENGTH] = { 0 };
+    uint8_t signature[SM2_SIGNATURE_LENGTH] = { 0 };
+    uint8_t* r = signature;
+    uint8_t* s = signature + SM2_SIGN_R_LENGTH;
     UInt256 r_num = { 0 };
     UInt256 s_num = { 0 };
 
@@ -55,14 +56,14 @@ void test_sign_digest()
     assert(SM2_Init(&sm2, sk, pk, 65, NULL, 0, SM2_PCMODE_RAW, &test_sign_rnd_alg) == 0);
 
     UInt256_ToBytes(&test_sign_e, digest);
-    assert(SM2_SignDigest(&sm2, digest, r, s) == 0);
+    assert(SM2_SignDigest(&sm2, digest, signature) == 0);
     UInt256_FromBytes(r, &r_num);
     UInt256_FromBytes(s, &s_num);
 
     assert(UInt256_Cmp(&r_num, &test_sign_r) == 0);
     assert(UInt256_Cmp(&s_num, &test_sign_s) == 0);
 
-    assert(SM2_VerifyDigest(&sm2, digest, r, s) == 0);
+    assert(SM2_VerifyDigest(&sm2, digest, signature) == 0);
 
     printf("SM2 Sign Digest Test OK.\n");
 }
@@ -77,22 +78,23 @@ void test_sign()
 
     uint8_t msg[15] = "message digest";
     uint64_t msg_len = 14;
-    uint8_t r[SM2_SIGN_R_LENGTH] = { 0 };
-    uint8_t s[SM2_SIGN_S_LENGTH] = { 0 };
+    uint8_t signature[SM2_SIGNATURE_LENGTH] = { 0 };
+    uint8_t* r = signature;
+    uint8_t* s = signature + SM2_SIGN_R_LENGTH;
     UInt256 r_num = { 0 };
     UInt256 s_num = { 0 };
 
     SM2 sm2 = { 0 };
     assert(SM2_Init(&sm2, sk, pk, 33, NULL, 0, SM2_PCMODE_RAW, &test_sign_rnd_alg) == 0);
 
-    assert(SM2_Sign(&sm2, msg, msg_len, r, s) == 0);
+    assert(SM2_Sign(&sm2, msg, msg_len, signature) == 0);
     UInt256_FromBytes(r, &r_num);
     UInt256_FromBytes(s, &s_num);
 
     assert(UInt256_Cmp(&r_num, &test_sign_r) == 0);
     assert(UInt256_Cmp(&s_num, &test_sign_s) == 0);
 
-    assert(SM2_Verify(&sm2, msg, msg_len, r, s) == 0);
+    assert(SM2_Verify(&sm2, msg, msg_len, signature) == 0);
 
     printf("SM2 Sign Test OK.\n");
 }

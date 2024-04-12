@@ -371,7 +371,7 @@ int _SM2_SignDigest(SM2* self, const uint8_t* digest, UInt256* r, UInt256* s)
     return 0;
 }
 
-int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s)
+int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* signature)
 {
     int has_err = 0;
     UInt256 r_num = { 0 };
@@ -384,8 +384,8 @@ int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s)
     if (has_err)
         return has_err;
 
-    UInt256_ToBytes(&r_num, r);
-    UInt256_ToBytes(&s_num, s);
+    UInt256_ToBytes(&r_num, signature);
+    UInt256_ToBytes(&s_num, signature + SM2_SIGN_R_LENGTH);
     return 0;
 }
 
@@ -426,7 +426,7 @@ int _SM2_VerifyDigest(SM2* self, const uint8_t* digest, const UInt256* r, const 
     return 0;
 }
 
-int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const uint8_t* s)
+int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* signature)
 {
     int has_err = 0;
     UInt256 r_num = { 0 };
@@ -435,12 +435,12 @@ int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const u
     if (!self->has_pk)
         return SM2_ERR_NEED_PK;
 
-    UInt256_FromBytes(r, &r_num);
-    UInt256_FromBytes(s, &s_num);
+    UInt256_FromBytes(signature, &r_num);
+    UInt256_FromBytes(signature + SM2_SIGN_R_LENGTH, &s_num);
     return _SM2_VerifyDigest(self, digest, &r_num, &s_num);
 }
 
-int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* r, uint8_t* s)
+int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* signature)
 {
     uint8_t digest[SM3_DIGEST_LENGTH] = { 0 };
     SM3 sm3 = { 0 };
@@ -459,10 +459,10 @@ int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* r, uint8_
     SM3_Update(&sm3, msg, msg_len);
     SM3_Digest(&sm3, digest);
 
-    return SM2_SignDigest(self, digest, r, s);
+    return SM2_SignDigest(self, digest, signature);
 }
 
-int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* r, const uint8_t* s)
+int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* signature)
 {
     uint8_t digest[SM3_DIGEST_LENGTH] = { 0 };
     SM3 sm3 = { 0 };
@@ -478,5 +478,5 @@ int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* r
     SM3_Update(&sm3, msg, msg_len);
     SM3_Digest(&sm3, digest);
 
-    return SM2_VerifyDigest(self, digest, r, s);
+    return SM2_VerifyDigest(self, digest, signature);
 }

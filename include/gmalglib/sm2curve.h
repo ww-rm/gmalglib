@@ -10,9 +10,10 @@
 #define SM2_PCMODE_COMPRESS                         1
 #define SM2_PCMODE_MIX                              2
 #define SM2_POINTBYTES_INF_LENGTH                   1
-#define SM2_POINTBYTES_FULL_LENGTH                  (1 + SM2_PARAMS_LENGTH + SM2_PARAMS_LENGTH)
 #define SM2_POINTBYTES_HALF_LENGTH                  (1 + SM2_PARAMS_LENGTH)
+#define SM2_POINTBYTES_FULL_LENGTH                  (SM2_POINTBYTES_HALF_LENGTH + SM2_PARAMS_LENGTH)
 #define SM2_POINTBYTES_MAX_LENGTH                   SM2_POINTBYTES_FULL_LENGTH
+#define SM2_GET_POINTBYTES_LENGTH(pc_mode)          (((pc_mode) == SM2_PCMODE_COMPRESS) ? SM2_POINTBYTES_HALF_LENGTH : SM2_POINTBYTES_FULL_LENGTH)
 
 #define SM2CURVE_ERR_NOTONCURVE                     -1
 #define SM2CURVE_ERR_INVALIDPC                      -2

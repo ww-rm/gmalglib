@@ -7,17 +7,26 @@
 #include <gmalglib/sm2curve.h>
 #include <gmalglib/sm3.h>
 
-#define SM2_UID_MAX_LENGTH              8191  // (0xFFFF >> 3)
-#define SM2_ENTITYINFO_LENGTH           SM3_DIGEST_LENGTH
-#define SM2_MSG_MAX_LENGTH              ((SM3_MAX_MSG_BITLEN >> 3) - SM2_ENTITYINFO_LENGTH)
-#define SM2_SK_LENGTH                   SM2_PARAMS_LENGTH
-#define SM2_PK_FULL_LENGTH              SM2_POINTBYTES_FULL_LENGTH
-#define SM2_PK_HALF_LENGTH              SM2_POINTBYTES_HALF_LENGTH
-#define SM2_PK_MAX_LENGTH               SM2_PK_FULL_LENGTH
-#define SM2_SIGN_R_LENGTH               SM2_PARAMS_LENGTH
-#define SM2_SIGN_S_LENGTH               SM2_PARAMS_LENGTH
+#define SM2_DEFAULT_UID_LENGTH                  16
+#define SM2_UID_MAX_LENGTH                      8191  // (0xFFFF >> 3)
+#define SM2_ENTITYINFO_LENGTH                   SM3_DIGEST_LENGTH
 
-#define SM2_DEFAULT_UID_LENGTH          16
+#define SM2_SK_LENGTH                           SM2_PARAMS_LENGTH
+#define SM2_PK_HALF_LENGTH                      SM2_POINTBYTES_HALF_LENGTH
+#define SM2_PK_FULL_LENGTH                      SM2_POINTBYTES_FULL_LENGTH
+#define SM2_PK_MAX_LENGTH                       SM2_PK_FULL_LENGTH
+#define SM2_GET_PK_LENGTH(pc_mode)              SM2_GET_POINTBYTES_LENGTH(pc_mode)
+
+#define SM2_MSG_MAX_LENGTH                      ((SM3_MAX_MSG_BITLEN >> 3) - SM2_ENTITYINFO_LENGTH)
+#define SM2_SIGN_R_LENGTH                       SM2_PARAMS_LENGTH
+#define SM2_SIGN_S_LENGTH                       SM2_PARAMS_LENGTH
+#define SM2_SIGNATURE_LENGTH                    (SM2_SIGN_R_LENGTH + SM2_SIGN_S_LENGTH)
+
+#define SM2_ENCRYPT_C1_HALF_LENGTH              SM2_POINTBYTES_HALF_LENGTH
+#define SM2_ENCRYPT_C1_FULL_LENGTH              SM2_POINTBYTES_FULL_LENGTH
+#define SM2_GET_ENCRYPT_C1_LENGTH(pc_mode)      SM2_GET_POINTBYTES_LENGTH(pc_mode)
+#define SM2_ENCRYPT_C3_LENGTH                   SM3_DIGEST_LENGTH
+
 
 #define SM2_ERR_UID_OVERFLOW            -1
 #define SM2_ERR_INVALID_SK              -2
@@ -59,10 +68,10 @@ int SM2_GetPk(const uint8_t* sk, uint8_t* pk, int pc_mode);
 int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int pc_mode, RandomAlg* rand_alg);
 int SM2_GenerateKeyPair(SM2* self, uint8_t* sk, uint8_t* pk);
 int SM2_GetEntityInfo(SM2* self, uint8_t* entity_info);
-int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* r, uint8_t* s);
-int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* r, const uint8_t* s);
-int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* r, uint8_t* s);
-int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* r, const uint8_t* s);
+int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* signature);
+int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* signature);
+int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* signature);
+int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* signature);
 
 #ifdef __cplusplus
 }
