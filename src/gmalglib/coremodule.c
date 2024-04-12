@@ -80,11 +80,69 @@ static PyObject* PySM3_copy(PySM3Object* self, PyObject* Py_UNUSED(args))
     return (PyObject*)other;
 }
 
+static PyObject* PySM3_derive_key(PySM3Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "klen", NULL };
+    uint8_t* key_buffer = NULL;
+    uint64_t klen = 0;
+    PyObject* ret = NULL;
+    int sm3_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "K:derive_key", keys, &klen))
+        return NULL;
+
+    key_buffer = (uint8_t*)PyMem_RawCalloc(klen, sizeof(uint8_t));
+    if (!key_buffer)
+        return PyErr_NoMemory();
+
+    sm3_ret = SM3_DeriveKey(&self->sm3, klen, key_buffer);
+    if (sm3_ret == SM3_ERR_OVERFLOW)
+    {
+        PyErr_SetString(PyExc_OverflowError, "Data too long.");
+        goto cleanup;
+    }
+    if (sm3_ret == SM3_ERR_KDF_OVERFLOW)
+    {
+        PyErr_SetString(PyExc_OverflowError, "Key stream too long.");
+        goto cleanup;
+    }
+
+    ret = PyBytes_FromStringAndSize((char*)key_buffer, klen);
+
+cleanup:
+    PyMem_RawFree(key_buffer);
+    return ret;
+}
+
+static PyObject* PySM3_mac(PySM3Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "key", NULL };
+    Py_buffer py_buffer_key = { 0 };
+    uint8_t mac[SM3_MAC_LENGTH] = { 0 };
+    int ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*:mac", keys, &py_buffer_key))
+        return NULL;
+
+    ret = SM3_Mac(&self->sm3, py_buffer_key.buf, py_buffer_key.len, mac);
+    PyBuffer_Release(&py_buffer_key);
+
+    if (ret == SM3_ERR_OVERFLOW)
+    {
+        PyErr_SetString(PyExc_OverflowError, "Data too long.");
+        return NULL;
+    }
+
+    return PyBytes_FromStringAndSize((char*)mac, SM3_MAC_LENGTH);
+}
+
 static PyMethodDef py_methods_def_SM3[] = {
     {"update", (PyCFunction)PySM3_update, METH_VARARGS | METH_KEYWORDS, PyDoc_STR("Update internal state with data stream.")},
     {"digest", (PyCFunction)PySM3_digest, METH_NOARGS, PyDoc_STR("Get digest.")},
     {"reset", (PyCFunction)PySM3_reset, METH_NOARGS, PyDoc_STR("Reset internal state to empty.")},
     {"copy", (PyCFunction)PySM3_copy, METH_NOARGS, PyDoc_STR("Copy state to a new object.")},
+    {"derive_key", (PyCFunction)PySM3_derive_key, METH_VARARGS | METH_KEYWORDS, PyDoc_STR("Key derivation function.")},
+    {"mac", (PyCFunction)PySM3_mac, METH_VARARGS | METH_KEYWORDS, PyDoc_STR("SM3 MAC.")},
     {NULL}
 };
 
@@ -111,6 +169,8 @@ static int PyModule_AddSM3(PyObject* py_module)
     if (!(py_long_SM3_MAX_MSG_BITLEN = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN))) goto error;
     if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_SM3_MAX_MSG_BITLEN) < 0) goto error;
     if (PyModule_AddIntMacro(py_module, SM3_DIGEST_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM3_KDF_MAX_LENGTH) < 0) goto error;
+    if (PyModule_AddIntMacro(py_module, SM3_MAC_LENGTH) < 0) goto error;
 
     return 1;
 
@@ -489,7 +549,7 @@ static PyObject* PySM2_is_sk_valid(PySM2Object* self, PyObject* args, PyObject* 
     Py_buffer py_buffer_sk = { 0 };
     int is_valid = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:is_sk_valid", keys, &py_buffer_sk))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*:is_sk_valid", keys, &py_buffer_sk))
         return NULL;
 
     if (py_buffer_sk.len != SM2_SK_LENGTH)
@@ -514,7 +574,7 @@ static PyObject* PySM2_is_pk_valid(PySM2Object* self, PyObject* args, PyObject* 
 
     int is_valid = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:is_pk_valid", keys, &py_buffer_pk))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*:is_pk_valid", keys, &py_buffer_pk))
         return NULL;
 
     if (py_buffer_pk.len != SM2_PK_HALF_LENGTH && py_buffer_pk.len != SM2_PK_FULL_LENGTH)
@@ -541,7 +601,7 @@ static PyObject* PySM2_get_pk(PySM2Object* self, PyObject* args, PyObject* kwarg
 
     int sm2_ret = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*$i:get_pk", keys, &py_buffer_sk, &pc_mode))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|$i:get_pk", keys, &py_buffer_sk, &pc_mode))
         return NULL;
 
     if (py_buffer_sk.len != SM2_SK_LENGTH)
@@ -597,7 +657,7 @@ static PyObject* PySM2_sign_digest(PySM2Object* self, PyObject* args, PyObject* 
     PyObject* ret = NULL;
     int sm2_ret = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:sign_digest", keys, &py_buffer_digest))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*:sign_digest", keys, &py_buffer_digest))
         return NULL;
 
     if (py_buffer_digest.len != SM3_DIGEST_LENGTH)
@@ -632,7 +692,7 @@ static PyObject* PySM2_verify_digest(PySM2Object* self, PyObject* args, PyObject
     Py_buffer py_buffer_signature = { 0 };
     int sm2_ret = -1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*y*:verify_digest", keys, &py_buffer_digest, &py_buffer_signature))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*y*:verify_digest", keys, &py_buffer_digest, &py_buffer_signature))
         return NULL;
 
     if (py_buffer_digest.len != SM3_DIGEST_LENGTH)
@@ -675,7 +735,7 @@ static PyObject* PySM2_sign(PySM2Object* self, PyObject* args, PyObject* kwargs)
     PyObject* ret = NULL;
     int sm2_ret = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*:sign", keys, &py_buffer_message))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*:sign", keys, &py_buffer_message))
         return NULL;
 
     sm2_ret = SM2_Sign(&self->sm2, py_buffer_message.buf, py_buffer_message.len, signature);
@@ -714,7 +774,7 @@ static PyObject* PySM2_verify(PySM2Object* self, PyObject* args, PyObject* kwarg
     Py_buffer py_buffer_signature = { 0 };
     int sm2_ret = -1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|y*y*:verify", keys, &py_buffer_message, &py_buffer_signature))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*y*:verify", keys, &py_buffer_message, &py_buffer_signature))
         return NULL;
 
     if (py_buffer_signature.len != SM2_SIGNATURE_LENGTH)

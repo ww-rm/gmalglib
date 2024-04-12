@@ -237,3 +237,55 @@ void SM3_Digest(SM3* self, uint8_t* digest)
         TO_BE(value[i], digest + i * 4);
     }
 }
+
+int SM3_DeriveKey(SM3* self, uint64_t klen, uint8_t* key)
+{
+    uint64_t i = 0;
+    SM3 copy;
+    uint32_t ct = 0x00000001;
+    uint8_t ct_bytes[4] = { 0 };
+    uint8_t tail[SM3_DIGEST_LENGTH] = { 0 };
+
+    if (klen > SM3_KDF_MAX_LENGTH)
+        return SM3_ERR_KDF_OVERFLOW;
+
+    if (self->msg_bitlen + 32 < self->msg_bitlen)
+        return SM3_ERR_OVERFLOW;
+
+    while (klen > 0)
+    {
+        copy = *self;
+        TO_BE(ct, ct_bytes);
+        SM3_Update(&copy, ct_bytes, 4);
+
+        if (klen >= SM3_DIGEST_LENGTH)
+        {
+            SM3_Digest(&copy, key);
+            key += SM3_DIGEST_LENGTH;
+            klen -= SM3_DIGEST_LENGTH;
+        }
+        else
+        {
+            SM3_Digest(&copy, tail);
+            for (i = 0; i < klen; i++)
+            {
+                key[i] = tail[i];
+            }
+            klen = 0;
+        }
+        ct++;
+    }
+
+    return 0;
+}
+
+int SM3_Mac(SM3* self, const uint8_t* key, uint64_t klen, uint8_t* mac)
+{
+    SM3 copy = *self;
+    int err = SM3_Update(&copy, key, klen);;
+
+    if (err) return err;
+
+    SM3_Digest(&copy, mac);
+    return 0;
+}

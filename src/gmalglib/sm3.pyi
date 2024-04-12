@@ -1,5 +1,7 @@
 SM3_MAX_MSG_BITLEN: int
 SM3_DIGEST_LENGTH: int
+SM3_KDF_MAX_LENGTH: int
+SM3_MAC_LENGTH: int
 
 
 class SM3:
@@ -23,3 +25,9 @@ class SM3:
 
     def copy(self) -> SM3:
         """拷贝当前对象及其内部状态."""
+
+    def derive_key(self, klen: int) -> bytes:
+        """密钥派生函数."""
+
+    def mac(self, key: bytes) -> bytes:
+        """消息认证码."""
