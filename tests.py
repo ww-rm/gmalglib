@@ -120,6 +120,7 @@ class TestZUC(unittest.TestCase):
 class TestSM2(unittest.TestCase):
     def test_key(self):
         d, _ = alg.SM2().generate_keypair()
+        d = b"\x00" * (32 - len(d)) + d
         self.assertEqual(alg.SM2().generate_pk(d), lib.sm2.SM2.get_pk(d))
 
         d, _ = lib.sm2.SM2().generate_keypair()
