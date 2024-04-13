@@ -1,4 +1,5 @@
-from .core import ZUC_KEY_LENGTH
-from .core import ZUC_IV_LENGTH
-from .core import ZUC_WORD_LENGTH
-from .core import ZUC
+from . import core as __c
+
+globals().update(filter(lambda kv: kv[0].startswith("ZUC"), __c.__dict__.items()))
+
+del __c

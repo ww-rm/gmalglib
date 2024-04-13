@@ -1,3 +1,5 @@
-from .core import SM4_KEY_LENGTH
-from .core import SM4_BLOCK_LENGTH
-from .core import SM4
+from . import core as __c
+
+globals().update(filter(lambda kv: kv[0].startswith("SM4"), __c.__dict__.items()))
+
+del __c
