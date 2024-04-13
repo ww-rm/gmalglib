@@ -164,8 +164,10 @@ class TestSM2(unittest.TestCase):
 
         msg = b"12345678123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678"
         for _ in range(100):
-            s = algsm2.sign(msg)
-            self.assertTrue(libsm2.verify(msg, b"".join(s)))
+            r, s = algsm2.sign(msg)
+            r = b"\x00" * (32 - len(r)) + r
+            s = b"\x00" * (32 - len(s)) + s
+            self.assertTrue(libsm2.verify(msg, r + s))
 
         for _ in range(100):
             s = libsm2.sign(msg)
