@@ -161,6 +161,7 @@ static PyTypeObject py_type_SM3 = {
 static int PyModule_AddSM3(PyObject* py_module) 
 {
     PyObject* py_long_SM3_MAX_MSG_BITLEN = NULL;
+    PyObject* py_long_SM3_KDF_MAX_LENGTH = NULL;
 
     if (PyType_Ready(&py_type_SM3) < 0) return 0;
 
@@ -169,7 +170,8 @@ static int PyModule_AddSM3(PyObject* py_module)
     if (!(py_long_SM3_MAX_MSG_BITLEN = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN))) goto error;
     if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_SM3_MAX_MSG_BITLEN) < 0) goto error;
     if (PyModule_AddIntMacro(py_module, SM3_DIGEST_LENGTH) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, SM3_KDF_MAX_LENGTH) < 0) goto error;
+    if (!(py_long_SM3_KDF_MAX_LENGTH = PyLong_FromUnsignedLongLong(SM3_KDF_MAX_LENGTH))) goto error;
+    if (PyModule_AddObject(py_module, "SM3_KDF_MAX_LENGTH", py_long_SM3_KDF_MAX_LENGTH) < 0) goto error;
     if (PyModule_AddIntMacro(py_module, SM3_MAC_LENGTH) < 0) goto error;
 
     return 1;
