@@ -67,7 +67,9 @@ extern const uint8_t* const SM2_DEFAULT_UID;
 
 int SM2_IsSkValid(const uint8_t* sk);
 int SM2_IsPkValid(const uint8_t* pk, uint64_t pk_len);
-int SM2_GetPk(const uint8_t* sk, uint8_t* pk, int pc_mode);
+int SM2_IsKeyPair(const uint8_t* sk, const uint8_t* pk, uint64_t pk_len);
+int SM2_GetPk(const uint8_t* sk, int pc_mode, uint8_t* pk);
+int SM2_ConvertPk(const uint8_t* pk, uint64_t pk_len, int pc_mode, uint8_t* pk_converted);
 
 int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int pc_mode, RandomAlg* rand_alg);
 int SM2_GenerateKeyPair(SM2* self, uint8_t* sk, uint8_t* pk);

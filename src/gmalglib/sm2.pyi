@@ -74,7 +74,15 @@ class SM2:
         """测试公钥是否合法."""
 
     @staticmethod
-    def get_pk(sk: bytes) -> bytes:
+    def is_keypair(sk: bytes, pk: bytes) -> bool:
+        """检查是否是合法密钥对."""
+
+    @staticmethod
+    def get_pk(sk: bytes, pc_mode: int = SM2_PCMODE_RAW) -> bytes:
+        """由私钥得到公钥."""
+
+    @staticmethod
+    def convert_pk(pk: bytes, pc_mode: int = SM2_PCMODE_RAW) -> bytes:
         """由私钥得到公钥."""
 
     def __init__(

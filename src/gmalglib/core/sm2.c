@@ -180,7 +180,25 @@ int SM2_IsPkValid(const uint8_t* pk, uint64_t pk_len)
     return pk_len > 1 && SM2JacobPointMont_FromBytes(pk, pk_len, &P) == 0;
 }
 
-int SM2_GetPk(const uint8_t* sk, uint8_t* pk, int pc_mode)
+int SM2_IsKeyPair(const uint8_t* sk, const uint8_t* pk, uint64_t pk_len)
+{
+    SM2ModN sk_num = { 0 };
+    SM2JacobPointMont P = { 0 };
+    SM2JacobPointMont skG = { 0 };
+
+    UInt256_FromBytes(sk, &sk_num);
+    if (!_SM2_IsSkValid(&sk_num))
+        return 0;
+
+    if (pk_len <= 1 || SM2JacobPointMont_FromBytes(pk, pk_len, &P) != 0)
+        return 0;
+
+    SM2JacobPointMont_MulG(&sk_num, &skG);
+
+    return SM2JacobPointMont_IsEqual(&P, &skG);
+}
+
+int SM2_GetPk(const uint8_t* sk, int pc_mode, uint8_t* pk)
 {
     SM2ModN sk_num = { 0 };
     SM2JacobPointMont P = { 0 };
@@ -195,6 +213,19 @@ int SM2_GetPk(const uint8_t* sk, uint8_t* pk, int pc_mode)
         pc_mode = SM2_PCMODE_RAW;
 
     SM2JacobPointMont_ToBytes(&P, pc_mode, pk);
+    return 0;
+}
+
+int SM2_ConvertPk(const uint8_t* pk, uint64_t pk_len, int pc_mode, uint8_t* pk_converted)
+{
+    SM2JacobPointMont P = { 0 };
+    if (pk_len <= 1 || SM2JacobPointMont_FromBytes(pk, pk_len, &P) != 0)
+        return SM2_ERR_INVALID_PK;
+
+    if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
+        pc_mode = SM2_PCMODE_RAW;
+
+    SM2JacobPointMont_ToBytes(&P, pc_mode, pk_converted);
     return 0;
 }
 

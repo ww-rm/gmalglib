@@ -65,10 +65,22 @@ def sm2_is_pk_valid(pk: bytes) -> bool:
     return __sm2.SM2.is_pk_valid(pk)
 
 
-def sm2_get_pk(sk: bytes) -> bytes:
+def sm2_is_keypair(sk: bytes, pk: bytes) -> bool:
+    """检查是否是合法密钥对."""
+
+    return __sm2.SM2.is_keypair(sk, pk)
+
+
+def sm2_get_pk(sk: bytes, pc_mode: __T.Literal["raw", "compress", "mix"] = "raw") -> bytes:
     """由私钥得到公钥."""
 
-    return __sm2.SM2.get_pk(sk)
+    return __sm2.SM2.get_pk(sk, __sm2_pcmode[pc_mode])
+
+
+def sm2_convert_pk(pk: bytes, pc_mode: __T.Literal["raw", "compress", "mix"] = "raw") -> bytes:
+    """由私钥得到公钥."""
+
+    return __sm2.SM2.convert_pk(pk, __sm2_pcmode[pc_mode])
 
 
 def sm2_generate_keypair(pc_mode: __T.Literal["raw", "compress", "mix"] = "raw") -> __T.Tuple[bytes, bytes]:

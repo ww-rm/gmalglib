@@ -582,6 +582,41 @@ static PyObject* PySM2_is_pk_valid(PySM2Object* self, PyObject* args, PyObject* 
     Py_RETURN_FALSE;
 }
 
+static PyObject* PySM2_is_keypair(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "sk", "pk", NULL };
+    Py_buffer py_buffer_sk = { 0 };
+    Py_buffer py_buffer_pk = { 0 };
+
+    int is_pair = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*y*:is_keypair", keys, &py_buffer_sk, &py_buffer_pk))
+        return NULL;
+
+    if (py_buffer_sk.len != SM2_SK_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect secret key length.");
+        PyBuffer_Release(&py_buffer_sk);
+        PyBuffer_Release(&py_buffer_pk);
+        return NULL;
+    }
+    if (py_buffer_pk.len != SM2_PK_HALF_LENGTH && py_buffer_pk.len != SM2_PK_FULL_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect public key length.");
+        PyBuffer_Release(&py_buffer_sk);
+        PyBuffer_Release(&py_buffer_pk);
+        return NULL;
+    }
+
+    is_pair = SM2_IsKeyPair(py_buffer_sk.buf, py_buffer_pk.buf, py_buffer_pk.len);
+    PyBuffer_Release(&py_buffer_sk);
+    PyBuffer_Release(&py_buffer_pk);
+
+    if (is_pair)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
 static PyObject* PySM2_get_pk(PySM2Object* self, PyObject* args, PyObject* kwargs)
 {
     char* keys[] = { "sk", "pc_mode", NULL};
@@ -591,7 +626,7 @@ static PyObject* PySM2_get_pk(PySM2Object* self, PyObject* args, PyObject* kwarg
 
     int sm2_ret = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|$i:get_pk", keys, &py_buffer_sk, &pc_mode))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i:get_pk", keys, &py_buffer_sk, &pc_mode))
         return NULL;
 
     if (py_buffer_sk.len != SM2_SK_LENGTH)
@@ -604,12 +639,46 @@ static PyObject* PySM2_get_pk(PySM2Object* self, PyObject* args, PyObject* kwarg
     if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
         pc_mode = SM2_PCMODE_RAW;
 
-    sm2_ret = SM2_GetPk(py_buffer_sk.buf, pk, pc_mode);
+    sm2_ret = SM2_GetPk(py_buffer_sk.buf, pc_mode, pk);
     PyBuffer_Release(&py_buffer_sk);
 
     if (sm2_ret != 0)
     {
         PyErr_SetString(PyExc_ValueError, "Invalid secret key.");
+        return NULL;
+    }
+
+    return PyBytes_FromStringAndSize((char*)pk, SM2_GET_PK_LENGTH(pc_mode));
+}
+
+static PyObject* PySM2_convert_pk(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "pk", "pc_mode", NULL };
+    Py_buffer py_buffer_pk = { 0 };
+    int pc_mode = 0;
+    uint8_t pk[SM2_PK_FULL_LENGTH] = { 0 };
+
+    int sm2_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i:convert_pk", keys, &py_buffer_pk, &pc_mode))
+        return NULL;
+
+    if (py_buffer_pk.len != SM2_PK_HALF_LENGTH && py_buffer_pk.len != SM2_PK_FULL_LENGTH)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect public key length.");
+        PyBuffer_Release(&py_buffer_pk);
+        return NULL;
+    }
+
+    if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
+        pc_mode = SM2_PCMODE_RAW;
+
+    sm2_ret = SM2_ConvertPk(py_buffer_pk.buf, py_buffer_pk.len, pc_mode, pk);
+    PyBuffer_Release(&py_buffer_pk);
+
+    if (sm2_ret != 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Invalid public key.");
         return NULL;
     }
 
@@ -861,7 +930,9 @@ cleanup:
 static PyMethodDef py_methods_def_SM2[] = {
     {"is_sk_valid",         (PyCFunction)PySM2_is_sk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check sk is valid.")},
     {"is_pk_valid",         (PyCFunction)PySM2_is_pk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check pk is valid.")},
+    {"is_keypair",          (PyCFunction)PySM2_is_keypair,          METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check if a valid keypair.")},
     {"get_pk",              (PyCFunction)PySM2_get_pk,              METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Get public key bytes.")},
+    {"convert_pk",          (PyCFunction)PySM2_convert_pk,          METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Convert public key bytes to other pc_mode.")},
     {"generate_keypair",    (PyCFunction)PySM2_generate_keypair,    METH_NOARGS,                                    PyDoc_STR("Generate key pair.")},
     {"get_entity_info",     (PyCFunction)PySM2_get_entity_info,     METH_NOARGS,                                    PyDoc_STR("Get entity info.")},
     {"sign_digest",         (PyCFunction)PySM2_sign_digest,         METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Sign on digest.")},

@@ -127,6 +127,24 @@ class TestSM2(unittest.TestCase):
         d = b"\x00" * (32 - len(d)) + d
         self.assertEqual(alg.SM2().generate_pk(d), lib.sm2.SM2.get_pk(d))
 
+        d, _ = alg.SM2().generate_keypair()
+        d = b"\x00" * (32 - len(d)) + d
+        self.assertEqual(alg.SM2(pc_mode=alg.PC_MODE.COMPRESS).generate_pk(d), lib.sm2.SM2.get_pk(d, lib.sm2.SM2_PCMODE_COMPRESS))
+
+        d, _ = lib.sm2.SM2().generate_keypair()
+        d = b"\x00" * (32 - len(d)) + d
+        self.assertEqual(alg.SM2(pc_mode=alg.PC_MODE.MIXED).generate_pk(d), lib.sm2.SM2.get_pk(d, lib.sm2.SM2_PCMODE_MIX))
+
+        d, pk = lib.sm2.SM2().generate_keypair()
+        pk2 = lib.sm2.SM2.get_pk(d, lib.sm2.SM2_PCMODE_COMPRESS)
+        pk2 = lib.sm2.SM2.convert_pk(pk2, lib.sm2.SM2_PCMODE_RAW)
+
+        self.assertEqual(pk, pk2)
+        self.assertTrue(lib.sm2.SM2.is_keypair(d, pk))
+        pk2 = lib.sm2.SM2.convert_pk(pk, lib.sm2.SM2_PCMODE_COMPRESS)
+        self.assertTrue(lib.sm2.SM2.is_keypair(d, pk2))
+
+
     def test_sign1(self):
         sm2 = lib.sm2.SM2(
             bytes.fromhex("3945208F 7B2144B1 3F36E38A C6D39F95 88939369 2860B51A 42FB81EF 4DF7C5B8"),
