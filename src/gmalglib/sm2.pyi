@@ -38,7 +38,7 @@ class SM2:
 
     @staticmethod
     def is_pk_valid(pk: bytes) -> bool:
-        """测试公钥是否合法"""
+        """测试公钥是否合法."""
 
     @staticmethod
     def get_pk(sk: bytes) -> bytes:
@@ -57,7 +57,7 @@ class SM2:
 
         Args:
             sk: 私钥.
-            pk: 公钥.
+            pk: 公钥, sk 参数有效时忽略 pk.
             uid: 用户 ID.
 
         Keyword Args:
