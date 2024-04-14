@@ -11,8 +11,13 @@
 
 #else
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
 #endif // _WIN32
 
+#ifdef SIMPLE_RANDOM
 
 static int SimpleRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 {
@@ -24,6 +29,8 @@ static int SimpleRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 
     return 1;
 }
+
+#endif
 
 #ifdef _WIN32
 
@@ -45,27 +52,31 @@ static int _WinRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 
 static int _LinuxRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 {
+    size_t chunk = 0;
+    ssize_t n = 0;
     int fd = 0;
-    fd = _Py_open_noraise("/dev/urandom", O_RDONLY);
+    fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0)
         return 0;
 
     while (bytes_len > 0)
     {
+        chunk = (size_t)(bytes_len < SIZE_MAX ? bytes_len : SIZE_MAX);
         do {
-            n = read(fd, buffer, (size_t)size);
+            n = read(fd, bytes, chunk);
         } while (n < 0 && errno == EINTR);
 
         if (n <= 0) {
-            /* stop on error or if read(size) returned 0 */
             close(fd);
-            return -1;
+            return 0;
         }
 
-        buffer += n;
-        size -= n;
+        bytes += n;
+        bytes_len -= n;
     }
+
     close(fd);
+    return 1;
 }
 
 #endif // _WIN32
@@ -80,7 +91,16 @@ static int OsRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 #endif // _WIN32
 }
 
+#ifdef SIMPLE_RANDOM
+
 const RandomAlg _DEFAULT_RANDOM_ALGORITHM = { SimpleRandomProc, NULL };
+
+#else
+
+const RandomAlg _DEFAULT_RANDOM_ALGORITHM = { OsRandomProc, NULL };
+
+#endif
+
 const RandomAlg* const DEFAULT_RANDOM_ALGORITHM = &_DEFAULT_RANDOM_ALGORITHM;
 
 int RandomBytes(RandomAlg* self, uint64_t bytes_len, uint8_t* bytes)
