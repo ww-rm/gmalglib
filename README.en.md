@@ -42,3 +42,15 @@ import gmalglib
 
 print(gmalglib.sm3_digest(b"messagedigest").hex())
 ```
+
+## About Random Number Generators
+
+For all sections involving random number generators, custom parameters for random number generation are provided, implemented in the form of callback functions. The function type is `Callable[[int], bytes]`, meaning it generates a byte string of a specified length.
+
+```python
+def rnd_fn(n: int) -> bytes: ...
+```
+
+If no random number generator is passed, the default system-related random number generator is used. On Windows, it utilizes `BCryptGenRandom`, while other systems use `/dev/urandom` for implementation, which is similar to the Python standard library function `os.urandom`.
+
+For specific implementation details, refer to [random.c](https://github.com/ww-rm/gmalglib/blob/main/src/gmalglib/core/random.c) under the `OsRandomProc` function.
