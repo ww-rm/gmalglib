@@ -66,7 +66,8 @@ static int _LinuxRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
             n = read(fd, bytes, chunk);
         } while (n < 0 && errno == EINTR);
 
-        if (n <= 0) {
+        if (n <= 0) 
+        {
             close(fd);
             return 0;
         }
