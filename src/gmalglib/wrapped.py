@@ -1,3 +1,5 @@
+"""算法包装模块, 提供过程式调用方式."""
+
 from . import sm2 as __sm2
 from . import sm3 as __sm3
 from . import sm4 as __sm4
