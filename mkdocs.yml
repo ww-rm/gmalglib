@@ -1,0 +1,43 @@
+site_name: gmalglib 用户指南
+site_url: "https://gmalglib.readthedocs.io/zh-cn/latest/"
+site_author: ww-rm
+site_description: "gmalglib 用户指南"
+
+repo_url: https://github.com/ww-rm/gmalglib/
+
+edit_uri: blob/main/docs/
+
+theme:
+  name: readthedocs
+  locale: zh_CN
+
+nav:
+  - "主页": "index.md"
+  # - "quickstart.md"
+  - "api.md"
+
+markdown_extensions:
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      lang: zh
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+            - url: https://docs.python.org/3/objects.inv
+              domains: [py, std]
+          paths: [src]
+          options:
+            show_root_heading: true
+            show_root_full_path: true
+            show_root_members_full_path: true
+            show_object_full_path: true
+            show_source: false
+            merge_init_into_class: true
+            members_order: source
+
+            docstring_options:
+              ignore_init_summary: true
