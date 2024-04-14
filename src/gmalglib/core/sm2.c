@@ -27,7 +27,6 @@ static const SM2ModNMont* const CONSTS_MODN_MONT_ONE = &_CONSTS_NEG_N;
 
 // 1
 static const UInt256 _CONSTS_ONE = { .u64 = {  1, 0, 0, 0 } };
-static const UInt256* const CONSTS_ONE = &_CONSTS_ONE;
 static const SM2ModN* const CONSTS_MODN_ONE = &_CONSTS_ONE;
 
 // n - 1
@@ -234,8 +233,6 @@ void _SM2_GetEntityInfo(const SM2JacobPointMont* pk, const uint8_t* uid, uint64_
 
 int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int pc_mode, RandomAlg* rand_alg)
 {
-    UInt256 one = { 1 };
-
     // check and parse sk
     self->has_sk = 0;
     if (sk)
@@ -430,7 +427,6 @@ int _SM2_VerifyDigest(SM2* self, const uint8_t* digest, const SM2ModN* r, const 
 
 int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* signature)
 {
-    int has_err = 0;
     SM2ModN r_num = { 0 };
     SM2ModN s_num = { 0 };
 

@@ -22,14 +22,12 @@ static const UInt256 _CONSTS_A = { .u32 = {
     0xFFFFFFFC, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE
 } };
-static const UInt256* const CONSTS_A = &_CONSTS_A;
 
 // 0x28E9FA9E_9D9F5E34_4D5A9E4B_CF6509A7_F39789F5_15AB8F92_DDBCBD41_4D940E93
 static const UInt256 _CONSTS_B = { .u32 = {
     0x4D940E93, 0xDDBCBD41, 0x15AB8F92, 0xF39789F5,
     0xCF6509A7, 0x4D5A9E4B, 0x9D9F5E34, 0x28E9FA9E
 } };
-static const UInt256* const CONSTS_B = &_CONSTS_B;
 
 // 0x32C4AE2C_1F198119_5F990446_6A39C994_8FE30BBF_F2660BE1_715A4589_334C74C7
 // 0xBC3736A2_F4F6779C_59BDCEE3_6B692153_D0A9877C_C62A4740_02DF32E5_2139F0A0
@@ -38,14 +36,12 @@ static const SM2Point _CONSTS_POINT_G = {
     {.u32 = { 0x2139F0A0, 0x02DF32E5, 0xC62A4740, 0xD0A9877C, 0x6B692153, 0x59BDCEE3, 0xF4F6779C, 0xBC3736A2 } },
     0
 };
-static const SM2Point* const CONSTS_POINT_G = &_CONSTS_POINT_G;
 
 // 0xFFFFFFFE_FFFFFFFF_FFFFFFFF_FFFFFFFF_7203DF6B_21C6052B_53BBF409_39D54123
 static const UInt256 _CONSTS_N = { .u32 = {
     0x39D54123, 0x53BBF409, 0x21C6052B, 0x7203DF6B, 
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE
 } };
-static const UInt256* const CONSTS_N = &_CONSTS_N;
 
 const UInt256* const SM2_PARAMS_P = &_CONSTS_P;
 const UInt256* const SM2_PARAMS_A = &_CONSTS_A;
@@ -463,7 +459,7 @@ int SM2JacobPointMont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM2Jac
 
         SM2ModP_FromMont(&X->y, &pt.y);
         ylsb = pt.y.u8[0] & 0x1;
-        if (pc == 0x02 && ylsb || pc == 0x03 && !ylsb)
+        if ((pc == 0x02 && ylsb) || (pc == 0x03 && !ylsb))
         {
             SM2ModP_MontNeg(&X->y, &X->y);
         }

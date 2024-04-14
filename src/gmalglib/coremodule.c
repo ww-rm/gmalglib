@@ -402,7 +402,7 @@ static int PyRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
         return 0;
     }
 
-    if (py_buffer.len != bytes_len)
+    if ((uint64_t)py_buffer.len != bytes_len)
     {
         PyErr_SetString(PyExc_ValueError, "Incorrect random bytes length.");
         goto cleanup;
@@ -627,7 +627,7 @@ static PyObject* PySM2_generate_keypair(PySM2Object* self, PyObject* Py_UNUSED(a
         return NULL;
     }
 
-    return Py_BuildValue("y#y#", sk, (Py_ssize_t)SM2_SK_LENGTH, pk, (Py_ssize_t)SM2_GET_PK_LENGTH(self->sm2.pc_mode));
+    return Py_BuildValue("y#y#", (char*)sk, (Py_ssize_t)SM2_SK_LENGTH, pk, (Py_ssize_t)SM2_GET_PK_LENGTH(self->sm2.pc_mode));
 }
 
 static PyObject* PySM2_get_entity_info(PySM2Object* self, PyObject* Py_UNUSED(args))
@@ -907,31 +907,31 @@ static int PyModule_AddSM2(PyObject* py_module)
     if (PyModule_AddIntMacro(py_module, SM2_PARAMS_LENGTH) < 0) goto error;
     
     UInt256_ToBytes(SM2_PARAMS_P, buffer);
-    if (!(py_bytes_SM2_PARAMS_P = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (!(py_bytes_SM2_PARAMS_P = PyBytes_FromStringAndSize((char*)buffer, SM2_PARAMS_LENGTH))) goto error;
     if (PyModule_AddObject(py_module, "SM2_PARAMS_P", py_bytes_SM2_PARAMS_P) < 0) goto error;
 
     UInt256_ToBytes(SM2_PARAMS_A, buffer);
-    if (!(py_bytes_SM2_PARAMS_A = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (!(py_bytes_SM2_PARAMS_A = PyBytes_FromStringAndSize((char*)buffer, SM2_PARAMS_LENGTH))) goto error;
     if (PyModule_AddObject(py_module, "SM2_PARAMS_A", py_bytes_SM2_PARAMS_A) < 0) goto error;
 
     UInt256_ToBytes(SM2_PARAMS_B, buffer);
-    if (!(py_bytes_SM2_PARAMS_B = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (!(py_bytes_SM2_PARAMS_B = PyBytes_FromStringAndSize((char*)buffer, SM2_PARAMS_LENGTH))) goto error;
     if (PyModule_AddObject(py_module, "SM2_PARAMS_B", py_bytes_SM2_PARAMS_B) < 0) goto error;
 
     UInt256_ToBytes(&SM2_PARAMS_G->x, buffer);
     UInt256_ToBytes(&SM2_PARAMS_G->y, buffer + SM2_PARAMS_LENGTH);
-    if (!(py_tuple_SM2_PARAMS_G = Py_BuildValue("y#y#", buffer, (Py_ssize_t)SM2_PARAMS_LENGTH, buffer + SM2_PARAMS_LENGTH, (Py_ssize_t)SM2_PARAMS_LENGTH))) goto error;
+    if (!(py_tuple_SM2_PARAMS_G = Py_BuildValue("y#y#", (char*)buffer, (Py_ssize_t)SM2_PARAMS_LENGTH, buffer + SM2_PARAMS_LENGTH, (Py_ssize_t)SM2_PARAMS_LENGTH))) goto error;
     if (PyModule_AddObject(py_module, "SM2_PARAMS_G", py_tuple_SM2_PARAMS_G) < 0) goto error;
 
     UInt256_ToBytes(SM2_PARAMS_N, buffer);
-    if (!(py_bytes_SM2_PARAMS_N = PyBytes_FromStringAndSize(buffer, SM2_PARAMS_LENGTH))) goto error;
+    if (!(py_bytes_SM2_PARAMS_N = PyBytes_FromStringAndSize((char*)buffer, SM2_PARAMS_LENGTH))) goto error;
     if (PyModule_AddObject(py_module, "SM2_PARAMS_N", py_bytes_SM2_PARAMS_N) < 0) goto error;
 
     if (PyModule_AddIntMacro(py_module, SM2_PCMODE_RAW) < 0) goto error;
     if (PyModule_AddIntMacro(py_module, SM2_PCMODE_COMPRESS) < 0) goto error;
     if (PyModule_AddIntMacro(py_module, SM2_PCMODE_MIX) < 0) goto error;
     
-    if (!(py_bytes_SM2_DEFAULT_UID = PyBytes_FromStringAndSize(SM2_DEFAULT_UID, SM2_DEFAULT_UID_LENGTH))) goto error;
+    if (!(py_bytes_SM2_DEFAULT_UID = PyBytes_FromStringAndSize((char*)SM2_DEFAULT_UID, SM2_DEFAULT_UID_LENGTH))) goto error;
     if (PyModule_AddObject(py_module, "SM2_DEFAULT_UID", py_bytes_SM2_DEFAULT_UID) < 0) goto error;
 
     if (PyModule_AddIntMacro(py_module, SM2_UID_MAX_LENGTH) < 0) goto error;
