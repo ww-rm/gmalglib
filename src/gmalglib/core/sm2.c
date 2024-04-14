@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <gmalglib/random.h>
 #include <gmalglib/sm2curve.h>
 #include <gmalglib/sm3.h>
@@ -194,7 +195,7 @@ int SM2_GetPk(const uint8_t* sk, uint8_t* pk, int pc_mode)
     if (pc_mode != SM2_PCMODE_COMPRESS && pc_mode != SM2_PCMODE_MIX)
         pc_mode = SM2_PCMODE_RAW;
 
-    SM2JacobPointMont_ToBytes(&P, pk, pc_mode);
+    SM2JacobPointMont_ToBytes(&P, pc_mode, pk);
     return 0;
 }
 
@@ -304,7 +305,7 @@ int SM2_GenerateKeyPair(SM2* self, uint8_t* sk, uint8_t* pk)
     SM2JacobPointMont_MulG(&sk_num, &P);
 
     UInt256_ToBytes(&sk_num, sk);
-    SM2JacobPointMont_ToBytes(&P, pk, self->pc_mode);
+    SM2JacobPointMont_ToBytes(&P, self->pc_mode, pk);
     return 0;
 }
 
@@ -323,11 +324,11 @@ int SM2_GetEntityInfo(SM2* self, uint8_t* entity_info)
 }
 
 static
-int _SM2_SignDigest(SM2* self, const uint8_t* digest, UInt256* r, UInt256* s)
+int _SM2_SignDigest(SM2* self, const uint8_t* digest, SM2ModN* r, SM2ModN* s)
 {
     SM2ModN _e = { 0 };
     const SM2ModN* e = &_e;
-    UInt256 k = { 0 };
+    SM2ModN k = { 0 };
     SM2ModNMont r_modn_mont = { 0 };
 
     SM2JacobPointMont kG_mont = { 0 };
@@ -374,8 +375,8 @@ int _SM2_SignDigest(SM2* self, const uint8_t* digest, UInt256* r, UInt256* s)
 int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* signature)
 {
     int has_err = 0;
-    UInt256 r_num = { 0 };
-    UInt256 s_num = { 0 };
+    SM2ModN r_num = { 0 };
+    SM2ModN s_num = { 0 };
 
     if (!self->has_sk)
         return SM2_ERR_NEED_SK;
@@ -390,10 +391,10 @@ int SM2_SignDigest(SM2* self, const uint8_t* digest, uint8_t* signature)
 }
 
 static
-int _SM2_VerifyDigest(SM2* self, const uint8_t* digest, const UInt256* r, const UInt256* s)
+int _SM2_VerifyDigest(SM2* self, const uint8_t* digest, const SM2ModN* r, const SM2ModN* s)
 {
     SM2ModN t = { 0 };
-    UInt256 e = { 0 };
+    SM2ModN e = { 0 };
     SM2JacobPointMont tP_mont = { 0 };
     SM2JacobPointMont kG_mont = { 0 };
     SM2Point kG = { 0 };
@@ -429,8 +430,8 @@ int _SM2_VerifyDigest(SM2* self, const uint8_t* digest, const UInt256* r, const 
 int SM2_VerifyDigest(SM2* self, const uint8_t* digest, const uint8_t* signature)
 {
     int has_err = 0;
-    UInt256 r_num = { 0 };
-    UInt256 s_num = { 0 };
+    SM2ModN r_num = { 0 };
+    SM2ModN s_num = { 0 };
 
     if (!self->has_pk)
         return SM2_ERR_NEED_PK;
@@ -479,4 +480,200 @@ int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* s
     SM3_Digest(&sm3, digest);
 
     return SM2_VerifyDigest(self, digest, signature);
+}
+
+static
+int _SM2_Encrypt(SM2* self, const uint8_t* plain, uint64_t plain_len, SM2JacobPointMont* c1, uint8_t* c3, uint8_t* c2)
+{
+    uint64_t i = 0;
+    SM2ModN k = { 0 };
+    SM2JacobPointMont kP = { 0 };
+    uint8_t kP_bytes[SM2_POINTBYTES_FULL_LENGTH] = { 0 };
+    SM3 sm3 = { 0 };
+    int is_zero_key = 0;
+
+    do
+    {
+        if (!RandomUInt256(&self->rand_alg, CONSTS_N_MINUS_ONE, &k))
+        {
+            return SM2_ERR_RANDOM_FAILED;
+        }
+
+        // output c1
+        SM2JacobPointMont_MulG(&k, c1);
+        SM2JacobPointMont_Mul(&k, &self->pk, &kP);
+        SM2JacobPointMont_ToBytes(&kP, SM2_PCMODE_RAW, kP_bytes);
+
+        SM3_Init(&sm3);
+        SM3_Update(&sm3, kP_bytes + 1, SM2_PARAMS_LENGTH * 2);
+        SM3_DeriveKey(&sm3, plain_len, c2);
+
+        is_zero_key = 1;
+        for (i = 0; i < plain_len; i++)
+        {
+            if (c2[i] != 0)
+            {
+                is_zero_key = 0;
+                break;
+            }
+        }
+        if (is_zero_key)
+            continue;
+
+        // output c2
+        for (i = 0; i < plain_len; i++)
+        {
+            c2[i] = plain[i] ^ c2[i];
+        }
+
+        // output c3
+        SM3_Init(&sm3);
+        SM3_Update(&sm3, kP_bytes + 1, SM2_PARAMS_LENGTH);
+        SM3_Update(&sm3, plain, plain_len);
+        SM3_Update(&sm3, kP_bytes + 1 + SM2_PARAMS_LENGTH, SM2_PARAMS_LENGTH);
+        SM3_Digest(&sm3, c3);
+
+        break;
+    } while (0);
+
+    return 0;
+}
+
+int SM2_Encrypt(SM2* self, const uint8_t* plain, uint64_t plain_len, uint8_t* cipher)
+{
+    int err = 0;
+    uint64_t i = 0;
+    SM2JacobPointMont c1 = { 0 };
+    uint8_t c3[SM2_ENCRYPT_C3_LENGTH] = { 0 };
+    uint8_t* c2 = NULL;
+
+    if (!self->has_pk)
+        return SM2_ERR_NEED_PK;
+
+    if (plain_len > SM3_KDF_MAX_LENGTH)
+        return SM2_ERR_DATA_OVERFLOW;
+
+    c2 = (uint8_t*)calloc(plain_len, sizeof(uint8_t));
+    if (!c2)
+        return SM2_ERR_NO_MEMORY;
+
+    err = _SM2_Encrypt(self, plain, plain_len, &c1, c3, c2);
+    if (err)
+        goto cleanup;
+
+    SM2JacobPointMont_ToBytes(&c1, self->pc_mode, cipher);
+    cipher += SM2_GET_ENCRYPT_C1_LENGTH(self->pc_mode);
+
+    for (i = 0; i < SM2_ENCRYPT_C3_LENGTH; i++)
+    {
+        cipher[i] = c3[i];
+    }
+    cipher += SM2_ENCRYPT_C3_LENGTH;
+
+    for (i = 0; i < plain_len; i++)
+    {
+        cipher[i] = c2[i];
+    }
+
+cleanup:
+    free(c2);
+    return err;
+}
+
+static
+int _SM2_Decrypt(SM2* self, const SM2JacobPointMont* c1, const uint8_t* c3, const uint8_t* c2, uint64_t c2_len, uint8_t* plain)
+{
+    uint64_t i = 0;
+    SM2JacobPointMont kP = { 0 };
+    uint8_t kP_bytes[SM2_POINTBYTES_FULL_LENGTH] = { 0 };
+    uint8_t c3_computed[SM2_ENCRYPT_C3_LENGTH] = { 0 };
+    SM3 sm3 = { 0 };
+    int is_zero_key = 0;
+
+    SM2JacobPointMont_Mul(&self->sk, c1, &kP);
+    SM2JacobPointMont_ToBytes(&kP, SM2_PCMODE_RAW, kP_bytes);
+
+    SM3_Init(&sm3);
+    SM3_Init(&sm3);
+    SM3_Update(&sm3, kP_bytes + 1, SM2_PARAMS_LENGTH * 2);
+    SM3_DeriveKey(&sm3, c2_len, plain);
+
+    is_zero_key = 1;
+    for (i = 0; i < c2_len; i++)
+    {
+        if (plain[i] != 0)
+        {
+            is_zero_key = 0;
+            break;
+        }
+    }
+    if (is_zero_key)
+        return SM2_ERR_INVALID_C1;
+
+    for (i = 0; i < c2_len; i++)
+    {
+        plain[i] = c2[i] ^ plain[i];
+    }
+
+    SM3_Init(&sm3);
+    SM3_Update(&sm3, kP_bytes + 1, SM2_PARAMS_LENGTH);
+    SM3_Update(&sm3, plain, c2_len);
+    SM3_Update(&sm3, kP_bytes + 1 + SM2_PARAMS_LENGTH, SM2_PARAMS_LENGTH);
+    SM3_Digest(&sm3, c3_computed);
+
+    for (i = 0; i < SM2_ENCRYPT_C3_LENGTH; i++)
+    {
+        if (c3_computed[i] != c3[i])
+            return SM2_ERR_INVALID_C3;
+    }
+
+    return 0;
+}
+
+int SM2_Decrypt(SM2* self, const uint8_t* cipher, uint64_t cipher_len, uint8_t* plain, uint64_t* plain_len)
+{
+    int err = 0;
+    uint64_t i = 0;
+    SM2JacobPointMont c1 = { 0 };
+    uint8_t* plain_buffer = NULL;
+    uint64_t c1_len = 0;
+    uint64_t c2_len = 0;
+
+    if (!self->has_sk)
+        return SM2_ERR_NEED_SK;
+
+    if (cipher_len < SM2_ENCRYPT_C1_HALF_LENGTH + SM2_ENCRYPT_C3_LENGTH)
+        return SM2_ERR_INVALID_CIPHER;
+
+    if (cipher[0] == 0x00)
+        return SM2_ERR_INVALID_CIPHER;
+
+    c1_len = (cipher[0] & 0b100) ? SM2_ENCRYPT_C1_FULL_LENGTH : SM2_ENCRYPT_C1_HALF_LENGTH;
+    if (cipher_len < c1_len + SM2_ENCRYPT_C3_LENGTH)
+        return SM2_ERR_INVALID_CIPHER;
+
+    c2_len = cipher_len - c1_len - SM2_ENCRYPT_C3_LENGTH;
+    if (c2_len > SM3_KDF_MAX_LENGTH)
+        return SM2_ERR_DATA_OVERFLOW;
+
+    if (SM2JacobPointMont_FromBytes(cipher, c1_len, &c1) != 0)
+        return SM2_ERR_INVALID_C1;
+
+    plain_buffer = (uint8_t*)calloc(c2_len, sizeof(uint8_t));
+    if (!plain_buffer)
+        return SM2_ERR_NO_MEMORY;
+
+    err = _SM2_Decrypt(self, &c1, cipher + c1_len, cipher + c1_len + SM2_ENCRYPT_C3_LENGTH, c2_len, plain_buffer);
+    if (err)
+        goto cleanup;
+
+    for (i = 0; i < c2_len; i++)
+    {
+        plain[i] = plain_buffer[i];
+    }
+    *plain_len = c2_len;
+
+cleanup:
+    free(plain_buffer);
+    return err;
 }

@@ -46,7 +46,7 @@ extern const UInt256* const SM2_PARAMS_N;
 void SM2JacobPointMont_ToPoint(const SM2JacobPointMont* X, SM2Point* Y);
 void SM2JacobPointMont_FromPoint(const SM2Point* X, SM2JacobPointMont* Y);
 
-uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, uint8_t* bytes, int pc_mode);
+uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, int pc_mode, uint8_t* bytes);
 int SM2JacobPointMont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM2JacobPointMont* X);
 
 int SM2JacobPointMont_IsInf(const SM2JacobPointMont* X);

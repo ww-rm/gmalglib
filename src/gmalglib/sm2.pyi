@@ -87,3 +87,9 @@ class SM2:
 
     def verify(self, message: bytes, signature: bytes) -> bool:
         """对完整消息及其签名验签."""
+
+    def encrypt(self, plain: bytes) -> bytes:
+        """加密数据."""
+
+    def decrypt(self, cipher: bytes) -> bytes:
+        """解密数据."""

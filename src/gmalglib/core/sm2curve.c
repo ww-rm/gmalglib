@@ -375,7 +375,7 @@ void SM2JacobPointMont_FromPoint(const SM2Point* X, SM2JacobPointMont* Y)
     }
 }
 
-uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, uint8_t* bytes, int pc_mode)
+uint64_t SM2JacobPointMont_ToBytes(const SM2JacobPointMont* X, int pc_mode, uint8_t* bytes)
 {
     SM2Point pt = { 0 };
     SM2JacobPointMont_ToPoint(X, &pt);

@@ -96,18 +96,14 @@ static PyObject* PySM3_derive_key(PySM3Object* self, PyObject* args, PyObject* k
         return PyErr_NoMemory();
 
     sm3_ret = SM3_DeriveKey(&self->sm3, klen, key_buffer);
-    if (sm3_ret == SM3_ERR_OVERFLOW)
-    {
-        PyErr_SetString(PyExc_OverflowError, "Data too long.");
-        goto cleanup;
-    }
-    if (sm3_ret == SM3_ERR_KDF_OVERFLOW)
-    {
-        PyErr_SetString(PyExc_OverflowError, "Key stream too long.");
-        goto cleanup;
-    }
 
-    ret = PyBytes_FromStringAndSize((char*)key_buffer, klen);
+    switch (sm3_ret)
+    {
+    case SM3_ERR_OVERFLOW:          PyErr_SetString(PyExc_OverflowError, "Data too long.");             goto cleanup;
+    case SM3_ERR_KDF_OVERFLOW:      PyErr_SetString(PyExc_OverflowError, "Key stream too long.");       goto cleanup;
+    default:
+        ret = PyBytes_FromStringAndSize((char*)key_buffer, klen);
+    }
 
 cleanup:
     PyMem_RawFree(key_buffer);
@@ -137,12 +133,12 @@ static PyObject* PySM3_mac(PySM3Object* self, PyObject* args, PyObject* kwargs)
 }
 
 static PyMethodDef py_methods_def_SM3[] = {
-    {"update", (PyCFunction)PySM3_update, METH_VARARGS | METH_KEYWORDS, PyDoc_STR("Update internal state with data stream.")},
-    {"digest", (PyCFunction)PySM3_digest, METH_NOARGS, PyDoc_STR("Get digest.")},
-    {"reset", (PyCFunction)PySM3_reset, METH_NOARGS, PyDoc_STR("Reset internal state to empty.")},
-    {"copy", (PyCFunction)PySM3_copy, METH_NOARGS, PyDoc_STR("Copy state to a new object.")},
-    {"derive_key", (PyCFunction)PySM3_derive_key, METH_VARARGS | METH_KEYWORDS, PyDoc_STR("Key derivation function.")},
-    {"mac", (PyCFunction)PySM3_mac, METH_VARARGS | METH_KEYWORDS, PyDoc_STR("SM3 MAC.")},
+    {"update",      (PyCFunction)PySM3_update,      METH_VARARGS | METH_KEYWORDS,   PyDoc_STR("Update internal state with data stream.")},
+    {"digest",      (PyCFunction)PySM3_digest,      METH_NOARGS,                    PyDoc_STR("Get digest.")},
+    {"reset",       (PyCFunction)PySM3_reset,       METH_NOARGS,                    PyDoc_STR("Reset internal state to empty.")},
+    {"copy",        (PyCFunction)PySM3_copy,        METH_NOARGS,                    PyDoc_STR("Copy state to a new object.")},
+    {"derive_key",  (PyCFunction)PySM3_derive_key,  METH_VARARGS | METH_KEYWORDS,   PyDoc_STR("Key derivation function.")},
+    {"mac",         (PyCFunction)PySM3_mac,         METH_VARARGS | METH_KEYWORDS,   PyDoc_STR("SM3 MAC.")},
     {NULL}
 };
 
@@ -166,13 +162,13 @@ static int PyModule_AddSM3(PyObject* py_module)
     if (PyType_Ready(&py_type_SM3) < 0) return 0;
 
     Py_INCREF(&py_type_SM3);
-    if (PyModule_AddObject(py_module, "SM3", (PyObject*)&py_type_SM3) < 0) goto error;
-    if (!(py_long_SM3_MAX_MSG_BITLEN = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN))) goto error;
-    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_SM3_MAX_MSG_BITLEN) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, SM3_DIGEST_LENGTH) < 0) goto error;
-    if (!(py_long_SM3_KDF_MAX_LENGTH = PyLong_FromUnsignedLongLong(SM3_KDF_MAX_LENGTH))) goto error;
-    if (PyModule_AddObject(py_module, "SM3_KDF_MAX_LENGTH", py_long_SM3_KDF_MAX_LENGTH) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, SM3_MAC_LENGTH) < 0) goto error;
+    if (PyModule_AddObject(py_module, "SM3", (PyObject*)&py_type_SM3) < 0)                      goto error;
+    if (!(py_long_SM3_MAX_MSG_BITLEN = PyLong_FromUnsignedLongLong(SM3_MAX_MSG_BITLEN)))        goto error;
+    if (PyModule_AddObject(py_module, "SM3_MAX_MSG_BITLEN", py_long_SM3_MAX_MSG_BITLEN) < 0)    goto error;
+    if (PyModule_AddIntMacro(py_module, SM3_DIGEST_LENGTH) < 0)                                 goto error;
+    if (!(py_long_SM3_KDF_MAX_LENGTH = PyLong_FromUnsignedLongLong(SM3_KDF_MAX_LENGTH)))        goto error;
+    if (PyModule_AddObject(py_module, "SM3_KDF_MAX_LENGTH", py_long_SM3_KDF_MAX_LENGTH) < 0)    goto error;
+    if (PyModule_AddIntMacro(py_module, SM3_MAC_LENGTH) < 0)                                    goto error;
 
     return 1;
 
@@ -285,9 +281,9 @@ static int PyModule_AddSM4(PyObject* py_module)
     if (PyType_Ready(&py_type_SM4) < 0) return 0;
 
     Py_INCREF(&py_type_SM4);
-    if (PyModule_AddObject(py_module, "SM4", (PyObject*)&py_type_SM4) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, SM4_KEY_LENGTH) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, SM4_BLOCK_LENGTH) < 0) goto error;
+    if (PyModule_AddObject(py_module, "SM4", (PyObject*)&py_type_SM4) < 0)      goto error;
+    if (PyModule_AddIntMacro(py_module, SM4_KEY_LENGTH) < 0)                    goto error;
+    if (PyModule_AddIntMacro(py_module, SM4_BLOCK_LENGTH) < 0)                  goto error;
 
     return 1;
 
@@ -353,8 +349,8 @@ static PyObject* PyZUC_copy(PyZUCObject* self, PyObject* Py_UNUSED(args))
 }
 
 static PyMethodDef py_methods_def_ZUC[] = {
-    {"generate", (PyCFunction)PyZUC_generate, METH_NOARGS, PyDoc_STR("Generate a word (4 bytes).")},
-    {"copy", (PyCFunction)PyZUC_copy, METH_NOARGS, PyDoc_STR("Copy state to a new object.")},
+    {"generate",    (PyCFunction)PyZUC_generate,    METH_NOARGS,    PyDoc_STR("Generate a word (4 bytes).")},
+    {"copy",        (PyCFunction)PyZUC_copy,        METH_NOARGS,    PyDoc_STR("Copy state to a new object.")},
     {NULL}
 };
 
@@ -375,10 +371,10 @@ static int PyModule_AddZUC(PyObject* py_module)
     if (PyType_Ready(&py_type_ZUC) < 0) return 0;
 
     Py_INCREF(&py_type_ZUC);
-    if (PyModule_AddObject(py_module, "ZUC", (PyObject*)&py_type_ZUC) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, ZUC_KEY_LENGTH) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, ZUC_IV_LENGTH) < 0) goto error;
-    if (PyModule_AddIntMacro(py_module, ZUC_WORD_LENGTH) < 0) goto error;
+    if (PyModule_AddObject(py_module, "ZUC", (PyObject*)&py_type_ZUC) < 0)      goto error;
+    if (PyModule_AddIntMacro(py_module, ZUC_KEY_LENGTH) < 0)                    goto error;
+    if (PyModule_AddIntMacro(py_module, ZUC_IV_LENGTH) < 0)                     goto error;
+    if (PyModule_AddIntMacro(py_module, ZUC_WORD_LENGTH) < 0)                   goto error;
 
     return 1;
 
@@ -507,21 +503,13 @@ static int PySM2_init(PySM2Object* self, PyObject* args, PyObject* kwargs)
         pc_mode, 
         rnd_alg
     );
-
-    if (sm2_ret == SM2_ERR_INVALID_SK)
+    switch (sm2_ret)
     {
-        PyErr_SetString(PyExc_ValueError, "Invalid secret key.");
-        goto cleanup;
-    }
-    if (sm2_ret == SM2_ERR_INVALID_PK)
-    {
-        PyErr_SetString(PyExc_ValueError, "Invalid public key.");
-        goto cleanup;
-    }
-    if (sm2_ret == SM2_ERR_UID_OVERFLOW)
-    {
-        PyErr_SetString(PyExc_OverflowError, "uid too long.");
-        goto cleanup;
+    case SM2_ERR_INVALID_SK:        PyErr_SetString(PyExc_ValueError, "Invalid secret key.");       goto cleanup;
+    case SM2_ERR_INVALID_PK:        PyErr_SetString(PyExc_ValueError, "Invalid public key.");       goto cleanup;
+    case SM2_ERR_UID_OVERFLOW:      PyErr_SetString(PyExc_OverflowError, "uid too long.");          goto cleanup;
+    default:
+        break;
     }
 
     // self->sm2.rand_alg is untouched if SM2_Init failed
@@ -669,18 +657,13 @@ static PyObject* PySM2_sign_digest(PySM2Object* self, PyObject* args, PyObject* 
     }
 
     sm2_ret = SM2_SignDigest(&self->sm2, py_buffer_digest.buf, signature);
-    if (sm2_ret == SM2_ERR_NEED_SK)
+    switch (sm2_ret)
     {
-        PyErr_SetString(PyExc_AttributeError, "Need secret key.");
-        goto cleanup;
+    case SM2_ERR_NEED_SK:           PyErr_SetString(PyExc_AttributeError, "Need secret key.");              goto cleanup;
+    case SM2_ERR_RANDOM_FAILED:     PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");     goto cleanup;
+    default:
+        ret = PyBytes_FromStringAndSize((char*)signature, SM2_SIGNATURE_LENGTH);
     }
-    if (sm2_ret == SM2_ERR_RANDOM_FAILED)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");
-        goto cleanup;
-    }
-
-    ret = PyBytes_FromStringAndSize((char*)signature, SM2_SIGNATURE_LENGTH);
 
 cleanup:
     PyBuffer_Release(&py_buffer_digest);
@@ -741,28 +724,15 @@ static PyObject* PySM2_sign(PySM2Object* self, PyObject* args, PyObject* kwargs)
         return NULL;
 
     sm2_ret = SM2_Sign(&self->sm2, py_buffer_message.buf, py_buffer_message.len, signature);
-    if (sm2_ret == SM2_ERR_NEED_SK)
+    switch (sm2_ret)
     {
-        PyErr_SetString(PyExc_AttributeError, "Need secret key.");
-        goto cleanup;
+    case SM2_ERR_NEED_SK:           PyErr_SetString(PyExc_AttributeError, "Need secret key.");              goto cleanup;
+    case SM2_ERR_NEED_PK:           PyErr_SetString(PyExc_AttributeError, "Need public key.");              goto cleanup;
+    case SM2_ERR_MSG_OVERFLOW:      PyErr_SetString(PyExc_OverflowError, "Message too long.");              goto cleanup;
+    case SM2_ERR_RANDOM_FAILED:     PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");     goto cleanup;
+    default:
+        ret = PyBytes_FromStringAndSize((char*)signature, SM2_SIGNATURE_LENGTH);
     }
-    if (sm2_ret == SM2_ERR_NEED_PK)
-    {
-        PyErr_SetString(PyExc_AttributeError, "Need public key.");
-        goto cleanup;
-    }
-    if (sm2_ret == SM2_ERR_MSG_OVERFLOW)
-    {
-        PyErr_SetString(PyExc_OverflowError, "Message too long.");
-        goto cleanup;
-    }
-    if (sm2_ret == SM2_ERR_RANDOM_FAILED)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");
-        goto cleanup;
-    }
-
-    ret = PyBytes_FromStringAndSize((char*)signature, SM2_SIGNATURE_LENGTH);
 
 cleanup:
     PyBuffer_Release(&py_buffer_message);
@@ -810,6 +780,85 @@ static PyObject* PySM2_verify(PySM2Object* self, PyObject* args, PyObject* kwarg
     Py_RETURN_TRUE;
 }
 
+static PyObject* PySM2_encrypt(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "plain", NULL };
+    Py_buffer py_buffer_plain = { 0 };
+    uint8_t* cipher = NULL;
+    uint64_t cipher_len = 0;
+    PyObject* ret = NULL;
+    int sm2_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*:encrypt", keys, &py_buffer_plain))
+        return NULL;
+
+    cipher_len = SM2_GET_ENCRYPT_HEADER_LENGTH(self->sm2.pc_mode) + py_buffer_plain.len;
+    cipher = (uint8_t*)calloc(cipher_len, sizeof(uint8_t));
+    if (!cipher)
+    {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate buffer.");
+        goto cleanup;
+    }
+
+    sm2_ret = SM2_Encrypt(&self->sm2, py_buffer_plain.buf, py_buffer_plain.len, cipher);
+    switch (sm2_ret)
+    {
+    case SM2_ERR_NEED_PK:           PyErr_SetString(PyExc_AttributeError, "Need public key.");              goto cleanup;
+    case SM2_ERR_DATA_OVERFLOW:     PyErr_SetString(PyExc_OverflowError, "Data too long.");                 goto cleanup;
+    case SM2_ERR_NO_MEMORY:         PyErr_SetString(PyExc_MemoryError, "Failed to allocate buffer.");       goto cleanup;
+    case SM2_ERR_RANDOM_FAILED:     PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");     goto cleanup;
+    default:
+        ret = PyBytes_FromStringAndSize((char*)cipher, cipher_len);
+    }
+
+cleanup:
+    if (cipher)
+        free(cipher);
+    PyBuffer_Release(&py_buffer_plain);
+    return ret;
+}
+
+static PyObject* PySM2_decrypt(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "cipher", NULL };
+    Py_buffer py_buffer_cipher = { 0 };
+    uint8_t* plain = NULL;
+    uint64_t plain_len = 0;
+    PyObject* ret = NULL;
+    int sm2_ret = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*:decrypt", keys, &py_buffer_cipher))
+        return NULL;
+
+    // cipher_len exactly greater than plain_len
+    plain_len = py_buffer_cipher.len - SM2_GET_ENCRYPT_HEADER_LENGTH(SM2_PCMODE_COMPRESS);
+    plain = (uint8_t*)calloc(plain_len, sizeof(uint8_t));
+    if (!plain)
+    {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate buffer.");
+        goto cleanup;
+    }
+
+    sm2_ret = SM2_Decrypt(&self->sm2, py_buffer_cipher.buf, py_buffer_cipher.len, plain, &plain_len);
+    switch (sm2_ret)
+    {
+    case SM2_ERR_NEED_SK:           PyErr_SetString(PyExc_AttributeError, "Need secret key.");              goto cleanup;
+    case SM2_ERR_DATA_OVERFLOW:     PyErr_SetString(PyExc_OverflowError, "Data too long.");                 goto cleanup;
+    case SM2_ERR_NO_MEMORY:         PyErr_SetString(PyExc_MemoryError, "Failed to allocate buffer.");       goto cleanup;
+    case SM2_ERR_INVALID_CIPHER:    PyErr_SetString(PyExc_ValueError, "Invalid cipher.");                   goto cleanup;
+    case SM2_ERR_INVALID_C1:        PyErr_SetString(PyExc_ValueError, "Invalid C1.");                       goto cleanup;
+    case SM2_ERR_INVALID_C3:        PyErr_SetString(PyExc_ValueError, "Invalid C3.");                       goto cleanup;
+    default:
+        ret = PyBytes_FromStringAndSize((char*)plain, plain_len);
+    }
+
+cleanup:
+    if (plain)
+        free(plain);
+    PyBuffer_Release(&py_buffer_cipher);
+    return ret;
+}
+
 static PyMethodDef py_methods_def_SM2[] = {
     {"is_sk_valid",         (PyCFunction)PySM2_is_sk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check sk is valid.")},
     {"is_pk_valid",         (PyCFunction)PySM2_is_pk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check pk is valid.")},
@@ -820,6 +869,8 @@ static PyMethodDef py_methods_def_SM2[] = {
     {"verify_digest",       (PyCFunction)PySM2_verify_digest,       METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Verify on digest.")},
     {"sign",                (PyCFunction)PySM2_sign,                METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Sign on full message.")},
     {"verify",              (PyCFunction)PySM2_verify,              METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Verify on full message.")},
+    {"encrypt",             (PyCFunction)PySM2_encrypt,             METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Encrypt data.")},
+    {"decrypt",             (PyCFunction)PySM2_decrypt,             METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Decrypt data.")},
     {NULL}
 };
 
