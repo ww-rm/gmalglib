@@ -10,8 +10,22 @@
 
 ## 安装
 
-```bat
+### Windows
+
+对于 `python3.8` 及以上, 可以直接使用 `pip` 进行安装.
+
+```bash
 pip install gmalglib
+```
+
+或者参考其他平台使用源码安装.
+
+### 其他平台
+
+前往 PyPI 项目文件列表 [Download files](https://pypi.org/project/gmalglib/#files) 页面下载源码发布包 `gmalglib-x.y.z.tar.gz`, 之后使用源码安装.
+
+```bash
+pip install gmalglib-x.y.z.tar.gz
 ```
 
 ## 已实现的核心算法
