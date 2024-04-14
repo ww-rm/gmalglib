@@ -727,7 +727,6 @@ static PyObject* PySM2_sign(PySM2Object* self, PyObject* args, PyObject* kwargs)
     switch (sm2_ret)
     {
     case SM2_ERR_NEED_SK:           PyErr_SetString(PyExc_AttributeError, "Need secret key.");              goto cleanup;
-    case SM2_ERR_NEED_PK:           PyErr_SetString(PyExc_AttributeError, "Need public key.");              goto cleanup;
     case SM2_ERR_MSG_OVERFLOW:      PyErr_SetString(PyExc_OverflowError, "Message too long.");              goto cleanup;
     case SM2_ERR_RANDOM_FAILED:     PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");     goto cleanup;
     default:

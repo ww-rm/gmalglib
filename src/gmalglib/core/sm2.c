@@ -252,16 +252,17 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, c
     
     // check and parse pk
     self->has_pk = 0;
-    if (pk)
+    if (self->has_sk)
+    {
+        // omit passed pk argument
+        SM2JacobPointMont_MulG(&self->sk, &self->pk);
+        self->has_pk = 1;
+    }
+    else if (pk)
     {
         if (pk_len <= 1 || SM2JacobPointMont_FromBytes(pk, pk_len, &self->pk) != 0)
             return SM2_ERR_INVALID_PK;
 
-        self->has_pk = 1;
-    }
-    else if (self->has_sk)
-    {
-        SM2JacobPointMont_MulG(&self->sk, &self->pk);
         self->has_pk = 1;
     }
 
@@ -448,9 +449,6 @@ int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* signature
 
     if (!self->has_sk)
         return SM2_ERR_NEED_SK;
-
-    if (!self->has_pk)
-        return SM2_ERR_NEED_PK;
 
     if (msg_len > SM2_MSG_MAX_LENGTH)
         return SM2_ERR_MSG_OVERFLOW;
