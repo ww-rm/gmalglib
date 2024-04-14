@@ -5,6 +5,7 @@
 
 #ifdef _WIN32
 
+#pragma comment(lib, "Bcrypt.lib")
 #include <Windows.h>
 #include <bcrypt.h>
 
@@ -28,14 +29,43 @@ static int SimpleRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 
 static int _WinRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 {
-
+    ULONG chunk = 0;
+    while (bytes_len > 0)
+    {
+        chunk = (ULONG)(bytes_len < ULONG_MAX ? bytes_len : ULONG_MAX);
+        if (!BCRYPT_SUCCESS(BCryptGenRandom(NULL, bytes, chunk, BCRYPT_USE_SYSTEM_PREFERRED_RNG)))
+            return 0;
+        bytes += chunk;
+        bytes_len -= chunk;
+    }
+    return 1;
 }
 
 #else
 
 static int _LinuxRandomProc(void* rand_obj, uint64_t bytes_len, uint8_t* bytes)
 {
+    int fd = 0;
+    fd = _Py_open_noraise("/dev/urandom", O_RDONLY);
+    if (fd < 0)
+        return 0;
 
+    while (bytes_len > 0)
+    {
+        do {
+            n = read(fd, buffer, (size_t)size);
+        } while (n < 0 && errno == EINTR);
+
+        if (n <= 0) {
+            /* stop on error or if read(size) returned 0 */
+            close(fd);
+            return -1;
+        }
+
+        buffer += n;
+        size -= n;
+    }
+    close(fd);
 }
 
 #endif // _WIN32
