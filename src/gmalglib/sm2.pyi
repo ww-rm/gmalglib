@@ -1,3 +1,36 @@
+"""SM2 算法实现.
+
+Attributes:
+    SM2_PARAMS_LENGTH: SM2 参数长度
+    SM2_PARAMS_P: SM2 参数 p
+    SM2_PARAMS_A: SM2 参数 a
+    SM2_PARAMS_B: SM2 参数 b
+    SM2_PARAMS_G: SM2 参数 G
+    SM2_PARAMS_N: SM2 参数 n
+
+    SM2_PCMODE_RAW: 未压缩模式
+    SM2_PCMODE_COMPRESS: 压缩模式
+    SM2_PCMODE_MIX: 混合模式
+
+    SM2_DEFAULT_UID: 默认 uid
+    SM2_UID_MAX_LENGTH: uid 最大长度
+    SM2_ENTITYINFO_LENGTH: 实体信息长度
+
+    SM2_SK_LENGTH: 私钥长度
+    SM2_PK_HALF_LENGTH: 压缩公钥长度
+    SM2_PK_FULL_LENGTH: 未压缩公钥长度
+
+    SM2_MSG_MAX_LENGTH: 签名消息最大长度
+    SM2_SIGN_R_LENGTH: 签名值 r 长度
+    SM2_SIGN_S_LENGTH: 签名值 s 长度
+    SM2_SIGNATURE_LENGTH: 签名长度
+
+    SM2_ENCRYPT_C1_HALF_LENGTH: 密文 C1 压缩长度
+    SM2_ENCRYPT_C1_FULL_LENGTH: 密文 C1 未压缩长度
+    SM2_ENCRYPT_C3_LENGTH: 密文 C3 长度
+"""
+
+
 from typing import Tuple, Optional, Callable
 
 SM2_PARAMS_LENGTH: int

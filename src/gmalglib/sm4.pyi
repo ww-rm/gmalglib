@@ -1,3 +1,11 @@
+"""SM4 算法实现.
+
+Attributes:
+    SM4_KEY_LENGTH: 密钥长度
+    SM4_BLOCK_LENGTH: 数据分组长度
+"""
+
+
 SM4_KEY_LENGTH: int
 SM4_BLOCK_LENGTH: int
 

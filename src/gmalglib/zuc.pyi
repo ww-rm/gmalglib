@@ -1,3 +1,12 @@
+"""ZUC 算法实现.
+
+Attributes:
+    ZUC_KEY_LENGTH: 密钥长度
+    ZUC_IV_LENGTH: 初始向量长度
+    ZUC_WORD_LENGTH: 伪随机字长
+"""
+
+
 ZUC_KEY_LENGTH: int
 ZUC_IV_LENGTH: int
 ZUC_WORD_LENGTH: int

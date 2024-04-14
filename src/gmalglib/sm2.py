@@ -1,5 +1,3 @@
-"""SM2 算法实现."""
-
 from . import core as __c
 
 globals().update(filter(lambda kv: kv[0].startswith("SM2"), __c.__dict__.items()))

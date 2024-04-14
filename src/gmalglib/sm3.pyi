@@ -1,3 +1,12 @@
+"""SM3 算法实现.
+
+Attributes:
+    SM3_MAX_MSG_BITLEN: 最大消息长度
+    SM3_DIGEST_LENGTH: 摘要长度
+    SM3_KDF_MAX_LENGTH: 密钥派生最大长度
+    SM3_MAC_LENGTH: 消息认证码长度
+"""
+
 SM3_MAX_MSG_BITLEN: int
 SM3_DIGEST_LENGTH: int
 SM3_KDF_MAX_LENGTH: int
