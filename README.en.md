@@ -10,22 +10,8 @@ Implemented in C language, encapsulated based on the native CPython interface, w
 
 ## Installation
 
-### Windows
-
-For `python3.8` and higher versions, you can directly install using `pip`.
-
 ```bash
 pip install gmalglib
-```
-
-Alternatively, refer to the source code installation for other platforms.
-
-### Other Platforms
-
-Visit the PyPI project file list [Download files](https://pypi.org/project/gmalglib/#files) page to download the source distribution package `gmalglib-x.y.z.tar.gz`, then proceed with the source code installation.
-
-```bash
-pip install gmalglib-x.y.z.tar.gz
 ```
 
 ## Core Algorithms Implemented
