@@ -6,6 +6,10 @@
 
 ---
 
+::: gmalglib
+
+---
+
 ::: gmalglib.wrapped
 
 ---
