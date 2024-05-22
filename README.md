@@ -62,7 +62,7 @@ def rnd_fn(n: int) -> bytes: ...
 
 ## 性能测试
 
-性能测试代码见 `benchmark.py`, `13th Gen Intel(R) Core(TM) i7-13700H` 上测试结果如下:
+性能测试代码见 [benchmark.py](https://github.com/ww-rm/gmalglib/blob/main/benchmark.py), `13th Gen Intel(R) Core(TM) i7-13700H` 上测试结果如下:
 
 ```plain
 ==================== SM2 Benchmark Test (1000 times, 32 bytes data) ====================

@@ -18,7 +18,7 @@ pip install gmalglib
 
 - SM2 Public Key Cryptograhpic Algorithm Based on Elliptic Curves
   - Sign/Verify
-  - Key exchange 
+  - Key exchange
   - Encrypt/Decrypt
 - SM3 Cryptogrpahic Hash Algorithm
 - SM4 Block Cipher Algorithm
@@ -59,7 +59,7 @@ For specific implementation details, refer to [random.c](https://github.com/ww-r
 
 ## Benchmark Test
 
-The benchmark test code can be found in `benchmark.py`. The test results on the `13th Gen Intel(R) Core(TM) i7-13700H` are as follows:
+The benchmark test code can be found in [benchmark.py](https://github.com/ww-rm/gmalglib/blob/main/benchmark.py). The test results on the `13th Gen Intel(R) Core(TM) i7-13700H` are as follows:
 
 ```plain
 ==================== SM2 Benchmark Test (1000 times, 32 bytes data) ====================
