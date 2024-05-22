@@ -40,6 +40,10 @@
 #define SM2_ERR_INVALID_C1              -11
 #define SM2_ERR_INVALID_C3              -12
 #define SM2_ERR_INVALID_CIPHER          -13
+#define SM2_ERR_INVALID_SPOINT          -14
+#define SM2_ERR_KEY_OVERFLOW            -15
+#define SM2_ERR_INVALID_T               -16
+#define SM2_ERR_INVALID_R               -17
 
 typedef UInt256 SM2ModN;
 typedef SM2ModN SM2ModNMont;
@@ -80,6 +84,8 @@ int SM2_Sign(SM2* self, const uint8_t* msg, uint64_t msg_len, uint8_t* signature
 int SM2_Verify(SM2* self, const uint8_t* msg, uint64_t msg_len, const uint8_t* signature);
 int SM2_Encrypt(SM2* self, const uint8_t* plain, uint64_t plain_len, uint8_t* cipher);
 int SM2_Decrypt(SM2* self, const uint8_t* cipher, uint64_t cipher_len, uint8_t* plain, uint64_t* plain_len);
+int SM2_BeginKeyExchange(SM2* self, SM2ModN* t, uint8_t* random_pt);
+int SM2_EndKeyExchange(SM2* self, const SM2ModN* t, const uint8_t* random_pt, uint64_t random_pt_len, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int is_responder, uint64_t klen, uint8_t* key);
 
 #ifdef __cplusplus
 }

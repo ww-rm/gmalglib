@@ -144,7 +144,6 @@ class TestSM2(unittest.TestCase):
         pk2 = lib.sm2.SM2.convert_pk(pk, lib.sm2.SM2_PCMODE_COMPRESS)
         self.assertTrue(lib.sm2.SM2.is_keypair(d, pk2))
 
-
     def test_sign1(self):
         sm2 = lib.sm2.SM2(
             bytes.fromhex("3945208F 7B2144B1 3F36E38A C6D39F95 88939369 2860B51A 42FB81EF 4DF7C5B8"),
@@ -259,6 +258,66 @@ class TestSM2(unittest.TestCase):
 
         for _ in range(10):
             self.assertTrue(libsm2.decrypt(libsm2.encrypt(msg)))
+
+    def test_keyxchg(self):
+        PA = bytes.fromhex("04"
+                           "160E1289 7DF4EDB6 1DD812FE B96748FB D3CCF4FF E26AA6F6 DB9540AF 49C94232"
+                           "4A7DAD08 BB9A4595 31694BEB 20AA489D 6649975E 1BFCF8C4 741B78B4 B223007F")
+        sm2A = lib.sm2.SM2(
+            bytes.fromhex("81EB26E9 41BB5AF1 6DF11649 5F906952 72AE2CD6 3D6C4AE1 678418BE 48230029"),
+            PA,
+            rnd_fn=lambda _: 0xD4DE1547_4DB74D06_491C440D_305E0124_00990F3E_390C7E87_153C12DB_2EA60BB3.to_bytes(32, "little")
+        )
+
+        PB = bytes.fromhex("04"
+                           "6AE848C5 7C53C7B1 B5FA99EB 2286AF07 8BA64C64 591B8B56 6F7357D5 76F16DFB"
+                           "EE489D77 1621A27B 36C5C799 2062E9CD 09A92643 86F3FBEA 54DFF693 05621C4D")
+        sm2B = lib.sm2.SM2(
+            bytes.fromhex("78512991 7D45A9EA 5437A593 56B82338 EAADDA6C EB199088 F14AE10D EFA229B5"),
+            PB,
+            rnd_fn=lambda _: 0x7E071248_14B30948_9125EAED_10111316_4EBF0F34_58C5BD88_335C1F9D_596243D6.to_bytes(32, "little")
+        )
+
+        tA, RA = sm2A.begin_key_exchange()
+        tB, RB = sm2B.begin_key_exchange()
+
+        KB = sm2B.end_key_exchange(tB, RA, PA, True, 16)
+        KA = sm2A.end_key_exchange(tA, RB, PB, False, 16)
+
+        self.assertEqual(KA, KB)
+        self.assertEqual(KA, bytes.fromhex("6C893473 54DE2484 C60B4AB1 FDE4C6E5"))
+
+    def test_keyxchg2(self):
+        for _ in range(10):
+            skA, pkA = lib.sm2.SM2().generate_keypair()
+            skB, pkB = lib.sm2.SM2().generate_keypair()
+
+            sm2A = lib.sm2.SM2(skA, uid=b"Alice", pc_mode=lib.sm2.SM2_PCMODE_COMPRESS)
+            sm2B = lib.sm2.SM2(skB, uid=b"Bob")
+
+            tA, RA = sm2A.begin_key_exchange()
+            tB, RB = sm2B.begin_key_exchange()
+
+            KB = sm2B.end_key_exchange(tB, RA, pkA, True, 17, b"Alice")
+            KA = sm2A.end_key_exchange(tA, RB, pkB, False, 17, b"Bob")
+
+            self.assertEqual(KA, KB)
+
+    def test_keyxchg3(self):
+        for _ in range(10):
+            skA, pkA = lib.sm2.SM2().generate_keypair()
+            skB, pkB = lib.sm2.SM2().generate_keypair()
+
+            sm2A = lib.sm2.SM2(skA, uid=b"Alice", pc_mode=lib.sm2.SM2_PCMODE_COMPRESS)
+            sm2B = alg.sm2.SM2(skB, uid=b"Bob")
+
+            tA, RA = sm2A.begin_key_exchange()
+            RB, tB = sm2B.begin_key_exchange()
+
+            KB = sm2B.end_key_exchange(17, tB, RA, b"Alice", pkA, alg.KEYXCHG_MODE.RESPONDER)
+            KA = sm2A.end_key_exchange(tA, RB, pkB, False, 17, b"Bob")
+
+            self.assertEqual(KA, KB)
 
 
 if __name__ == "__main__":

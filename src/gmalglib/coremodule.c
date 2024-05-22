@@ -927,6 +927,102 @@ cleanup:
     return ret;
 }
 
+static PyObject* PySM2_begin_key_exchange(PySM2Object* self, PyObject* Py_UNUSED(args))
+{
+    uint8_t random_pt[SM2_POINTBYTES_MAX_LENGTH] = { 0 };
+    SM2ModN t = { 0 };
+    uint8_t t_bytes[32] = { 0 };
+    int sm2_ret = 0;
+
+    sm2_ret = SM2_BeginKeyExchange(&self->sm2, &t, random_pt);
+
+    switch (sm2_ret)
+    {
+    case SM2_ERR_NEED_SK:           PyErr_SetString(PyExc_AttributeError, "Need secret key.");              return NULL;
+    case SM2_ERR_RANDOM_FAILED:     PyErr_SetString(PyExc_RuntimeError, "Failed to get random bytes.");     return NULL;
+    default: 
+        break;
+    }
+
+    UInt256_ToBytes(&t, t_bytes);
+    return Py_BuildValue("y#y#", (char*)t_bytes, (Py_ssize_t)32, random_pt, (Py_ssize_t)SM2_GET_POINTBYTES_LENGTH(self->sm2.pc_mode));
+}
+
+static PyObject* PySM2_end_key_exchange(PySM2Object* self, PyObject* args, PyObject* kwargs)
+{
+    char* keys[] = { "t", "random_pt", "pk", "is_responder", "klen", "uid" , NULL };
+
+    Py_buffer py_buffer_t = { 0 };
+    Py_buffer py_buffer_random_pt = { 0 };
+    Py_buffer py_buffer_pk = { 0 };
+    Py_buffer py_buffer_uid = { 0 };
+    uint64_t klen = 0;
+    int is_responder = 0;
+
+    PyObject* ret = NULL;
+    int sm2_ret = 0;
+
+    SM2ModN t = { 0 };
+    uint8_t* key = NULL;
+
+    if (!PyArg_ParseTupleAndKeywords(
+        args, kwargs, "y*y*y*pK|y*:end_key_exchange", keys,
+        &py_buffer_t,
+        &py_buffer_random_pt,
+        &py_buffer_pk,
+        &is_responder,
+        &klen,
+        &py_buffer_uid))
+        return NULL;
+
+    if (py_buffer_t.len != 32)
+    {
+        PyErr_SetString(PyExc_ValueError, "Incorrect t length.");
+        goto cleanup;
+    }
+
+    key = (uint8_t*)calloc(klen, sizeof(uint8_t));
+    if (!key)
+    {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate buffer.");
+        goto cleanup;
+    }
+
+    UInt256_FromBytes(py_buffer_t.buf, &t);
+
+    sm2_ret = SM2_EndKeyExchange(
+        &self->sm2,
+        &t,
+        py_buffer_random_pt.buf, py_buffer_random_pt.len,
+        py_buffer_pk.buf, py_buffer_pk.len,
+        py_buffer_uid.buf, py_buffer_uid.len,
+        is_responder,
+        klen,
+        key
+    );
+    switch (sm2_ret)
+    {
+    case SM2_ERR_NEED_PK:           PyErr_SetString(PyExc_AttributeError, "Need public key.");              goto cleanup;
+    case SM2_ERR_INVALID_T:         PyErr_SetString(PyExc_ValueError, "Invalid t value.");                  goto cleanup;
+    case SM2_ERR_INVALID_R:         PyErr_SetString(PyExc_ValueError, "Invalid R point.");                  goto cleanup;
+    case SM2_ERR_INVALID_PK:        PyErr_SetString(PyExc_ValueError, "Invalid public key.");               goto cleanup;
+    case SM2_ERR_UID_OVERFLOW:      PyErr_SetString(PyExc_OverflowError, "uid too long.");                  goto cleanup;
+    case SM2_ERR_INVALID_SPOINT:    PyErr_SetString(PyExc_ValueError, "Invalid S point.");                  goto cleanup;
+    case SM2_ERR_KEY_OVERFLOW:      PyErr_SetString(PyExc_OverflowError, "Key stream too long.");           goto cleanup;
+    default:
+        ret = PyBytes_FromStringAndSize((char*)key, klen);
+    }
+
+cleanup:
+    if (key) free(key);
+    PyBuffer_Release(&py_buffer_t);
+    PyBuffer_Release(&py_buffer_random_pt);
+    PyBuffer_Release(&py_buffer_pk);
+    PyBuffer_Release(&py_buffer_uid);
+
+    return ret;
+}
+
 static PyMethodDef py_methods_def_SM2[] = {
     {"is_sk_valid",         (PyCFunction)PySM2_is_sk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check sk is valid.")},
     {"is_pk_valid",         (PyCFunction)PySM2_is_pk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check pk is valid.")},
@@ -941,6 +1037,8 @@ static PyMethodDef py_methods_def_SM2[] = {
     {"verify",              (PyCFunction)PySM2_verify,              METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Verify on full message.")},
     {"encrypt",             (PyCFunction)PySM2_encrypt,             METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Encrypt data.")},
     {"decrypt",             (PyCFunction)PySM2_decrypt,             METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Decrypt data.")},
+    {"begin_key_exchange",  (PyCFunction)PySM2_begin_key_exchange,  METH_NOARGS,                                    PyDoc_STR("Begin key exchange.")},
+    {"end_key_exchange",    (PyCFunction)PySM2_end_key_exchange,    METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("End key exchange.")},
     {NULL}
 };
 

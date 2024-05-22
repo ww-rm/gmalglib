@@ -134,3 +134,26 @@ class SM2:
 
     def decrypt(self, cipher: bytes) -> bytes:
         """解密数据."""
+
+    def begin_key_exchange(self) -> Tuple[bytes, bytes]:
+        """开始密钥交换.
+
+        Returns:
+            t: t 值.
+            random_pt: 随机点 R.
+        """
+
+    def end_key_exchange(self, t: bytes, random_pt: bytes, pk: bytes, is_responder: bool, klen: int, uid: bytes = SM2_DEFAULT_UID) -> bytes:
+        """结束密钥交换.
+
+        Args:
+            t: 使用 `begin_key_exchange` 产生的自己的 t 值.
+            random_pt: 对方的随机点 R.
+            pk: 对方的公钥.
+            is_responder: 自己是否是响应方, 否则是发起方.
+            klen: 要生成的密钥长度.
+            uid: 对方的用户 ID.
+
+        Returns:
+            key: 交换的指定长度密钥.
+        """
