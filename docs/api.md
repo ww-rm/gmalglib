@@ -14,6 +14,10 @@
 
 ---
 
+::: gmalglib.sm2
+
+---
+
 ::: gmalglib.sm3
 
 ---
@@ -23,10 +27,6 @@
 ---
 
 ::: gmalglib.zuc
-
----
-
-::: gmalglib.sm2
 
 ---
 
