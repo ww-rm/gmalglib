@@ -78,7 +78,7 @@ def sm2_get_pk(sk: bytes, pc_mode: __T.Literal["raw", "compress", "mix"] = "raw"
 
 
 def sm2_convert_pk(pk: bytes, pc_mode: __T.Literal["raw", "compress", "mix"] = "raw") -> bytes:
-    """由私钥得到公钥."""
+    """转换公钥格式."""
 
     return __sm2.SM2.convert_pk(pk, __sm2_pcmode[pc_mode])
 
@@ -94,47 +94,32 @@ def sm2_generate_keypair(pc_mode: __T.Literal["raw", "compress", "mix"] = "raw")
     return __sm2.SM2(pc_mode=__sm2_pcmode[pc_mode]).generate_keypair()
 
 
-def sm2_get_entity_info(pk: bytes, uid: __T.Optional[bytes] = None) -> bytes:
+def sm2_get_entity_info(pk: bytes, uid: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:
     """获取实体信息."""
-
-    if uid is None:
-        uid = __sm2.SM2_DEFAULT_UID
 
     return __sm2.SM2(pk=pk, uid=uid).get_entity_info()
 
 
-def sm2_sign_digest(sk: bytes, digest: bytes, uid: __T.Optional[bytes] = None) -> bytes:
+def sm2_sign_digest(sk: bytes, digest: bytes, uid: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:
     """对摘要进行签名."""
-
-    if uid is None:
-        uid = __sm2.SM2_DEFAULT_UID
 
     return __sm2.SM2(sk=sk, uid=uid).sign_digest(digest)
 
 
-def sm2_sign(sk: bytes, msg: bytes, uid: __T.Optional[bytes] = None) -> bytes:
+def sm2_sign(sk: bytes, msg: bytes, uid: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:
     """对消息进行签名."""
-
-    if uid is None:
-        uid = __sm2.SM2_DEFAULT_UID
 
     return __sm2.SM2(sk=sk, uid=uid).sign(msg)
 
 
-def sm2_verify_digest(pk: bytes, digest: bytes, uid: __T.Optional[bytes] = None) -> bytes:
+def sm2_verify_digest(pk: bytes, digest: bytes, uid: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:
     """对摘要进行验签."""
-
-    if uid is None:
-        uid = __sm2.SM2_DEFAULT_UID
 
     return __sm2.SM2(pk=pk, uid=uid).verify_digest(digest)
 
 
-def sm2_verify(pk: bytes, msg: bytes, uid: __T.Optional[bytes] = None) -> bytes:
+def sm2_verify(pk: bytes, msg: bytes, uid: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:
     """对消息进行验签."""
-
-    if uid is None:
-        uid = __sm2.SM2_DEFAULT_UID
 
     return __sm2.SM2(pk=pk, uid=uid).verify(msg)
 
@@ -149,3 +134,34 @@ def sm2_decrypt(sk: bytes, cipher: bytes) -> bytes:
     """解密数据."""
 
     return __sm2.SM2(sk=sk).decrypt(cipher)
+
+
+def sm2_begin_key_exchange(sk: bytes, pc_mode: __T.Literal["raw", "compress", "mix"] = "raw") -> __T.Tuple[bytes, bytes]:
+    """开始密钥交换.
+
+    Returns:
+        t: t 值.
+        random_pt: 随机点 R.
+    """
+
+    return __sm2.SM2(sk, pc_mode=pc_mode).begin_key_exchange()
+
+
+def sm2_end_key_exchange(pk: bytes, t: bytes, random_pt: bytes, pk_another: bytes, is_responder: bool, klen: int, uid: bytes = __sm2.SM2_DEFAULT_UID, uid_another: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:
+    """结束密钥交换.
+
+    Args:
+        pk: 自己的公钥.
+        t: 从 begin_key_exchange 得到的 t 值.
+        random_pt: 对方的随机点 R.
+        pk_another: 对方的公钥.
+        is_responder: 自己是否是响应方, 否则是发起方.
+        klen: 要生成的密钥长度.
+        uid: 自己的用户 ID.
+        uid_another: 对方的用户 ID.
+
+    Returns:
+        key: 交换的密钥.
+    """
+
+    return __sm2.SM2(pk=pk, uid=uid).end_key_exchange(t, random_pt, pk_another, is_responder, klen, uid_another)
