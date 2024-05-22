@@ -23,7 +23,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{062360DE-6D98-4850-B69F-1581C6FD4872}</ProjectGuid>
-    <RootNamespace>zuctest</RootNamespace>
+    <RootNamespace>sm2curvetest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

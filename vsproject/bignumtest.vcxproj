@@ -21,7 +21,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{1B43C28D-65BD-4451-BF2B-1FC877C1D3CB}</ProjectGuid>
-    <RootNamespace>zuctest</RootNamespace>
+    <RootNamespace>bignumtest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
