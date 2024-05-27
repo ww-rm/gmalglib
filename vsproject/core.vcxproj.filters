@@ -30,6 +30,9 @@
     <ClInclude Include="..\include\gmalglib\sm2curve.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gmalglib\sm2table.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gmalglib\coremodule.c">
@@ -54,6 +57,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gmalglib\core\sm2curve.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\sm2table.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -15,6 +15,7 @@
     <ClInclude Include="..\include\gmalglib\random.h" />
     <ClInclude Include="..\include\gmalglib\sm2.h" />
     <ClInclude Include="..\include\gmalglib\sm2curve.h" />
+    <ClInclude Include="..\include\gmalglib\sm2table.h" />
     <ClInclude Include="..\include\gmalglib\sm3.h" />
     <ClInclude Include="..\include\gmalglib\sm4.h" />
     <ClInclude Include="..\include\gmalglib\zuc.h" />
@@ -24,6 +25,7 @@
     <ClCompile Include="..\src\gmalglib\core\random.c" />
     <ClCompile Include="..\src\gmalglib\core\sm2.c" />
     <ClCompile Include="..\src\gmalglib\core\sm2curve.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm2table.c" />
     <ClCompile Include="..\src\gmalglib\core\sm3.c" />
     <ClCompile Include="..\src\gmalglib\core\sm4.c" />
     <ClCompile Include="..\src\gmalglib\core\zuc.c" />
@@ -47,7 +49,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>

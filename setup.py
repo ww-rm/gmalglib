@@ -9,6 +9,7 @@ core_module = Extension(
         "src/gmalglib/core/zuc.c",
         "src/gmalglib/core/bignum.c",
         "src/gmalglib/core/random.c",
+        "src/gmalglib/core/sm2table.c",
         "src/gmalglib/core/sm2curve.c",
         "src/gmalglib/core/sm2.c",
     ],
@@ -22,6 +23,7 @@ core_module = Extension(
         "include/gmalglib/zuc.h",
         "include/gmalglib/bignum.h",
         "include/gmalglib/random.h",
+        "include/gmalglib/sm2table.h",
         "include/gmalglib/sm2curve.h",
         "include/gmalglib/sm2.h",
     ]

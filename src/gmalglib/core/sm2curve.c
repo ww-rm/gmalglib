@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <gmalglib/bignum.h>
 #include <gmalglib/sm2curve.h>
+#include <gmalglib/sm2table.h>
 
 #ifdef _DEBUG
 
@@ -632,7 +633,18 @@ void SM2JacobPointMont_Sub(const SM2JacobPointMont* X, const SM2JacobPointMont* 
 
 void SM2JacobPointMont_MulG(const UInt256* k, SM2JacobPointMont* X)
 {
-    SM2JacobPointMont_Mul(k, CONSTS_JACOB_G, X);
+    uint32_t i;
+    uint32_t part_k;
+    SM2JacobPointMont_SetInf(X);
+
+    for (i = 0; i < 32; i++)
+    {
+        part_k = k->u8[i];
+        if (part_k > 0)
+        {
+            SM2JacobPointMont_Add(X, SM2_MULG_TABLE_U8 + i * 256 + part_k, X);
+        }
+    }
 }
 
 #ifdef _DEBUG

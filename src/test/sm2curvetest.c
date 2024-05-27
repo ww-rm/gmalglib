@@ -14,7 +14,7 @@ void test_curve()
     SM2JacobPointMont A = { 0 };
     SM2JacobPointMont B = { 0 };
     SM2JacobPointMont C = { 0 };
-    UInt256 e = { 7 };
+    UInt256 e = { 7, 9 };
 
     SM2JacobPointMont_FromPoint(&_G, &G);
     assert(SM2JacobPointMont_IsOnCurve(&G));
@@ -23,11 +23,12 @@ void test_curve()
     SM2JacobPointMont_Add(&G, &A, &A);
     assert(SM2JacobPointMont_IsEqual(&A, &R));
 
-    SM2JacobPointMont_Add(&G, &A, &A);
-    SM2JacobPointMont_Add(&G, &A, &A);
-    SM2JacobPointMont_Add(&G, &A, &A);
-    SM2JacobPointMont_Add(&G, &A, &A);
-    SM2JacobPointMont_Add(&G, &A, &A);
+    //SM2JacobPointMont_Add(&G, &A, &A);
+    //SM2JacobPointMont_Add(&G, &A, &A);
+    //SM2JacobPointMont_Add(&G, &A, &A);
+    //SM2JacobPointMont_Add(&G, &A, &A);
+    //SM2JacobPointMont_Add(&G, &A, &A);
+    SM2JacobPointMont_Mul(&e, &G, &A);
 
     SM2JacobPointMont_MulG(&e, &B);
 
@@ -64,12 +65,56 @@ void test_convert()
     printf("SM2 Convert Test OK.\n");
 }
 
+void make_table()
+{
+    for (int i = 0; i < 32; i++) {
+        SM2JacobPointMont G = { 0 };
+        SM2JacobPointMont P = { 0 };
+
+        SM2JacobPointMont_SetInf(&P);
+
+        // u8[i]G
+        SM2JacobPointMont_FromPoint(SM2_PARAMS_G, &G);
+        UInt256 k = { 0 };
+        k.u8[i] = 0x01;
+        SM2JacobPointMont_Mul(&k, &G, &G);
+
+        printf("    // u8[%d]\n", i);
+        for (int j = 0; j < 256; j++)
+        {
+            printf("    {{.u32 = { ");
+            printf("0x%08X", P.x.u32[0]);
+            for (int n = 1; n < 8; n++)
+                printf(", 0x%08X", P.x.u32[n]);
+            printf(" }},\n");
+
+            printf("     {.u32 = { ");
+            printf("0x%08X", P.y.u32[0]);
+            for (int n = 1; n < 8; n++)
+                printf(", 0x%08X", P.y.u32[n]);
+            printf(" }},\n");
+
+            printf("     {.u32 = { ");
+            printf("0x%08X", P.z.u32[0]);
+            for (int n = 1; n < 8; n++)
+                printf(", 0x%08X", P.z.u32[n]);
+            printf(" }}},\n");
+
+            SM2JacobPointMont_Add(&P, &G, &P);
+        }
+        printf("\n");
+    }
+}
+
+
 int main()
 {
     printf("========== SM2Curve Test ==========\n");
 
     test_curve();
     test_convert();
+
+    //make_table();
 
     return 0;
 }
