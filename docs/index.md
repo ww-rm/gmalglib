@@ -26,21 +26,21 @@ pip install gmalglib
 
 ```plain
 ==================== SM2 Benchmark Test (1000 times, 32 bytes data) ====================
-SM2.encrypt             : 2.391558s
-SM2.decrypt             : 1.092445s
-SM2.sign_digest         : 1.062552s
-SM2.verify_digest       : 2.096187s
-SM2.sign                : 1.067850s
-SM2.verify              : 2.055190s
-SM2.begin_key_exchange  : 1.159822s
-SM2.end_key_exchange    : 1.633471s
+SM2.encrypt             : 0.766956s
+SM2.decrypt             : 0.678737s
+SM2.sign_digest         : 0.100963s
+SM2.verify_digest       : 0.707086s
+SM2.sign                : 0.100675s
+SM2.verify              : 0.729823s
+SM2.begin_key_exchange  : 0.153279s
+SM2.end_key_exchange    : 0.988622s
 ==================== SM3 Benchmark Test (1,000,000,000 bytes data) ====================
-SM3.update & SM3.digest : 5.118763s
+SM3.update & SM3.digest : 3.014004s
 ==================== SM4 Benchmark Test (1000000 times) ====================
-SM4.encrypt             : 0.369991s
-SM4.decrypt             : 0.297077s
+SM4.encrypt             : 0.185529s
+SM4.decrypt             : 0.184629s
 ==================== ZUC Benchmark Test (1000000 times) ====================
-zuc.generate            : 0.050301s
+zuc.generate            : 0.029673s
 ```
 
 ## 下一步
