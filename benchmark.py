@@ -16,35 +16,35 @@ def benchmark_sm2(times: int = 1000, data_len: int = 32):
     data = secrets.token_bytes(data_len)
 
     t = timeit("sm2A.encrypt(data)", number=times, globals=locals())
-    print(f"SM2.encrypt\t\t: {t:.6f}s")
+    print(f"SM2.encrypt\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     cipher = sm2A.encrypt(data)
 
     t = timeit("sm2A.decrypt(cipher)", number=times, globals=locals())
-    print(f"SM2.decrypt\t\t: {t:.6f}s")
+    print(f"SM2.decrypt\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     t = timeit("sm2A.sign_digest(data)", number=times, globals=locals())
-    print(f"SM2.sign_digest\t\t: {t:.6f}s")
+    print(f"SM2.sign_digest\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     signature = sm2A.sign_digest(data)
     t = timeit("sm2A.verify_digest(data, signature)", number=times, globals=locals())
-    print(f"SM2.verify_digest\t: {t:.6f}s")
+    print(f"SM2.verify_digest\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     t = timeit("sm2A.sign(data)", number=times, globals=locals())
-    print(f"SM2.sign\t\t: {t:.6f}s")
+    print(f"SM2.sign\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     signature = sm2A.sign(data)
     t = timeit("sm2A.verify(data, signature)", number=times, globals=locals())
-    print(f"SM2.verify\t\t: {t:.6f}s")
+    print(f"SM2.verify\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     t = timeit("sm2A.begin_key_exchange()", number=times, globals=locals())
-    print(f"SM2.begin_key_exchange\t: {t:.6f}s")
+    print(f"SM2.begin_key_exchange\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     tA, RA = sm2A.begin_key_exchange()
     tB, RB = sm2B.begin_key_exchange()
 
     t = timeit("sm2B.end_key_exchange(tB, RA, pkA, True, 16)", number=times, globals=locals())
-    print(f"SM2.end_key_exchange\t: {t:.6f}s")
+    print(f"SM2.end_key_exchange\t: {t:.6f}s ({times / t:.2f} times/s)")
 
 
 def benchmark_sm3(data_len: int = 1000000000):
@@ -53,7 +53,7 @@ def benchmark_sm3(data_len: int = 1000000000):
     sm3 = gmalglib.sm3.SM3()
     data = secrets.token_bytes(data_len)
     t = timeit("sm3.update(data); sm3.digest()", number=1, globals=locals())
-    print(f"SM3.update & SM3.digest\t: {t:.6f}s")
+    print(f"SM3.update & SM3.digest\t: {t:.6f}s ({data_len / t:,.0f} B/s)")
 
 
 def benchmark_sm4(times: int = 1000000):
@@ -65,11 +65,11 @@ def benchmark_sm4(times: int = 1000000):
     sm4 = gmalglib.sm4.SM4(key)
 
     t = timeit("sm4.encrypt(plain)", number=times, globals=locals())
-    print(f"SM4.encrypt\t\t: {t:.6f}s")
+    print(f"SM4.encrypt\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
     cipher = sm4.encrypt(plain)
     t = timeit("sm4.decrypt(cipher)", number=times, globals=locals())
-    print(f"SM4.decrypt\t\t: {t:.6f}s")
+    print(f"SM4.decrypt\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
 
 def benchmark_zuc(times: int = 1000000):
@@ -81,7 +81,7 @@ def benchmark_zuc(times: int = 1000000):
     zuc = gmalglib.zuc.ZUC(key, iv)
 
     t = timeit("zuc.generate()", number=times, globals=locals())
-    print(f"zuc.generate\t\t: {t:.6f}s")
+    print(f"zuc.generate\t\t: {t:.6f}s ({times / t:.2f} times/s)")
 
 
 if __name__ == "__main__":

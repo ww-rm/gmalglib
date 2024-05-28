@@ -66,19 +66,19 @@ def rnd_fn(n: int) -> bytes: ...
 
 ```plain
 ==================== SM2 Benchmark Test (1000 times, 32 bytes data) ====================
-SM2.encrypt             : 0.766956s
-SM2.decrypt             : 0.678737s
-SM2.sign_digest         : 0.100963s
-SM2.verify_digest       : 0.707086s
-SM2.sign                : 0.100675s
-SM2.verify              : 0.729823s
-SM2.begin_key_exchange  : 0.153279s
-SM2.end_key_exchange    : 0.988622s
+SM2.encrypt             : 0.779147s (1283.45 times/s)
+SM2.decrypt             : 0.675670s (1480.01 times/s)
+SM2.sign_digest         : 0.100938s (9907.09 times/s)
+SM2.verify_digest       : 0.718463s (1391.86 times/s)
+SM2.sign                : 0.101745s (9828.51 times/s)
+SM2.verify              : 0.721698s (1385.62 times/s)
+SM2.begin_key_exchange  : 0.146746s (6814.50 times/s)
+SM2.end_key_exchange    : 0.975762s (1024.84 times/s)
 ==================== SM3 Benchmark Test (1,000,000,000 bytes data) ====================
-SM3.update & SM3.digest : 3.014004s
+SM3.update & SM3.digest : 3.046274s (328,269,837 B/s)
 ==================== SM4 Benchmark Test (1000000 times) ====================
-SM4.encrypt             : 0.185529s
-SM4.decrypt             : 0.184629s
+SM4.encrypt             : 0.187035s (5346590.03 times/s)
+SM4.decrypt             : 0.186591s (5359300.93 times/s)
 ==================== ZUC Benchmark Test (1000000 times) ====================
-zuc.generate            : 0.029673s
+zuc.generate            : 0.030008s (33324668.92 times/s)
 ```
