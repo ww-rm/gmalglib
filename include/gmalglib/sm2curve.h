@@ -53,6 +53,7 @@ int SM2JacobPointMont_IsInf(const SM2JacobPointMont* X);
 void SM2JacobPointMont_SetInf(SM2JacobPointMont* X);
 int SM2JacobPointMont_IsOnCurve(const SM2JacobPointMont* X);
 int SM2JacobPointMont_IsEqual(const SM2JacobPointMont* X, const SM2JacobPointMont* Y);
+void SM2JacobPointMont_Dbl(const SM2JacobPointMont* X, SM2JacobPointMont* Y);
 void SM2JacobPointMont_Add(const SM2JacobPointMont* X, const SM2JacobPointMont* Y, SM2JacobPointMont* Z);
 void SM2JacobPointMont_Mul(const UInt256* k, const SM2JacobPointMont* X, SM2JacobPointMont* Y);
 void SM2JacobPointMont_Neg(const SM2JacobPointMont* X, SM2JacobPointMont* Y);

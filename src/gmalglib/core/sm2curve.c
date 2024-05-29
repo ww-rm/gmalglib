@@ -9,6 +9,9 @@
 
 #endif // _DEBUG
 
+#define POINTMUL_WSIZE          4
+#define POINTMUL_TSIZE          (1 << (POINTMUL_WSIZE - 1))
+
 
 // 0xFFFFFFFE_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_00000000_FFFFFFFF_FFFFFFFF
 static const UInt256 _CONSTS_P = { .u32 = {
@@ -516,6 +519,18 @@ void _SM2JacobPointMont_Dbl(const SM2JacobPointMont* X, SM2JacobPointMont* Y)
     SM2ModP_MontSub(&Y->y, &t3, &Y->y);
 }
 
+void SM2JacobPointMont_Dbl(const SM2JacobPointMont* X, SM2JacobPointMont* Y)
+{
+    if (SM2JacobPointMont_IsInf(X))
+    {
+        *Y = *X;
+    }
+    else
+    {
+        _SM2JacobPointMont_Dbl(X, Y);
+    }
+}
+
 static 
 void _SM2JacobPointMont_Add(const SM2JacobPointMont* X, const SM2JacobPointMont* Y, SM2JacobPointMont* Z)
 {
@@ -592,29 +607,89 @@ void SM2JacobPointMont_Add(const SM2JacobPointMont* X, const SM2JacobPointMont* 
     }
 }
 
-void SM2JacobPointMont_Mul(const UInt256* k, const SM2JacobPointMont* X, SM2JacobPointMont* Y)
-{
-    int32_t i;
-    uint32_t j;
-    uint64_t tmp = 0;
-    SM2JacobPointMont Y_tmp = { 0 };
-    SM2JacobPointMont_SetInf(&Y_tmp);
+//static
+//void _SM2JacobPointMont_Mul_DblAndAdd(const UInt256* k, const SM2JacobPointMont* X, SM2JacobPointMont* Y)
+//{
+//    int32_t i;
+//    uint32_t j;
+//    uint64_t tmp = 0;
+//    SM2JacobPointMont Y_tmp = { 0 };
+//    SM2JacobPointMont_SetInf(&Y_tmp);
+//
+//    for (i = 3; i >= 0; i--)
+//    {
+//        tmp = k->u64[i];
+//        for (j = 0; j < 64; j++)
+//        {
+//            SM2JacobPointMont_Dbl(&Y_tmp, &Y_tmp);
+//            if (tmp & 0x8000000000000000)
+//            {
+//                SM2JacobPointMont_Add(&Y_tmp, X, &Y_tmp);
+//            }
+//            tmp <<= 1;
+//        }
+//    }
+//
+//    *Y = Y_tmp;
+//}
 
-    for (i = 3; i >= 0; i--)
+static
+void _SM2JacobPointMont_Mul_SlidingWindow(const UInt256* k, const SM2JacobPointMont* X, SM2JacobPointMont* Y)
+{
+    int32_t i = 0;
+    int32_t j = 0;
+    int32_t w = 0;
+    uint32_t wvalue = 0;
+    SM2JacobPointMont Y_tmp = { 0 };
+
+    // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
+    SM2JacobPointMont table[POINTMUL_TSIZE] = { *X };
+    SM2JacobPointMont_Dbl(X, &Y_tmp);
+    for (i = 0; i < POINTMUL_TSIZE - 1; i++)
     {
-        tmp = k->u64[i];
-        for (j = 0; j < 64; j++)
+        SM2JacobPointMont_Add(table + i, &Y_tmp, table + i + 1);
+    }
+
+    SM2JacobPointMont_SetInf(&Y_tmp);
+    i = 255;
+    while (i >= 0)
+    {
+        wvalue = (k->u64[i / 64] >> (i % 64)) & 0x1;
+
+        if (wvalue == 0)
         {
-            SM2JacobPointMont_Add(&Y_tmp, &Y_tmp, &Y_tmp);
-            if (tmp & 0x8000000000000000)
+            SM2JacobPointMont_Dbl(&Y_tmp, &Y_tmp);
+            i--;
+        }
+        else
+        {
+            // find a longest 1...1 bits in window size
+            j = i;
+            for (w = i - 1; w >= 0 && w > i - POINTMUL_WSIZE; w--)
             {
-                SM2JacobPointMont_Add(&Y_tmp, X, &Y_tmp);
+                if ((k->u64[w / 64] >> (w % 64)) & 0x1)
+                {
+                    wvalue = (wvalue << (j - w)) | 0x1;
+                    j = w;
+                }
             }
-            tmp <<= 1;
+
+            while (i >= j)
+            {
+                SM2JacobPointMont_Dbl(&Y_tmp, &Y_tmp);
+                i--;
+            }
+
+            SM2JacobPointMont_Add(&Y_tmp, table + (wvalue >> 1), &Y_tmp);
         }
     }
 
     *Y = Y_tmp;
+}
+
+void SM2JacobPointMont_Mul(const UInt256* k, const SM2JacobPointMont* X, SM2JacobPointMont* Y)
+{
+    _SM2JacobPointMont_Mul_SlidingWindow(k, X, Y);
 }
 
 void SM2JacobPointMont_Neg(const SM2JacobPointMont* X, SM2JacobPointMont* Y)
