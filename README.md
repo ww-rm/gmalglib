@@ -66,19 +66,19 @@ def rnd_fn(n: int) -> bytes: ...
 
 ```plain
 ==================== SM2 Benchmark Test (1000 times, 32 bytes data) ====================
-SM2.encrypt             : 0.482069s (2074.39 times/s)
-SM2.decrypt             : 0.380268s (2629.72 times/s)
-SM2.sign_digest         : 0.100307s (9969.43 times/s)
-SM2.verify_digest       : 0.419963s (2381.16 times/s)
-SM2.sign                : 0.103122s (9697.30 times/s)
-SM2.verify              : 0.411118s (2432.39 times/s)
-SM2.begin_key_exchange  : 0.150200s (6657.79 times/s)
-SM2.end_key_exchange    : 0.536930s (1862.44 times/s)
+SM2.encrypt             : 0.453286s (2206.12 times/s)
+SM2.decrypt             : 0.353108s (2831.99 times/s)
+SM2.sign_digest         : 0.086778s (11523.62 times/s)
+SM2.verify_digest       : 0.407510s (2453.92 times/s)
+SM2.sign                : 0.088102s (11350.42 times/s)
+SM2.verify              : 0.415350s (2407.61 times/s)
+SM2.begin_key_exchange  : 0.119090s (8396.99 times/s)
+SM2.end_key_exchange    : 0.535585s (1867.12 times/s)
 ==================== SM3 Benchmark Test (1,000,000,000 bytes data) ====================
-SM3.update & SM3.digest : 3.082285s (324,434,643 B/s)
+SM3.update & SM3.digest : 3.061764s (326,609,116 B/s)
 ==================== SM4 Benchmark Test (1000000 times) ====================
-SM4.encrypt             : 0.199543s (5011458.70 times/s)
-SM4.decrypt             : 0.186599s (5359085.53 times/s)
+SM4.encrypt             : 0.188778s (5297230.24 times/s)
+SM4.decrypt             : 0.186436s (5363756.56 times/s)
 ==================== ZUC Benchmark Test (1000000 times) ====================
-zuc.generate            : 0.030584s (32697048.76 times/s)
+zuc.generate            : 0.037984s (26326735.85 times/s)
 ```
