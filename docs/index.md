@@ -26,21 +26,21 @@ pip install gmalglib
 
 ```plain
 ==================== SM2 Benchmark Test (1000 times, 32 bytes data) ====================
-SM2.encrypt             : 0.779147s (1283.45 times/s)
-SM2.decrypt             : 0.675670s (1480.01 times/s)
-SM2.sign_digest         : 0.100938s (9907.09 times/s)
-SM2.verify_digest       : 0.718463s (1391.86 times/s)
-SM2.sign                : 0.101745s (9828.51 times/s)
-SM2.verify              : 0.721698s (1385.62 times/s)
-SM2.begin_key_exchange  : 0.146746s (6814.50 times/s)
-SM2.end_key_exchange    : 0.975762s (1024.84 times/s)
+SM2.encrypt             : 0.482069s (2074.39 times/s)
+SM2.decrypt             : 0.380268s (2629.72 times/s)
+SM2.sign_digest         : 0.100307s (9969.43 times/s)
+SM2.verify_digest       : 0.419963s (2381.16 times/s)
+SM2.sign                : 0.103122s (9697.30 times/s)
+SM2.verify              : 0.411118s (2432.39 times/s)
+SM2.begin_key_exchange  : 0.150200s (6657.79 times/s)
+SM2.end_key_exchange    : 0.536930s (1862.44 times/s)
 ==================== SM3 Benchmark Test (1,000,000,000 bytes data) ====================
-SM3.update & SM3.digest : 3.046274s (328,269,837 B/s)
+SM3.update & SM3.digest : 3.082285s (324,434,643 B/s)
 ==================== SM4 Benchmark Test (1000000 times) ====================
-SM4.encrypt             : 0.187035s (5346590.03 times/s)
-SM4.decrypt             : 0.186591s (5359300.93 times/s)
+SM4.encrypt             : 0.199543s (5011458.70 times/s)
+SM4.decrypt             : 0.186599s (5359085.53 times/s)
 ==================== ZUC Benchmark Test (1000000 times) ====================
-zuc.generate            : 0.030008s (33324668.92 times/s)
+zuc.generate            : 0.030584s (32697048.76 times/s)
 ```
 
 ## 下一步
