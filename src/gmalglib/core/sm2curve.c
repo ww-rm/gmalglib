@@ -9,8 +9,8 @@
 
 #endif // _DEBUG
 
-#define POINTMUL_WSIZE          4
-#define POINTMUL_TSIZE          (1 << (POINTMUL_WSIZE - 1))
+#define SCALARMUL_WSIZE          4
+#define SCALARMUL_TSIZE          (1 << (SCALARMUL_WSIZE - 1))
 
 
 // 0xFFFFFFFE_FFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_00000000_FFFFFFFF_FFFFFFFF
@@ -190,27 +190,55 @@ void SM2ModP_MontSub(const SM2ModPMont* x, const SM2ModPMont* y, SM2ModPMont* z)
 static 
 void SM2ModP_MontPow(const SM2ModPMont* x, const UInt256* e, SM2ModPMont* y)
 {
-    int32_t i;
-    uint32_t j;
-    uint64_t tmp = 0;
-    SM2ModPMont _y_tmp = *CONSTS_MODP_MONT_ONE;
-    SM2ModPMont* y_tmp = &_y_tmp;
+    int32_t i = 0;
+    int32_t j = 0;
+    int32_t w = 0;
+    uint32_t wvalue = 0;
+    SM2ModPMont y_tmp = { 0 };
 
-    for (i = 3; i >= 0; i--)
+    // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
+    SM2ModPMont table[SCALARMUL_TSIZE] = { *x };
+    SM2ModP_MontMul(x, x, &y_tmp);
+    for (i = 0; i < SCALARMUL_TSIZE - 1; i++)
     {
-        tmp = e->u64[i];
-        for (j = 0; j < 64; j++)
+        SM2ModP_MontMul(table + i, &y_tmp, table + i + 1);
+    }
+
+    y_tmp = *CONSTS_MODP_MONT_ONE;
+    i = 255;
+    while (i >= 0)
+    {
+        wvalue = (e->u64[i / 64] >> (i % 64)) & 0x1;
+
+        if (wvalue == 0)
         {
-            SM2ModP_MontMul(y_tmp, y_tmp, y_tmp);
-            if (tmp & 0x8000000000000000)
+            SM2ModP_MontMul(&y_tmp, &y_tmp, &y_tmp);
+            i--;
+        }
+        else
+        {
+            // find a longest 1...1 bits in window size
+            j = i;
+            for (w = i - 1; w >= 0 && w > i - SCALARMUL_WSIZE; w--)
             {
-                SM2ModP_MontMul(y_tmp, x, y_tmp);
+                if ((e->u64[w / 64] >> (w % 64)) & 0x1)
+                {
+                    wvalue = (wvalue << (j - w)) | 0x1;
+                    j = w;
+                }
             }
-            tmp <<= 1;
+
+            while (i >= j)
+            {
+                SM2ModP_MontMul(&y_tmp, &y_tmp, &y_tmp);
+                i--;
+            }
+
+            SM2ModP_MontMul(&y_tmp, table + (wvalue >> 1), &y_tmp);
         }
     }
 
-    *y = *y_tmp;
+    *y = y_tmp;
 }
 
 static 
@@ -643,9 +671,9 @@ void _SM2JacobPointMont_Mul_SlidingWindow(const UInt256* k, const SM2JacobPointM
     SM2JacobPointMont Y_tmp = { 0 };
 
     // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
-    SM2JacobPointMont table[POINTMUL_TSIZE] = { *X };
+    SM2JacobPointMont table[SCALARMUL_TSIZE] = { *X };
     SM2JacobPointMont_Dbl(X, &Y_tmp);
-    for (i = 0; i < POINTMUL_TSIZE - 1; i++)
+    for (i = 0; i < SCALARMUL_TSIZE - 1; i++)
     {
         SM2JacobPointMont_Add(table + i, &Y_tmp, table + i + 1);
     }
@@ -665,7 +693,7 @@ void _SM2JacobPointMont_Mul_SlidingWindow(const UInt256* k, const SM2JacobPointM
         {
             // find a longest 1...1 bits in window size
             j = i;
-            for (w = i - 1; w >= 0 && w > i - POINTMUL_WSIZE; w--)
+            for (w = i - 1; w >= 0 && w > i - SCALARMUL_WSIZE; w--)
             {
                 if ((k->u64[w / 64] >> (w % 64)) & 0x1)
                 {
