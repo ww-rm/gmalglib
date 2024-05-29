@@ -63,19 +63,19 @@ The benchmark test code can be found in [benchmark.py](https://github.com/ww-rm/
 
 ```plain
 ==================== SM2 Benchmark Test (1000 times, 32 bytes data) ====================
-SM2.encrypt             : 2.391558s
-SM2.decrypt             : 1.092445s
-SM2.sign_digest         : 1.062552s
-SM2.verify_digest       : 2.096187s
-SM2.sign                : 1.067850s
-SM2.verify              : 2.055190s
-SM2.begin_key_exchange  : 1.159822s
-SM2.end_key_exchange    : 1.633471s
+SM2.encrypt             : 0.454363s (2200.88 times/s)
+SM2.decrypt             : 0.356014s (2808.88 times/s)
+SM2.sign_digest         : 0.088565s (11291.12 times/s)
+SM2.verify_digest       : 0.409243s (2443.54 times/s)
+SM2.sign                : 0.087475s (11431.80 times/s)
+SM2.verify              : 0.404026s (2475.09 times/s)
+SM2.begin_key_exchange  : 0.086665s (11538.62 times/s)
+SM2.end_key_exchange    : 0.536552s (1863.75 times/s)
 ==================== SM3 Benchmark Test (1,000,000,000 bytes data) ====================
-SM3.update & SM3.digest : 5.118763s
+SM3.update & SM3.digest : 3.083487s (324,308,109 B/s)
 ==================== SM4 Benchmark Test (1000000 times) ====================
-SM4.encrypt             : 0.369991s
-SM4.decrypt             : 0.297077s
+SM4.encrypt             : 0.197393s (5066040.91 times/s)
+SM4.decrypt             : 0.185619s (5387391.13 times/s)
 ==================== ZUC Benchmark Test (1000000 times) ====================
-zuc.generate            : 0.050301s
+zuc.generate            : 0.028821s (34696561.22 times/s)
 ```

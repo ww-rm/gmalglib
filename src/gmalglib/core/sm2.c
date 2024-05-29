@@ -704,29 +704,31 @@ cleanup:
 }
 
 static
-int _SM2_BeginKeyExchange(SM2* self, SM2JacobPointMont* random_pt, SM2ModN* t)
+int _SM2_BeginKeyExchange(SM2* self, SM2Point* random_pt, SM2ModN* t)
 {
     SM2ModNMont r = { 0 };
-    SM2Point R = { 0 };
+    SM2JacobPointMont R = { 0 };
+    SM2ModN x_bar = { 0 };
 
     if (!RandomUInt256(&self->rand_alg, CONSTS_N_MINUS_ONE, &r))
         return SM2_ERR_RANDOM_FAILED;
 
-    SM2JacobPointMont_MulG(&r, random_pt);
+    SM2JacobPointMont_MulG(&r, &R);
+    SM2JacobPointMont_ToPoint(&R, random_pt);
 
     // w        =   ceil(ceil(log2(N)) / 2) - 1         = 127
     // 2^w      =   0x80000000000000000000000000000000
     // 2^w - 1  =   0x7fffffffffffffffffffffffffffffff
     // x_bar    =   2^w + (x & (2^w - 1))
-    SM2JacobPointMont_ToPoint(random_pt, &R);
-    R.x.u64[3] = 0;
-    R.x.u64[2] = 0;
-    R.x.u64[1] |= 0x8000000000000000;
+    x_bar = random_pt->x;
+    x_bar.u64[3] = 0;
+    x_bar.u64[2] = 0;
+    x_bar.u64[1] |= 0x8000000000000000;
 
-    SM2ModN_ToMont(&R.x, &R.x);
+    SM2ModN_ToMont(&x_bar, &x_bar);
     SM2ModN_ToMont(&r, &r);
 
-    SM2ModN_MontMul(&R.x, &r, t);
+    SM2ModN_MontMul(&x_bar, &r, t);
     SM2ModN_FromMont(t, t);
     SM2ModN_Add(&self->sk, t, t);
 
@@ -736,7 +738,7 @@ int _SM2_BeginKeyExchange(SM2* self, SM2JacobPointMont* random_pt, SM2ModN* t)
 int SM2_BeginKeyExchange(SM2* self, SM2ModN* t, uint8_t* random_pt)
 {
     int ret = 0;
-    SM2JacobPointMont R = { 0 };
+    SM2Point R = { 0 };
 
     if (!self->has_sk)
         return SM2_ERR_NEED_SK;
@@ -745,38 +747,39 @@ int SM2_BeginKeyExchange(SM2* self, SM2ModN* t, uint8_t* random_pt)
     if (ret != 0)
         return ret;
 
-    SM2JacobPointMont_ToBytes(&R, self->pc_mode, random_pt);
+    SM2Point_ToBytes(&R, self->pc_mode, random_pt);
     return 0;
 }
 
 static
-int _SM2_EndKeyExchange(SM2* self, const SM2ModN* t, const SM2JacobPointMont* random_pt, const SM2JacobPointMont* pk, const uint8_t* uid, uint64_t uid_len, int is_responder, uint64_t klen, uint8_t* key)
+int _SM2_EndKeyExchange(SM2* self, const SM2ModN* t, const SM2Point* random_pt, const SM2JacobPointMont* pk, const uint8_t* uid, uint64_t uid_len, int is_responder, uint64_t klen, uint8_t* key)
 {
     SM2JacobPointMont S = { 0 };
-    SM2Point R = { 0 };
+    SM2Point tmp = { 0 };
     SM3 sm3 = { 0 };
     uint8_t buffer[32] = { 0 };
+    SM2ModN x_bar = random_pt->x;
 
     // x_bar
-    SM2JacobPointMont_ToPoint(random_pt, &R);
-    R.x.u64[3] = 0;
-    R.x.u64[2] = 0;
-    R.x.u64[1] |= 0x8000000000000000;
+    x_bar.u64[3] = 0;
+    x_bar.u64[2] = 0;
+    x_bar.u64[1] |= 0x8000000000000000;
 
-    SM2JacobPointMont_Mul(&R.x, random_pt, &S);
+    SM2JacobPointMont_FromPoint(random_pt, &S);
+    SM2JacobPointMont_Mul(&x_bar, &S, &S);
     SM2JacobPointMont_Add(pk, &S, &S);
     SM2JacobPointMont_Mul(t, &S, &S);
 
     if (SM2JacobPointMont_IsInf(&S))
         return SM2_ERR_INVALID_SPOINT;
 
-    SM2JacobPointMont_ToPoint(&S, &R);
+    SM2JacobPointMont_ToPoint(&S, &tmp);
 
     SM3_Init(&sm3);
 
-    UInt256_ToBytes(&R.x, buffer);
+    UInt256_ToBytes(&tmp.x, buffer);
     SM3_Update(&sm3, buffer, 32);
-    UInt256_ToBytes(&R.y, buffer);
+    UInt256_ToBytes(&tmp.y, buffer);
     SM3_Update(&sm3, buffer, 32);
 
     _SM2_GetEntityInfo(pk, uid, uid_len, buffer);
@@ -800,7 +803,7 @@ int _SM2_EndKeyExchange(SM2* self, const SM2ModN* t, const SM2JacobPointMont* ra
 
 int SM2_EndKeyExchange(SM2* self, const SM2ModN* t, const uint8_t* random_pt, uint64_t random_pt_len, const uint8_t* pk, uint64_t pk_len, const uint8_t* uid, uint64_t uid_len, int is_responder, uint64_t klen, uint8_t* key)
 {
-    SM2JacobPointMont R = { 0 };
+    SM2Point R = { 0 };
     SM2JacobPointMont P = { 0 };
     int ret = 0;
 
@@ -810,7 +813,7 @@ int SM2_EndKeyExchange(SM2* self, const SM2ModN* t, const uint8_t* random_pt, ui
     if (UInt256_IsZero(t) || UInt256_Cmp(t, CONSTS_N_MINUS_ONE) > 0)
         return SM2_ERR_INVALID_T;
 
-    if (SM2JacobPointMont_FromBytes(random_pt, random_pt_len, &R) != 0)
+    if (SM2Point_FromBytes(random_pt, random_pt_len, &R) != 0)
         return SM2_ERR_INVALID_R;
 
     if (SM2JacobPointMont_FromBytes(pk, pk_len, &P) != 0)
