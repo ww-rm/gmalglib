@@ -42,11 +42,11 @@ void TO_BE(uint32_t word, uint8_t* bytes)
     bytes[3] = (uint8_t)(word);
 }
 
-static inline
-uint32_t T(uint32_t i)
-{
-    return i <= 15 ? 0x79cc4519 : 0x7a879d8a;
-}
+//static inline
+//uint32_t T(uint32_t i)
+//{
+//    return i <= 15 ? 0x79cc4519 : 0x7a879d8a;
+//}
 
 static inline
 uint32_t FF(uint32_t i, uint32_t X, uint32_t Y, uint32_t Z)
