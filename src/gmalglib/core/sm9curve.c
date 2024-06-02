@@ -12,6 +12,8 @@
 #define SCALARMUL_WSIZE          4
 #define SCALARMUL_TSIZE          (1 << (SCALARMUL_WSIZE - 1))
 
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Constants >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 // 0xB6400000_02A3A6F1_D603AB4F_F58EC745_21F2934B_1A7AEEDB_E56F9B27_E351457D
 static const UInt256 _CONSTS_P = { .u32 = { 0xE351457D, 0xE56F9B27, 0x1A7AEEDB, 0x21F2934B, 0xF58EC745, 0xD603AB4F, 0x02A3A6F1, 0xB6400000 } };
 static const UInt256* const CONSTS_P = &_CONSTS_P;
@@ -53,7 +55,6 @@ static const SM9FP1Mont* const CONSTS_FP1_MONT_FOUR = &_CONSTS_FP1_MONT_FOUR;
 static const SM9FP1Mont _CONSTS_FP1_MONT_P_MINUS_ONE = { .u32 = { 0xC6A28AFA, 0xCADF364F, 0x34F5DDB7, 0x43E52696, 0xEB1D8E8A, 0xAC07569F, 0x05474DE3, 0x6C800000 } };
 static const SM9FP1Mont* const CONSTS_FP1_MONT_P_MINUS_ONE = &_CONSTS_FP1_MONT_P_MINUS_ONE;
 
-
 // p - 2, used for Inv
 static const UInt256 _CONSTS_P_MINUS_TWO = { .u32 = { 0xE351457B, 0xE56F9B27, 0x1A7AEEDB, 0x21F2934B, 0xF58EC745, 0xD603AB4F, 0x02A3A6F1, 0xB6400000 } };
 static const UInt256* const CONSTS_P_MINUS_TWO = &_CONSTS_P_MINUS_TWO;
@@ -86,6 +87,8 @@ static const SM9JacobPoint1Mont _CONSTS_JACOB_G1 = {
     {.u32 = { 0x1CAEBA83, 0x1A9064D8, 0xE5851124, 0xDE0D6CB4, 0x0A7138BA, 0x29FC54B0, 0xFD5C590E, 0x49BFFFFF } }
 };
 static const SM9JacobPoint1Mont* const CONSTS_JACOB_G1 = &_CONSTS_JACOB_G1;
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Constants <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FP1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -419,7 +422,118 @@ int SM9Point1_IsOnCurve(const SM9Point1* X)
     return UInt256_Cmp(&left, &right) == 0;
 }
 
-// TODO: From and To Bytes
+uint64_t SM9Point1_ToBytes(const SM9Point1* X, int pc_mode, uint8_t* bytes)
+{
+    if (X->is_inf)
+    {
+        bytes[0] = 0x00;
+        return 1;
+    }
+
+    if (pc_mode == SM9_PCMODE_COMPRESS)
+    {
+        if (X->y.u8[0] & 0x1)
+            bytes[0] = 0x03;
+        else
+            bytes[0] = 0x02;
+        UInt256_ToBytes(&X->x, bytes + 1);
+        return 33;
+    }
+    else if (pc_mode == SM9_PCMODE_MIX)
+    {
+        if (X->y.u8[0] & 0x1)
+            bytes[0] = 0x07;
+        else
+            bytes[0] = 0x06;
+        UInt256_ToBytes(&X->x, bytes + 1);
+        UInt256_ToBytes(&X->y, bytes + 33);
+        return 65;
+    }
+    else
+    {
+        bytes[0] = 0x04;
+        UInt256_ToBytes(&X->x, bytes + 1);
+        UInt256_ToBytes(&X->y, bytes + 33);
+        return 65;
+    }
+
+    return 0;
+}
+
+int SM9Point1_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9Point1* X)
+{
+    uint8_t pc = bytes[0];
+    int ylsb = 0;
+
+    if (pc == 0x00)
+    {
+        if (bytes_len != 1)
+            return SM9CURVE_ERR_INVALIDPC;
+
+        X->is_inf = 1;
+    }
+    else if (pc == 0x04 || pc == 0x06 || pc == 0x07)
+    {
+        if (bytes_len != SM9_POINT1BYTES_FULL_LENGTH)
+            return SM9CURVE_ERR_INVALIDPC;
+
+        UInt256_FromBytes(bytes + 1, &X->x);
+        UInt256_FromBytes(bytes + 33, &X->y);
+        X->is_inf = 0;
+        if (!SM9Point1_IsOnCurve(X))
+            return SM9CURVE_ERR_NOTONCURVE;
+    }
+    else if (pc == 0x02 || pc == 0x03)
+    {
+        if (bytes_len != SM9_POINT1BYTES_HALF_LENGTH)
+            return SM9CURVE_ERR_INVALIDPC;
+
+        UInt256_FromBytes(bytes + 1, &X->x);
+        if (UInt256_Cmp(&X->x, CONSTS_P) >= 0)
+            return SM9CURVE_ERR_NOTONCURVE;
+
+        SM9FP1_ToMont(&X->x, &X->x);
+
+        // compute y, x^3 + b
+        SM9FP1_MontMul(&X->x, &X->x, &X->y);
+        SM9FP1_MontMul(&X->x, &X->y, &X->y);
+        SM9FP1_MontAdd(&X->y, CONSTS_FP1_MONT_B, &X->y);
+        if (!SM9FP1_MontHasSqrt(&X->y, &X->y))
+            return SM9CURVE_ERR_NOTONCURVE;
+
+        SM9FP1_FromMont(&X->x, &X->x);
+        SM9FP1_FromMont(&X->y, &X->y);
+        ylsb = X->y.u8[0] & 0x1;
+        if ((pc == 0x02 && ylsb) || (pc == 0x03 && !ylsb))
+        {
+            SM9FP1_Neg(&X->y, &X->y);
+        }
+    }
+    else
+    {
+        return SM9CURVE_ERR_INVALIDPC;
+    }
+
+    return 0;
+}
+
+uint64_t SM9JacobPoint1Mont_ToBytes(const SM9JacobPoint1Mont* X, int pc_mode, uint8_t* bytes)
+{
+    SM9Point1 pt = { 0 };
+    SM9JacobPoint1Mont_ToPoint(X, &pt);
+    return SM9Point1_ToBytes(&pt, pc_mode, bytes);
+}
+
+int SM9JacobPoint1Mont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9JacobPoint1Mont* X)
+{
+    SM9Point1 pt = { 0 };
+    int ret = SM9Point1_FromBytes(bytes, bytes_len, &pt);
+    if (ret != 0)
+        return ret;
+
+    SM9JacobPoint1Mont_FromPoint(&pt, X);
+    return 0;
+}
 
 static
 void _SM9JacobPoint1Mont_Dbl(const SM9JacobPoint1Mont* X, SM9JacobPoint1Mont* Y)

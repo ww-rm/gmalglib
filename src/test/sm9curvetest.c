@@ -44,6 +44,27 @@ void test_curve1()
     printf("SM9 Curve 1 Test OK.\n");
 }
 
+void test_convert1()
+{
+    UInt256 x = { .u32 = { 0x80A892FF, 0xABC66E3C, 0xA7137D39, 0x720B17EC, 0x3F32DA5C, 0x4E0A6600, 0xA51F3AB8, 0x787ED7B8 } };
+    UInt256 y = { .u32 = { 0x4C57A7B1, 0x3F220F64, 0x9A8C49DC, 0x20287127, 0x1354900B, 0xB9FF85A3, 0x91E5ADC4, 0x769DE617 } };
+    uint8_t pk[SM9_POINT1BYTES_MAX_LENGTH] = { 0x04 };
+    UInt256_ToBytes(&x, pk + 1);
+    UInt256_ToBytes(&y, pk + 33);
+
+    SM9JacobPoint1Mont PK = { 0 };
+    SM9Point1 PKK = { 0 };
+    assert(SM9JacobPoint1Mont_FromBytes(pk, 65, &PK) == 0);
+
+    pk[0] = 0x03;
+    assert(SM9JacobPoint1Mont_FromBytes(pk, 33, &PK) == 0);
+
+    SM9JacobPoint1Mont_ToPoint(&PK, &PKK);
+    assert(UInt256_Cmp(&y, &PKK.y) == 0);
+
+    printf("SM9 Convert 1 Test OK.\n");
+}
+
 void make_table()
 {
     for (int i = 0; i < 32; i++) {
@@ -89,6 +110,8 @@ void make_table()
 int main()
 {
     test_curve1();
+
+    test_convert1();
 
     //make_table();
 
