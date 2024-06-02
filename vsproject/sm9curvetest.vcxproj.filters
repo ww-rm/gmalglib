@@ -15,12 +15,21 @@
     <ClInclude Include="..\include\gmalglib\sm9curve.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gmalglib\sm9table.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gmalglib\core\bignum.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gmalglib\core\sm9curve.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\test\sm9curvetest.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\sm9table.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
