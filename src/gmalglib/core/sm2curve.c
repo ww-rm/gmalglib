@@ -146,6 +146,25 @@ void SM2ModP_Neg(const SM2ModP* x, SM2ModP* y)
     }
 }
 
+static
+void SM2ModP_Div2(const SM2ModP* x, SM2ModP* y)
+{
+    uint64_t carry = 0;
+    if (x->u64[0] & 0x1)
+    {
+        carry = UInt256_Add(x, CONSTS_P, y);
+    }
+    else
+    {
+        *y = *x;
+    }
+
+    y->u64[0] = (y->u64[0] >> 1) | ((y->u64[1] & 0x1) << 63);
+    y->u64[1] = (y->u64[1] >> 1) | ((y->u64[2] & 0x1) << 63);
+    y->u64[2] = (y->u64[2] >> 1) | ((y->u64[3] & 0x1) << 63);
+    y->u64[3] = (y->u64[3] >> 1) | ((carry & 0x1) << 63);
+}
+
 static 
 void SM2ModP_MontMul(const SM2ModPMont* x, const SM2ModPMont* y, SM2ModPMont* z)
 {
@@ -253,16 +272,16 @@ void SM2ModP_MontPow(const SM2ModPMont* x, const UInt256* e, SM2ModPMont* y)
 static 
 int SM2ModP_MontHasSqrt(const SM2ModPMont* x, SM2ModPMont* y)
 {
-    int ret = 0;
     SM2ModPMont y_tmp = { 0 };
     SM2ModPMont ysqr = { 0 };
 
     SM2ModP_MontPow(x, CONSTS_U_PLUS_ONE, &y_tmp);
     SM2ModP_MontMul(&y_tmp, &y_tmp, &ysqr);
-    ret = UInt256_Cmp(x, &ysqr) == 0;
+    if (UInt256_Cmp(x, &ysqr) != 0)
+        return 0;
 
     *y = y_tmp;
-    return ret;
+    return 1;
 }
 
 static 
@@ -275,6 +294,12 @@ static
 void SM2ModP_MontInv(const SM2ModPMont* x, SM2ModPMont* y)
 {
     SM2ModP_MontPow(x, CONSTS_P_MINUS_TWO, y);
+}
+
+static
+void SM2ModP_MontDiv2(const SM2ModPMont* x, SM2ModPMont* y)
+{
+    SM2ModP_Div2(x, y);
 }
 
 int SM2JacobPointMont_IsInf(const SM2JacobPointMont* X)
@@ -569,19 +594,17 @@ void _SM2JacobPointMont_Dbl(const SM2JacobPointMont* X, SM2JacobPointMont* Y)
     SM2ModP_MontAdd(&t1, &t1, &t2);             // 2(x + z^2)(x - z^2)
     SM2ModP_MontAdd(&t1, &t2, &t1);             // 3(x + z^2)(x - z^2)
 
+    // z' = 2yz
     SM2ModP_MontAdd(&X->y, &X->y, &t3);         // 2y
+    SM2ModP_MontMul(&t3, &X->z, &Y->z);
+
+    // t3 = 8y^4
     SM2ModP_MontMul(&t3, &t3, &t2);             // 4y^2
-    SM2ModP_MontMul(&t2, &t3, &t3);             // 8y^3
+    SM2ModP_MontMul(&t2, &t2, &t3);             // 16y^4
+    SM2ModP_MontDiv2(&t3, &t3);                 // 8y^4
 
     // t2 = 4xy^2
     SM2ModP_MontMul(&X->x, &t2, &t2);           // 4xy^2
-
-    // t3 = 8y^4
-    SM2ModP_MontMul(&X->y, &t3, &t3);           // 8y^4
-
-    // z' = 2yz
-    SM2ModP_MontMul(&X->y, &X->z, &Y->z);
-    SM2ModP_MontAdd(&Y->z, &Y->z, &Y->z);
 
     // x' = t1^2 - 2t2
     SM2ModP_MontMul(&t1, &t1, &Y->x);
