@@ -14,7 +14,7 @@ void test_curve1()
     SM9JacobPoint1Mont A = { 0 };
     SM9JacobPoint1Mont B = { 0 };
     SM9JacobPoint1Mont C = { 0 };
-    UInt256 e = { 7, 9 };
+    UInt256 e = { .u8 = {7, 9} };
 
     SM9JacobPoint1Mont_FromPoint(&_G, &G);
     assert(SM9JacobPoint1Mont_IsOnCurve(&G));
@@ -125,7 +125,7 @@ void test_curve2()
     SM9JacobPoint2Mont A = { 0 };
     SM9JacobPoint2Mont B = { 0 };
     SM9JacobPoint2Mont C = { 0 };
-    UInt256 e = { 7, 9, 13 };
+    UInt256 e = { .u8 = { 7, 9, 13 } };
 
     SM9JacobPoint2Mont_FromPoint(&_G, &G);
     assert(SM9JacobPoint2Mont_IsOnCurve(&G));
