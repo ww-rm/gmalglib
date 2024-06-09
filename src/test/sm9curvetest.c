@@ -7,9 +7,9 @@ void test_curve1()
     SM9Point1 _G = *SM9_PARAMS_G1;
     SM9JacobPoint1Mont G = { 0 };
     SM9JacobPoint1Mont R = {
-        {.u32 = { 0x8013BA8A, 0x4B131575, 0xE5C40522, 0xC1766D14, 0xBCDB3562, 0xC2934A22, 0xD2488DDF, 0x2B25F38A }},
-        {.u32 = { 0x617676AF, 0xD1A4E6F3, 0x58214CBB, 0x035E0834, 0x1C809B69, 0x5B50BE74, 0xC8E95BAF, 0x2ADC9853 }},
-        {.u32 = { 0xF3BEAA11, 0xF77F916B, 0xBDE65C11, 0x08B9E630, 0x5ABB1839, 0x8EC2FBD2, 0xC4E3895E, 0x2DEAE2EE }}
+        {.u32 = { 0x8F0FDE68, 0x08FDF254, 0x804D6DD4, 0xC80DDEBF, 0x2905B7CA, 0xC8CEF528, 0x34132464, 0x6007E084 }},
+        {.u32 = { 0x962DACA2, 0x01040281, 0x896409D2, 0x859CBBBE, 0x4B059E38, 0x5F0DD9B7, 0xABF00FD4, 0x00C02CCF }},
+        {.u32 = { 0x1CAEBA83, 0x1A9064D8, 0xE5851124, 0xDE0D6CB4, 0x0A7138BA, 0x29FC54B0, 0xFD5C590E, 0x49BFFFFF }}
     };
     SM9JacobPoint1Mont A = { 0 };
     SM9JacobPoint1Mont B = { 0 };
@@ -21,6 +21,7 @@ void test_curve1()
 
     A = G;
     SM9JacobPoint1Mont_Add(&G, &A, &A);
+    //SM9JacobPoint1Mont_Print(&A);
     assert(SM9JacobPoint1Mont_IsEqual(&A, &R));
 
     //SM9JacobPoint1Mont_Add(&G, &A, &A);
@@ -65,7 +66,7 @@ void test_convert1()
     printf("SM9 Convert 1 Test OK.\n");
 }
 
-void make_table()
+void make_table1()
 {
     for (int i = 0; i < 32; i++) {
         SM9JacobPoint1Mont G = { 0 };
@@ -106,6 +107,51 @@ void make_table()
     }
 }
 
+void test_curve2()
+{
+    SM9Point2 _G = *SM9_PARAMS_G2;
+    SM9JacobPoint2Mont G = { 0 };
+    SM9JacobPoint2Mont G_dbl = {
+        {.fp1 = {{.u32 = { 0x70C32949, 0x814E681A, 0xB140479A, 0x14C6A2BF, 0x99E0B315, 0x95CC9ED9, 0x72DAACE1, 0x43723007 }},
+                 {.u32 = { 0xDCF3D8C2, 0xFB7EB8A0, 0x276FCF4E, 0xF03B823F, 0x76822AC0, 0xF72E796B, 0x354177C4, 0x50406B3E }}}},
+        {.fp1 = {{.u32 = { 0xF5F34A70, 0x9AEDF94A, 0x668E95D3, 0xC073DDFD, 0x042ACC9A, 0x4C5EDF11, 0x8FF6AE1D, 0x80A5EA22 }},
+                 {.u32 = { 0xA9A03880, 0x6B979082, 0xCD2CE885, 0x0052AE25, 0x126B4F55, 0x600DF0A6, 0xF4373FAC, 0x07E0D5A3 }}}},
+        {.fp1 = {{.u32 = { 0x1CAEBA83, 0x1A9064D8, 0xE5851124, 0xDE0D6CB4, 0x0A7138BA, 0x29FC54B0, 0xFD5C590E, 0x49BFFFFF }},
+                 {.u64 = { 0x0, 0x0, 0x0, 0x0 }}}}
+    };
+    SM9JacobPoint2Mont A = { 0 };
+    SM9JacobPoint2Mont B = { 0 };
+    SM9JacobPoint2Mont C = { 0 };
+    UInt256 e = { 7, 9, 13 };
+
+    SM9JacobPoint2Mont_FromPoint(&_G, &G);
+    assert(SM9JacobPoint2Mont_IsOnCurve(&G));
+
+    A = G;
+    SM9JacobPoint2Mont_Dbl(&A, &A);
+    //SM9JacobPoint2Mont_Print(&A);
+    //SM9JacobPoint2Mont_Print(&G_dbl);
+    assert(SM9JacobPoint2Mont_IsEqual(&A, &G_dbl));
+
+    SM9JacobPoint2Mont_Mul(&e, &G, &A);
+    //SM9JacobPoint2Mont_Add(&G, &A, &A);
+    //SM9JacobPoint2Mont_Add(&G, &A, &A);
+    //SM9JacobPoint2Mont_Add(&G, &A, &A);
+    //SM9JacobPoint2Mont_Add(&G, &A, &A);
+    //SM9JacobPoint2Mont_Add(&G, &A, &A);
+    SM9JacobPoint2Mont_MulG2(&e, &B);
+
+    assert(SM9JacobPoint2Mont_IsEqual(&A, &B));
+
+    SM9JacobPoint2Mont_Neg(&A, &B);
+    SM9JacobPoint2Mont_Add(&A, &B, &B);
+    assert(SM9JacobPoint2Mont_IsInf(&B));
+
+    SM9JacobPoint2Mont_Mul(SM9_PARAMS_N, &A, &C);
+    assert(SM9JacobPoint2Mont_IsInf(&C));
+
+    printf("SM9 Curve 2 Test OK.\n");
+}
 
 int main()
 {
@@ -113,7 +159,9 @@ int main()
 
     test_convert1();
 
-    //make_table();
+    //make_table1();
+
+    test_curve2();
 
     return 0;
 }
