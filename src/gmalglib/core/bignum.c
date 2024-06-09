@@ -56,6 +56,11 @@ int UInt256_IsZero(const UInt256* x)
     return x->u64[0] == 0 && x->u64[1] == 0 && x->u64[2] == 0 && x->u64[3] == 0;
 }
 
+void UInt256_SetZero(UInt256* x)
+{
+    x->u64[0] = x->u64[1] = x->u64[2] = x->u64[3] = 0;
+}
+
 uint8_t UInt256_Add(const UInt256* x, const UInt256* y, UInt256* z)
 {
     uint32_t i = 0;
