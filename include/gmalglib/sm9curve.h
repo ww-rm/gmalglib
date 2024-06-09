@@ -9,11 +9,18 @@
 #define SM9_PCMODE_RAW                              0
 #define SM9_PCMODE_COMPRESS                         1
 #define SM9_PCMODE_MIX                              2
+
 #define SM9_POINT1BYTES_INF_LENGTH                  1
 #define SM9_POINT1BYTES_HALF_LENGTH                 (1 + SM9_PARAMS_LENGTH)
 #define SM9_POINT1BYTES_FULL_LENGTH                 (SM9_POINT1BYTES_HALF_LENGTH + SM9_PARAMS_LENGTH)
 #define SM9_POINT1BYTES_MAX_LENGTH                  SM9_POINT1BYTES_FULL_LENGTH
 #define SM9_GET_POINT1BYTES_LENGTH(pc_mode)         (((pc_mode) == SM9_PCMODE_COMPRESS) ? SM9_POINT1BYTES_HALF_LENGTH : SM9_POINT1BYTES_FULL_LENGTH)
+
+#define SM9_POINT2BYTES_INF_LENGTH                  SM9_POINT1BYTES_INF_LENGTH
+#define SM9_POINT2BYTES_HALF_LENGTH                 (1 + SM9_PARAMS_LENGTH * 2)
+#define SM9_POINT2BYTES_FULL_LENGTH                 (SM9_POINT2BYTES_HALF_LENGTH + SM9_PARAMS_LENGTH * 2)
+#define SM9_POINT2BYTES_MAX_LENGTH                  SM9_POINT2BYTES_FULL_LENGTH
+#define SM9_GET_POINT2BYTES_LENGTH(pc_mode)         (((pc_mode) == SM9_PCMODE_COMPRESS) ? SM9_POINT2BYTES_HALF_LENGTH : SM9_POINT2BYTES_FULL_LENGTH)
 
 #define SM9CURVE_ERR_NOTONCURVE                     -1
 #define SM9CURVE_ERR_INVALIDPC                      -2
@@ -66,6 +73,7 @@ extern "C" {
 extern const UInt256* const SM9_PARAMS_P;
 extern const UInt256* const SM9_PARAMS_B;
 extern const SM9Point1* const SM9_PARAMS_G1;
+extern const SM9Point2* const SM9_PARAMS_G2;
 extern const UInt256* const SM9_PARAMS_N;
 
 void SM9JacobPoint1Mont_ToPoint(const SM9JacobPoint1Mont* X, SM9Point1* Y);
@@ -91,6 +99,32 @@ void SM9JacobPoint1Mont_MulG1(const UInt256* k, SM9JacobPoint1Mont* X);
 
 void SM9Point1_Print(const SM9Point1* X);
 void SM9JacobPoint1Mont_Print(const SM9JacobPoint1Mont* X);
+
+#endif // _DEBUG
+
+void SM9JacobPoint2Mont_ToPoint(const SM9JacobPoint2Mont* X, SM9Point2* Y);
+void SM9JacobPoint2Mont_FromPoint(const SM9Point2* X, SM9JacobPoint2Mont* Y);
+
+uint64_t SM9Point2_ToBytes(const SM9Point2* X, int pc_mode, uint8_t* bytes);
+int SM9Point2_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9Point2* X);
+uint64_t SM9JacobPoint2Mont_ToBytes(const SM9JacobPoint2Mont* X, int pc_mode, uint8_t* bytes);
+int SM9JacobPoint2Mont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9JacobPoint2Mont* X);
+
+int SM9JacobPoint2Mont_IsInf(const SM9JacobPoint2Mont* X);
+void SM9JacobPoint2Mont_SetInf(SM9JacobPoint2Mont* X);
+int SM9JacobPoint2Mont_IsOnCurve(const SM9JacobPoint2Mont* X);
+int SM9JacobPoint2Mont_IsEqual(const SM9JacobPoint2Mont* X, const SM9JacobPoint2Mont* Y);
+void SM9JacobPoint2Mont_Dbl(const SM9JacobPoint2Mont* X, SM9JacobPoint2Mont* Y);
+void SM9JacobPoint2Mont_Add(const SM9JacobPoint2Mont* X, const SM9JacobPoint2Mont* Y, SM9JacobPoint2Mont* Z);
+void SM9JacobPoint2Mont_Mul(const UInt256* k, const SM9JacobPoint2Mont* X, SM9JacobPoint2Mont* Y);
+void SM9JacobPoint2Mont_Neg(const SM9JacobPoint2Mont* X, SM9JacobPoint2Mont* Y);
+void SM9JacobPoint2Mont_Sub(const SM9JacobPoint2Mont* X, const SM9JacobPoint2Mont* Y, SM9JacobPoint2Mont* Z);
+void SM9JacobPoint2Mont_MulG2(const UInt256* k, SM9JacobPoint2Mont* X);
+
+#ifdef _DEBUG
+
+void SM9Point2_Print(const SM9Point2* X);
+void SM9JacobPoint2Mont_Print(const SM9JacobPoint2Mont* X);
 
 #endif // _DEBUG
 
