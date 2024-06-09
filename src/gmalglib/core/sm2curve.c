@@ -287,7 +287,7 @@ void SM2JacobPointMont_SetInf(SM2JacobPointMont* X)
 {
     X->x = *CONSTS_MODP_MONT_ONE;
     X->y = *CONSTS_MODP_MONT_ONE;
-    X->z.u64[0] = X->z.u64[1] = X->z.u64[2] = X->z.u64[3] = 0;
+    UInt256_SetZero(&X->z);
 }
 
 int SM2JacobPointMont_IsOnCurve(const SM2JacobPointMont* X)
@@ -361,10 +361,7 @@ int SM2JacobPointMont_IsEqual(const SM2JacobPointMont* X, const SM2JacobPointMon
     SM2ModP_MontMul(&Y->y, &t5, &t5);           // y2 * z1^2
     SM2ModP_MontMul(&t5, &X->z, &t5);           // y2 * z1^3
 
-    if (UInt256_Cmp(&t4, &t5) != 0)
-        return 0;
-
-    return 1;
+    return UInt256_Cmp(&t4, &t5) == 0;
 }
 
 void SM2JacobPointMont_ToPoint(const SM2JacobPointMont* X, SM2Point* Y)
