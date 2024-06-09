@@ -214,6 +214,60 @@ void test_convert2_2()
     printf("SM9 Convert 2.2 Test OK.\n");
 }
 
+void make_table2()
+{
+    for (int i = 0; i < 32; i++) {
+        SM9JacobPoint2Mont G = { 0 };
+        SM9JacobPoint2Mont P = { 0 };
+
+        SM9JacobPoint2Mont_SetInf(&P);
+
+        // u8[i]G
+        SM9JacobPoint2Mont_FromPoint(SM9_PARAMS_G2, &G);
+        UInt256 k = { 0 };
+        k.u8[i] = 0x01;
+        SM9JacobPoint2Mont_Mul(&k, &G, &G);
+
+        printf("    // u8[%d]\n", i);
+        for (int j = 0; j < 256; j++)
+        {
+            printf("    {{.fp1 = {{.u64 = { ");
+            printf("0x%016llX", P.x.fp1[0].u64[0]);
+            for (int n = 1; n < 4; n++) printf(", 0x%016llX", P.x.fp1[0].u64[n]);
+            printf(" }},\n");
+
+            printf("              {.u64 = { ");
+            printf("0x%016llX", P.x.fp1[1].u64[0]);
+            for (int n = 1; n < 4; n++) printf(", 0x%016llX", P.x.fp1[1].u64[n]);
+            printf(" }}}},\n");
+
+            printf("     {.fp1 = {{.u64 = { ");
+            printf("0x%016llX", P.y.fp1[0].u64[0]);
+            for (int n = 1; n < 4; n++) printf(", 0x%016llX", P.y.fp1[0].u64[n]);
+            printf(" }},\n");
+
+            printf("              {.u64 = { ");
+            printf("0x%016llX", P.y.fp1[1].u64[0]);
+            for (int n = 1; n < 4; n++) printf(", 0x%016llX", P.y.fp1[1].u64[n]);
+            printf(" }}}},\n");
+
+            printf("     {.fp1 = {{.u64 = { ");
+            printf("0x%016llX", P.z.fp1[0].u64[0]);
+            for (int n = 1; n < 4; n++) printf(", 0x%016llX", P.z.fp1[0].u64[n]);
+            printf(" }},\n");
+
+            printf("              {.u64 = { ");
+            printf("0x%016llX", P.z.fp1[1].u64[0]);
+            for (int n = 1; n < 4; n++) printf(", 0x%016llX", P.z.fp1[1].u64[n]);
+            printf(" }}}}},\n");
+
+            SM9JacobPoint2Mont_Add(&P, &G, &P);
+        }
+        printf("\n");
+    }
+}
+
+
 int main()
 {
     test_curve1();
@@ -226,6 +280,8 @@ int main()
 
     test_convert2_1();
     test_convert2_2();
+
+    //make_table2();
 
     return 0;
 }

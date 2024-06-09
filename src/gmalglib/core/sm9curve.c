@@ -1492,19 +1492,18 @@ void SM9JacobPoint2Mont_Sub(const SM9JacobPoint2Mont* X, const SM9JacobPoint2Mon
 
 void SM9JacobPoint2Mont_MulG2(const UInt256* k, SM9JacobPoint2Mont* X)
 {
-    SM9JacobPoint2Mont_Mul(k, CONSTS_JACOB_G2, X);
-    // uint32_t i;
-    // uint32_t part_k;
-    // SM9JacobPoint2Mont_SetInf(X);
+    uint32_t i;
+    uint32_t part_k;
+    SM9JacobPoint2Mont_SetInf(X);
 
-    // for (i = 0; i < 32; i++)
-    // {
-    //     part_k = k->u8[i];
-    //     if (part_k > 0)
-    //     {
-    //         SM9JacobPoint2Mont_Add(X, SM9_MULG1_TABLE_U8 + i * 256 + part_k, X);
-    //     }
-    // }
+    for (i = 0; i < 32; i++)
+    {
+        part_k = k->u8[i];
+        if (part_k > 0)
+        {
+            SM9JacobPoint2Mont_Add(X, SM9_MULG2_TABLE_U8 + i * 256 + part_k, X);
+        }
+    }
 }
 
 #ifdef _DEBUG

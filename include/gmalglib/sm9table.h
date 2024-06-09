@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 extern const SM9JacobPoint1Mont* SM9_MULG1_TABLE_U8;
-
+extern const SM9JacobPoint2Mont* SM9_MULG2_TABLE_U8;
 
 #ifdef __cplusplus
 }
