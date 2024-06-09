@@ -767,6 +767,13 @@ void SM9JacobPoint1Mont_MulG1(const UInt256* k, SM9JacobPoint1Mont* X)
 
 #ifdef _DEBUG
 
+void SM9FP1Mont_Print(const SM9FP1Mont* x)
+{
+    SM9FP1 xx = { 0 };
+    SM9FP1_FromMont(x, &xx);
+    UInt256_Print(&xx, 4);
+}
+
 void SM9Point1_Print(const SM9Point1* X)
 {
     printf("{ ");
@@ -949,12 +956,12 @@ int SM9FP2_MontHasSqrt(const SM9FP2Mont* x, SM9FP2Mont* y)
     SM9FP1Mont* y1 = y_tmp.fp1 + 1;
     SM9FP1Mont* y0 = y_tmp.fp1;
 
-    // w^2 = x0^2 - 2(x1^2)
+    // XXX: w^2 = x0^2 + 2(x1^2)
     SM9FP1Mont w = { 0 };
     SM9FP1_MontMul(x0, x0, y0);
     SM9FP1_MontMul(x1, x1, y1);
-    SM9FP1_Sub(y0, y1, &w);
-    SM9FP1_Sub(&w, y1, &w);
+    SM9FP1_Add(y0, y1, &w);
+    SM9FP1_Add(&w, y1, &w);
     if (!SM9FP1_MontHasSqrt(&w, &w))
         return 0;
 
@@ -1135,12 +1142,154 @@ void SM9JacobPoint2Mont_FromPoint(const SM9Point2* X, SM9JacobPoint2Mont* Y)
 }
 
 static
-int SM9Point2_IsOnCurve(const SM9Point2* X);
+int SM9Point2_IsOnCurve(const SM9Point2* X)
+{
+    SM9FP2Mont left = { 0 };
+    SM9FP2Mont right = { 0 };
+    SM9FP2Mont x = { 0 };
+    SM9FP2Mont y = { 0 };
 
-uint64_t SM9Point2_ToBytes(const SM9Point2* X, int pc_mode, uint8_t* bytes);
-int SM9Point2_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9Point2* X);
-uint64_t SM9JacobPoint2Mont_ToBytes(const SM9JacobPoint2Mont* X, int pc_mode, uint8_t* bytes);
-int SM9JacobPoint2Mont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9JacobPoint2Mont* X);
+    if (X->is_inf)
+        return 1;
+
+    SM9FP2_ToMont(&X->x, &x);
+    SM9FP2_ToMont(&X->y, &y);
+
+    // left = y^2
+    SM9FP2_MontMul(&y, &y, &left);
+
+    // right = x^3 + b
+    SM9FP2_MontMul(&x, &x, &right);
+    SM9FP2_MontMul(&right, &x, &right);
+    SM9FP2_Add(&right, CONSTS_FP2_MONT_BETA_B, &right);
+
+    return UInt256_Cmp(left.fp1 + 1, right.fp1 + 1) == 0 && UInt256_Cmp(left.fp1, right.fp1) == 0;
+}
+
+uint64_t SM9Point2_ToBytes(const SM9Point2* X, int pc_mode, uint8_t* bytes)
+{
+    if (X->is_inf)
+    {
+        bytes[0] = 0x00;
+        return 1;
+    }
+
+    if (pc_mode == SM9_PCMODE_COMPRESS)
+    {
+        if (X->y.fp1->u8[0] & 0x1)
+            bytes[0] = 0x03;
+        else
+            bytes[0] = 0x02;
+
+        UInt256_ToBytes(X->x.fp1 + 1, bytes + 1);
+        UInt256_ToBytes(X->x.fp1, bytes + 1 + 32);
+        return SM9_POINT2BYTES_HALF_LENGTH;
+    }
+    else if (pc_mode == SM9_PCMODE_MIX)
+    {
+        if (X->y.fp1->u8[0] & 0x1)
+            bytes[0] = 0x07;
+        else
+            bytes[0] = 0x06;
+
+        UInt256_ToBytes(X->x.fp1 + 1, bytes + 1);
+        UInt256_ToBytes(X->x.fp1, bytes + 1 + 32);
+        UInt256_ToBytes(X->y.fp1 + 1, bytes + 1 + 64);
+        UInt256_ToBytes(X->y.fp1, bytes + 1 + 96);
+        return SM9_POINT2BYTES_FULL_LENGTH;
+    }
+    else
+    {
+        bytes[0] = 0x04;
+
+        UInt256_ToBytes(X->x.fp1 + 1, bytes + 1);
+        UInt256_ToBytes(X->x.fp1, bytes + 1 + 32);
+        UInt256_ToBytes(X->y.fp1 + 1, bytes + 1 + 64);
+        UInt256_ToBytes(X->y.fp1, bytes + 1 + 96);
+        return SM9_POINT2BYTES_FULL_LENGTH;
+    }
+
+    return 0;
+}
+
+int SM9Point2_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9Point2* X)
+{
+    uint8_t pc = bytes[0];
+    int ylsb = 0;
+
+    if (pc == 0x00)
+    {
+        if (bytes_len != 1)
+            return SM9CURVE_ERR_INVALIDPC;
+
+        X->is_inf = 1;
+    }
+    else if (pc == 0x04 || pc == 0x06 || pc == 0x07)
+    {
+        if (bytes_len != SM9_POINT2BYTES_FULL_LENGTH)
+            return SM9CURVE_ERR_INVALIDPC;
+
+        UInt256_FromBytes(bytes + 1, X->x.fp1 + 1);
+        UInt256_FromBytes(bytes + 1 + 32, X->x.fp1);
+        UInt256_FromBytes(bytes + 1 + 64, X->y.fp1 + 1);
+        UInt256_FromBytes(bytes + 1 + 96, X->y.fp1);
+        X->is_inf = 0;
+        if (!SM9Point2_IsOnCurve(X))
+            return SM9CURVE_ERR_NOTONCURVE;
+    }
+    else if (pc == 0x02 || pc == 0x03)
+    {
+        if (bytes_len != SM9_POINT2BYTES_HALF_LENGTH)
+            return SM9CURVE_ERR_INVALIDPC;
+
+        UInt256_FromBytes(bytes + 1, X->x.fp1 + 1);
+        UInt256_FromBytes(bytes + 1 + 32, X->x.fp1);
+        if (UInt256_Cmp(X->x.fp1 + 1, CONSTS_P) >= 0 || UInt256_Cmp(X->x.fp1, CONSTS_P) >= 0)
+            return SM9CURVE_ERR_NOTONCURVE;
+
+        SM9FP2_ToMont(&X->x, &X->x);
+
+        // compute y, x^3 + b
+        SM9FP2_MontMul(&X->x, &X->x, &X->y);
+        SM9FP2_MontMul(&X->x, &X->y, &X->y);
+        SM9FP2_Add(&X->y, CONSTS_FP2_MONT_BETA_B, &X->y);
+
+        if (!SM9FP2_MontHasSqrt(&X->y, &X->y))
+            return SM9CURVE_ERR_NOTONCURVE;
+
+        SM9FP2_FromMont(&X->x, &X->x);
+        SM9FP2_FromMont(&X->y, &X->y);
+        ylsb = X->y.fp1->u8[0] & 0x1;
+        if ((pc == 0x02 && ylsb) || (pc == 0x03 && !ylsb))
+        {
+            SM9FP2_Neg(&X->y, &X->y);
+        }
+    }
+    else
+    {
+        return SM9CURVE_ERR_INVALIDPC;
+    }
+
+    return 0;
+}
+
+uint64_t SM9JacobPoint2Mont_ToBytes(const SM9JacobPoint2Mont* X, int pc_mode, uint8_t* bytes)
+{
+    SM9Point2 pt = { 0 };
+    SM9JacobPoint2Mont_ToPoint(X, &pt);
+    return SM9Point2_ToBytes(&pt, pc_mode, bytes);
+}
+
+int SM9JacobPoint2Mont_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9JacobPoint2Mont* X)
+{
+    SM9Point2 pt = { 0 };
+    int ret = SM9Point2_FromBytes(bytes, bytes_len, &pt);
+    if (ret != 0)
+        return ret;
+
+    SM9JacobPoint2Mont_FromPoint(&pt, X);
+    return 0;
+}
 
 static
 void _SM9JacobPoint2Mont_Dbl(const SM9JacobPoint2Mont* X, SM9JacobPoint2Mont* Y)
@@ -1359,6 +1508,16 @@ void SM9JacobPoint2Mont_MulG2(const UInt256* k, SM9JacobPoint2Mont* X)
 }
 
 #ifdef _DEBUG
+
+void SM9FP2Mont_Print(const SM9FP2Mont* x)
+{
+    SM9FP1 xx = { 0 };
+    SM9FP1_FromMont(x->fp1 + 1, &xx);
+    UInt256_Print(&xx, 4);
+    printf(",\n");
+    SM9FP1_FromMont(x->fp1, &xx);
+    UInt256_Print(&xx, 4);
+}
 
 void SM9Point2_Print(const SM9Point2* X)
 {

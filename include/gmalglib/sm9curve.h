@@ -97,6 +97,7 @@ void SM9JacobPoint1Mont_MulG1(const UInt256* k, SM9JacobPoint1Mont* X);
 
 #ifdef _DEBUG
 
+void SM9FP1Mont_Print(const SM9FP1Mont* x);
 void SM9Point1_Print(const SM9Point1* X);
 void SM9JacobPoint1Mont_Print(const SM9JacobPoint1Mont* X);
 
@@ -123,6 +124,7 @@ void SM9JacobPoint2Mont_MulG2(const UInt256* k, SM9JacobPoint2Mont* X);
 
 #ifdef _DEBUG
 
+void SM9FP2Mont_Print(const SM9FP2Mont* x);
 void SM9Point2_Print(const SM9Point2* X);
 void SM9JacobPoint2Mont_Print(const SM9JacobPoint2Mont* X);
 
