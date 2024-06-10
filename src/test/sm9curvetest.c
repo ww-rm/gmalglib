@@ -267,6 +267,23 @@ void make_table2()
     }
 }
 
+void test_fp12()
+{
+    //SM9FP12Mont x = { 0 };
+    //for (int i = 1; i <= 12; i++)
+    //{
+    //    x.fp1[i - 1].u8[0] = i;
+    //}
+    //SM9FP12_ToMont(&x, &x);
+    //SM9FP12Mont_Print(&x); printf("\n");
+
+    //UInt256 e = { .u8 = { 1, 2, 3 } };
+    ////SM9FP12_MontPow(&x, &e, &x);
+    ////SM9FP12Mont_Print(&x); printf("\n");
+
+    //SM9FP12_MontInv(&x, &x);
+    //SM9FP12Mont_Print(&x); printf("\n");
+}
 
 int main()
 {
@@ -282,6 +299,8 @@ int main()
     test_convert2_2();
 
     //make_table2();
+
+    //test_fp12();
 
     return 0;
 }

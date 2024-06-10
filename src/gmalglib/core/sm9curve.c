@@ -96,8 +96,6 @@ static const SM9JacobPoint1Mont _CONSTS_JACOB_G1 = {
 static const SM9JacobPoint1Mont* const CONSTS_JACOB_G1 = &_CONSTS_JACOB_G1;
 
 // G2 Point
-// 0x85AEF3D0_78640C98_597B6027_B441A01F_F1DD2C19_0F5E93C4_54806C11_D8806141, 0x37227552_92130B08_D2AAB97F_D34EC120_EE265948_D19C17AB_F9B7213B_AF82D65B
-// 0x17509B09_2E845C12_66BA0D26_2CBEE6ED_0736A96F_A347C8BD_856DC76B_84EBEB96, 0xA7CF28D5_19BE3DA6_5F317015_3D278FF2_47EFBA98_A71A0811_6215BBA5_C999A7C7
 static const SM9JacobPoint2Mont _CONSTS_JACOB_G2 = {
     {.fp1 = {{.u32 = { 0x8CE2DA8F, 0x260226A6, 0xDBF6C06B, 0x7EE5645E, 0xB1495444, 0xF8F57C82, 0xBC47C4D1, 0x61FCF018 }},
              {.u32 = { 0x2750A8A6, 0xDB6DB482, 0x5121F134, 0x84C6135A, 0x88791D41, 0x1874032F, 0xB85F3A37, 0x905112F2 }}}},
@@ -107,6 +105,30 @@ static const SM9JacobPoint2Mont _CONSTS_JACOB_G2 = {
              {.u64 = { 0x0, 0x0, 0x0, 0x0 }}}}
 };
 static const SM9JacobPoint2Mont* const CONSTS_JACOB_G2 = &_CONSTS_JACOB_G2;
+
+// factors used in FP12 frobenius
+
+// 0x2D40A38C_F6983351_711E5F99_520347CC_57D778A9_F8FF4C8A_4C949C7F_A2A96686 * 2^256
+static const SM9FP1Mont _CONSTS_FP1_MONT_FP12_FROB_F5 = { .u32 = { 0xDCC34107, 0x048BAA79, 0xFE76C161, 0x5E2E7AC4, 0x365BD4BC, 0x99399754, 0x819B0E13, 0xAF91AEAC } };
+static const SM9FP1Mont* const CONSTS_FP1_MONT_FP12_FROB_F5 = &_CONSTS_FP1_MONT_FP12_FROB_F5;
+
+// 0x00000000_00000000_F3000000_02A3A6F2_78027235_4F8B78F4_D5FC1196_7BE65333 * 2^256
+static const SM9FP1Mont _CONSTS_FP1_MONT_FP12_FROB_F4 = { .u32 = { 0x94E9C1C4, 0x81054FCD, 0x8CE2DF3E, 0x4C0E91CB, 0xE8AEDFB4, 0x4877B452, 0x8B491776, 0x88F53E74 } };
+static const SM9FP1Mont* const CONSTS_FP1_MONT_FP12_FROB_F4 = &_CONSTS_FP1_MONT_FP12_FROB_F4;
+
+// 0x6C648DE5_DC0A3F2C_F55ACC93_EE0BAF15_9F9D4118_06DC5177_F5B21FD3_DA24D011 * 2^256
+static const SM9FP1Mont _CONSTS_FP1_MONT_FP12_FROB_F3 = { .u32 = { 0x3EE72529, 0x39B4EF0F, 0x08582782, 0xDB043BF5, 0x54AC91E3, 0xB8554AB0, 0x5498CAB5, 0x9848EEC2 } };
+static const SM9FP1Mont* const CONSTS_FP1_MONT_FP12_FROB_F3 = &_CONSTS_FP1_MONT_FP12_FROB_F3;
+
+// 0x00000000_00000000_F3000000_02A3A6F2_78027235_4F8B78F4_D5FC1196_7BE65334 * 2^256
+static const SM9FP1Mont _CONSTS_FP1_MONT_FP12_FROB_F2 = { .u32 = { 0xCE4736CA, 0xB626197D, 0x57ED0186, 0x08296B35, 0xFD91512A, 0x9C705DB2, 0x8601C992, 0x1C753E74 } };
+static const SM9FP1Mont* const CONSTS_FP1_MONT_FP12_FROB_F2 = &_CONSTS_FP1_MONT_FP12_FROB_F2;
+
+// 0x3F23EA58_E5720BDB_843C6CFA_9C086749_47C5C86E_0DDD04ED_A91D8354_377B698B * 2^256
+static const SM9FP1Mont _CONSTS_FP1_MONT_FP12_FROB_F1 = { .u32 = { 0x4575299F, 0x1A98DFBD, 0x245C54FD, 0x9EC8547B, 0x13DF846C, 0xF51F5EAC, 0xD5A16393, 0x9EF74015 } };
+static const SM9FP1Mont* const CONSTS_FP1_MONT_FP12_FROB_F1 = &_CONSTS_FP1_MONT_FP12_FROB_F1;
+
+// CONSTS_FP1_MONT_FP12_FROB_F0 = 0x1 * 2^256
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Constants <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -1702,7 +1724,6 @@ void SM9FP12_Neg(const SM9FP12* x, SM9FP12* y)
         SM9FP1_Neg(x->fp1 + i, y->fp1 + i);
 }
 
-static
 void SM9FP12_MontMul(const SM9FP12Mont* x, const SM9FP12Mont* y, SM9FP12Mont* z)
 {
     SM9FP12Mont z_tmp = { 0 };
@@ -1756,6 +1777,20 @@ void SM9FP12_MontMul(const SM9FP12Mont* x, const SM9FP12Mont* y, SM9FP12Mont* z)
 }
 
 static
+void SM9FP12_ToMont(const SM9FP12* x, SM9FP12Mont* y)
+{
+    for (int i = 0; i < 12; i++)
+        SM9FP1_ToMont(x->fp1 + i, y->fp1 + i);
+}
+
+static
+void SM9FP12_FromMont(const SM9FP12Mont* x, SM9FP12* y)
+{
+    for (int i = 0; i < 12; i++)
+        SM9FP1_FromMont(x->fp1 + i, y->fp1 + i);
+}
+
+static
 void SM9FP12_MontInv(const SM9FP12Mont* x, SM9FP12Mont* y)
 {
     SM9FP12Mont y_tmp = { 0 };
@@ -1806,7 +1841,6 @@ void SM9FP12_MontInv(const SM9FP12Mont* x, SM9FP12Mont* y)
     *y = y_tmp;
 }
 
-static
 void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y)
 {
     int32_t i = 0;
@@ -1863,23 +1897,100 @@ void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y)
 }
 
 static
-void SM9FP12_MontFrob1(const SM9FP12Mont* x, SM9FP12Mont* y);
+void SM9FP12_MontFrob1(const SM9FP12Mont* x, SM9FP12Mont* y)
+{
+    // (((p - w5, w5), (p - w2, w2)), ((p - w4, w4), (p - w1, w1)), ((p - w3, w3), (p - w0, w0)))
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F5, x->fp1 + 11, y->fp1 + 11); SM9FP1_Neg(y->fp1 + 11, y->fp1 + 11);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F5, x->fp1 + 10, y->fp1 + 10);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->fp1 + 9, y->fp1 + 9); SM9FP1_Neg(y->fp1 + 9, y->fp1 + 9);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->fp1 + 8, y->fp1 + 8);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F4, x->fp1 + 7, y->fp1 + 7); SM9FP1_Neg(y->fp1 + 7, y->fp1 + 7);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F4, x->fp1 + 6, y->fp1 + 6);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F1, x->fp1 + 5, y->fp1 + 5); SM9FP1_Neg(y->fp1 + 5, y->fp1 + 5);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F1, x->fp1 + 4, y->fp1 + 4);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 3, y->fp1 + 3); SM9FP1_Neg(y->fp1 + 3, y->fp1 + 3);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 2, y->fp1 + 2);
+    SM9FP1_Neg(x->fp1 + 1, y->fp1 + 1);
+    y->fp1[0] = x->fp1[0];
+}
 
 static
-void SM9FP12_MontFrob2(const SM9FP12Mont* x, SM9FP12Mont* y);
+void SM9FP12_MontFrob2(const SM9FP12Mont* x, SM9FP12Mont* y)
+{
+    // (((p - w4, p - w4), (w4, w4)), ((p - w2, p - w2), (w2, w2)), ((p - w0, p - w0), (w0, w0)))
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F4, x->fp1 + 11, y->fp1 + 11); SM9FP1_Neg(y->fp1 + 11, y->fp1 + 11);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F4, x->fp1 + 10, y->fp1 + 10); SM9FP1_Neg(y->fp1 + 10, y->fp1 + 10);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F4, x->fp1 + 9, y->fp1 + 9);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F4, x->fp1 + 8, y->fp1 + 8);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->fp1 + 7, y->fp1 + 7); SM9FP1_Neg(y->fp1 + 7, y->fp1 + 7);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->fp1 + 6, y->fp1 + 6); SM9FP1_Neg(y->fp1 + 6, y->fp1 + 6);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->fp1 + 5, y->fp1 + 5);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->fp1 + 4, y->fp1 + 4);
+    SM9FP1_Neg(x->fp1 + 3, y->fp1 + 3);
+    SM9FP1_Neg(x->fp1 + 2, y->fp1 + 2);
+    y->fp1[1] = x->fp1[1];
+    y->fp1[0] = x->fp1[0];
+}
 
 static
-void SM9FP12_MontFrob2(const SM9FP12Mont* x, SM9FP12Mont* y);
+void SM9FP12_MontFrob3(const SM9FP12Mont* x, SM9FP12Mont* y)
+{
+    // (((p - w3, w3), (w0, p - w0)), ((p - w0, w0), (p - w3, w3)), ((w3, p - w3), (p - w0, w0)))
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 11, y->fp1 + 11); SM9FP1_Neg(y->fp1 + 11, y->fp1 + 11);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 10, y->fp1 + 10);
+    y->fp1[9] = x->fp1[9];
+    SM9FP1_Neg(x->fp1 + 8, y->fp1 + 8);
+    SM9FP1_Neg(x->fp1 + 7, y->fp1 + 7);
+    y->fp1[6] = x->fp1[6];
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 5, y->fp1 + 5); SM9FP1_Neg(y->fp1 + 5, y->fp1 + 5);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 4, y->fp1 + 4);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 3, y->fp1 + 3);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F3, x->fp1 + 2, y->fp1 + 2); SM9FP1_Neg(y->fp1 + 2, y->fp1 + 2);
+    SM9FP1_Neg(x->fp1 + 1, y->fp1 + 1);
+    y->fp1[0] = x->fp1[0];
+}
 
 static
-void SM9FP12_MontFrob6(const SM9FP12Mont* x, SM9FP12Mont* y);
+void SM9FP12_MontFrob6(const SM9FP12Mont* x, SM9FP12Mont* y)
+{
+    // (((p - w0, p - w0), (w0, w0)), ((w0, w0), (p - w0, p - w0)), ((p - w0, p - w0), (w0, w0)))
+    SM9FP1_Neg(x->fp1 + 11, y->fp1 + 11);
+    SM9FP1_Neg(x->fp1 + 10, y->fp1 + 10);
+    y->fp1[9] = x->fp1[9];
+    y->fp1[8] = x->fp1[8];
+    y->fp1[7] = x->fp1[7];
+    y->fp1[6] = x->fp1[6];
+    SM9FP1_Neg(x->fp1 + 5, y->fp1 + 5);
+    SM9FP1_Neg(x->fp1 + 4, y->fp1 + 4);
+    SM9FP1_Neg(x->fp1 + 3, y->fp1 + 3);
+    SM9FP1_Neg(x->fp1 + 2, y->fp1 + 2);
+    y->fp1[1] = x->fp1[1];
+    y->fp1[0] = x->fp1[0];
+}
+
+#ifdef _DEBUG
+
+void SM9FP12Mont_Print(const SM9FP12Mont* x)
+{
+    SM9FP1 xx = { 0 };
+    for (int i = 11; i > 0; i--)
+    {
+        SM9FP1_FromMont(x->fp1 + i, &xx);
+        UInt256_Print(&xx, 4);
+        printf(",\n");
+    }
+    SM9FP1_FromMont(x->fp1, &xx);
+    UInt256_Print(&xx, 4);
+}
+
+#endif // _DEBUG
+
 
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FP12 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> R-ate Pairing >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-static
 void SM9Pairing_RAte(const SM9JacobPoint1Mont* p1, const SM9JacobPoint2Mont* p2, SM9FP12Mont* result);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< R-ate Pairing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

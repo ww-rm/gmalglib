@@ -130,6 +130,18 @@ void SM9JacobPoint2Mont_Print(const SM9JacobPoint2Mont* X);
 
 #endif // _DEBUG
 
+void SM9FP12_MontMul(const SM9FP12Mont* x, const SM9FP12Mont* y, SM9FP12Mont* z);
+void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y);
+
+void SM9Pairing_RAte(const SM9JacobPoint1Mont* p1, const SM9JacobPoint2Mont* p2, SM9FP12Mont* result);
+
+#ifdef _DEBUG
+
+void SM9FP12Mont_Print(const SM9FP12Mont* x);
+
+#endif // _DEBUG
+
+
 #ifdef __cplusplus
 }
 #endif
