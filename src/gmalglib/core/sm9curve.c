@@ -877,6 +877,16 @@ void SM9FP2_MontMul(const SM9FP2Mont* x, const SM9FP2Mont* y, SM9FP2Mont* z)
     *z = z_tmp;
 }
 
+static inline
+void _SM9FP2_MontMulU(const SM9FP2Mont* x, SM9FP2Mont* y)
+{
+    // U = (1, 0)
+    // (1, 0) * (a1, a0) = (a0, -2a1)
+    y->fp1[1] = x->fp1[0];
+    SM9FP1_Add(x->fp1 + 1, x->fp1 + 1, y->fp1);
+    SM9FP1_Neg(y->fp1, y->fp1);
+}
+
 static
 void SM9FP2_ToMont(const SM9FP2* x, SM9FP2Mont* y)
 {
@@ -1576,3 +1586,300 @@ void SM9JacobPoint2Mont_Print(const SM9JacobPoint2Mont* X)
 #endif // _DEBUG
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FP2 Points <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FP4 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+static
+void SM9FP4_Add(const SM9FP4* x, const SM9FP4* y, SM9FP4* z)
+{
+    SM9FP1_Add(x->fp1 + 3, y->fp1 + 3, z->fp1 + 3);
+    SM9FP1_Add(x->fp1 + 2, y->fp1 + 2, z->fp1 + 2);
+    SM9FP1_Add(x->fp1 + 1, y->fp1 + 1, z->fp1 + 1);
+    SM9FP1_Add(x->fp1, y->fp1, z->fp1);
+}
+
+static
+void SM9FP4_Sub(const SM9FP4* x, const SM9FP4* y, SM9FP4* z)
+{
+    SM9FP1_Sub(x->fp1 + 3, y->fp1 + 3, z->fp1 + 3);
+    SM9FP1_Sub(x->fp1 + 2, y->fp1 + 2, z->fp1 + 2);
+    SM9FP1_Sub(x->fp1 + 1, y->fp1 + 1, z->fp1 + 1);
+    SM9FP1_Sub(x->fp1, y->fp1, z->fp1);
+}
+
+static
+void SM9FP4_MontMul(const SM9FP4Mont* x, const SM9FP4Mont* y, SM9FP4Mont* z)
+{
+    SM9FP4Mont z_tmp = { 0 };
+    const SM9FP2Mont* x1 = x->fp2 + 1;
+    const SM9FP2Mont* x0 = x->fp2;
+    const SM9FP2Mont* y1 = y->fp2 + 1;
+    const SM9FP2Mont* y0 = y->fp2;
+    SM9FP2Mont* z1 = z_tmp.fp2 + 1;
+    SM9FP2Mont* z0 = z_tmp.fp2;
+
+    SM9FP2Mont _x1y1 = { 0 };
+    SM9FP2Mont _x0y0 = { 0 };
+    const SM9FP2Mont* x1y1 = &_x1y1;
+    const SM9FP2Mont* x0y0 = &_x0y0;
+
+    SM9FP2_MontMul(x1, y1, &_x1y1);
+    SM9FP2_MontMul(x0, y0, &_x0y0);
+
+    // z1 = (x1 + x0)(y1 + y0) - x1y1 - x0y0
+    SM9FP2_Add(x1, x0, z1);
+    SM9FP2_Add(y1, y0, z0);
+    SM9FP2_MontMul(z1, z0, z1);
+    SM9FP2_Sub(z1, x1y1, z1);
+    SM9FP2_Sub(z1, x0y0, z1);
+
+    // z0 = x0y0 + U(x1y1)
+    _SM9FP2_MontMulU(x1y1, z0);
+    SM9FP2_Add(x0y0, z0, z0);
+
+    *z = z_tmp;
+}
+
+static inline
+void _SM9FP4_MontMulU(const SM9FP4Mont* x, SM9FP4Mont* y)
+{
+    // U = ((0, 1), (0, 0))
+    // (1, 0) * (b1, b0) = (b0, (1, 0) * b1)
+    y->fp2[1] = x->fp2[0];
+    _SM9FP2_MontMulU(x->fp2 + 1, y->fp2);
+}
+
+static
+void SM9FP4_MontInv(const SM9FP4Mont* x, SM9FP4Mont* y)
+{
+    SM9FP4Mont y_tmp = { 0 };
+    const SM9FP2Mont* x1 = x->fp2 + 1;
+    const SM9FP2Mont* x0 = x->fp2;
+    SM9FP2Mont* y1 = y_tmp.fp2 + 1;
+    SM9FP2Mont* y0 = y_tmp.fp2;
+
+    // det = x0^2 - U(x1^2)
+    SM9FP2_MontMul(x1, x1, y0);
+    _SM9FP2_MontMulU(y0, y1);
+    SM9FP2_MontMul(x0, x0, y0);
+    SM9FP2_Sub(y0, y1, y0);
+
+    // 1 / det
+    SM9FP2_MontInv(y0, y0);
+
+    // y1 =  -x1 / det
+    SM9FP2_MontMul(y0, x1, y1);
+    SM9FP2_Neg(y1, y1);
+
+    // y0 = x0 / det
+    SM9FP2_MontMul(y0, x0, y0);
+
+    *y = y_tmp;
+}
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FP4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FP12 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+static
+void SM9FP12_Add(const SM9FP12* x, const SM9FP12* y, SM9FP12* z)
+{
+    for (int i = 0; i < 12; i++)
+        SM9FP1_Add(x->fp1 + i, y->fp1 + i, z->fp1 + i);
+}
+
+static
+void SM9FP12_Sub(const SM9FP12* x, const SM9FP12* y, SM9FP12* z)
+{
+    for (int i = 0; i < 12; i++)
+        SM9FP1_Sub(x->fp1 + i, y->fp1 + i, z->fp1 + i);
+}
+
+static
+void SM9FP12_Neg(const SM9FP12* x, SM9FP12* y)
+{
+    for (int i = 0; i < 12; i++)
+        SM9FP1_Neg(x->fp1 + i, y->fp1 + i);
+}
+
+static
+void SM9FP12_MontMul(const SM9FP12Mont* x, const SM9FP12Mont* y, SM9FP12Mont* z)
+{
+    SM9FP12Mont z_tmp = { 0 };
+    SM9FP4Mont m2 = { 0 }, m1 = { 0 }, m0 = { 0 };
+    SM9FP4Mont tmp = { 0 };
+    const SM9FP4Mont* x2 = x->fp4 + 2;
+    const SM9FP4Mont* x1 = x->fp4 + 1;
+    const SM9FP4Mont* x0 = x->fp4;
+    const SM9FP4Mont* y2 = y->fp4 + 2;
+    const SM9FP4Mont* y1 = y->fp4 + 1;
+    const SM9FP4Mont* y0 = y->fp4;
+    SM9FP4Mont* z2 = z_tmp.fp4 + 2;
+    SM9FP4Mont* z1 = z_tmp.fp4 + 1;
+    SM9FP4Mont* z0 = z_tmp.fp4;
+
+    SM9FP4_MontMul(x2, y2, &m2);        // x2y2
+    SM9FP4_MontMul(x1, y1, &m1);        // x1y1
+    SM9FP4_MontMul(x0, y0, &m0);        // x0y0
+
+    // z2 =   x2y0  +   x1y1  + x0y2 =   (x2 + x0)(y2 + y0) - x2y2 - x0y0  +   x1y1
+    // z1 = U(x2y2) +   x1y0  + x0y1 =   (x1 + x0)(y1 + y0) - x1y1 - x0y0  + U(x2y2)
+    // z0 = U(x2y1) + U(x1y2) + x0y0 = U((x2 + x1)(y2 + y1) - x2y2 - x1y1) +   x0y0
+
+    // z2 = (x2 + x0)(y2 + y0) - x2y2 - x0y0 + x1y1
+    SM9FP4_Add(x2, x0, &tmp);
+    SM9FP4_Add(y2, y0, z2);
+    SM9FP4_MontMul(&tmp, z2, z2);
+    SM9FP4_Sub(z2, &m2, z2);
+    SM9FP4_Sub(z2, &m0, z2);
+    SM9FP4_Add(z2, &m1, z2);
+
+    // z1 = (x1 + x0)(y1 + y0) - x1y1 - x0y0 + U(x2y2)
+    SM9FP4_Add(x1, x0, &tmp);
+    SM9FP4_Add(y1, y0, z1);
+    SM9FP4_MontMul(&tmp, z1, z1);
+    SM9FP4_Sub(z1, &m1, z1);
+    SM9FP4_Sub(z1, &m0, z1);
+    _SM9FP4_MontMulU(&m2, &tmp);
+    SM9FP4_Add(z1, &tmp, z1);
+
+    // z0 = U((x2 + x1)(y2 + y1) - x2y2 - x1y1) + x0y0
+    SM9FP4_Add(x2, x1, &tmp);
+    SM9FP4_Add(y2, y1, z0);
+    SM9FP4_MontMul(&tmp, z0, z0);
+    SM9FP4_Sub(z0, &m2, z0);
+    SM9FP4_Sub(z0, &m1, z0);
+    _SM9FP4_MontMulU(z0, &tmp);
+    SM9FP4_Add(&tmp, &m0, z0);
+
+    *z = z_tmp;
+}
+
+static
+void SM9FP12_MontInv(const SM9FP12Mont* x, SM9FP12Mont* y)
+{
+    SM9FP12Mont y_tmp = { 0 };
+    SM9FP4Mont m2 = { 0 }, m1 = { 0 }, m0 = { 0 };
+    SM9FP4Mont tmp = { 0 };
+    const SM9FP4Mont* x2 = x->fp4 + 2;
+    const SM9FP4Mont* x1 = x->fp4 + 1;
+    const SM9FP4Mont* x0 = x->fp4;
+    SM9FP4Mont* y2 = y_tmp.fp4 + 2;
+    SM9FP4Mont* y1 = y_tmp.fp4 + 1;
+    SM9FP4Mont* y0 = y_tmp.fp4;
+    SM9FP4Mont det = { 0 };
+
+    // m2 = U(x2^2) -   x1x0
+    SM9FP4_MontMul(x2, x2, &tmp);
+    _SM9FP4_MontMulU(&tmp, &m2);
+    SM9FP4_MontMul(x1, x0, &tmp);
+    SM9FP4_Sub(&m2, &tmp, &m2);
+
+    // m1 =   x1^2  -   x2x0
+    SM9FP4_MontMul(x1, x1, &m1);
+    SM9FP4_MontMul(x2, x0, &tmp);
+    SM9FP4_Sub(&m1, &tmp, &m1);
+
+    // m0 =   x0^2  - U(x2x1)
+    SM9FP4_MontMul(x2, x1, &m0);
+    _SM9FP4_MontMulU(&m0, &tmp);
+    SM9FP4_MontMul(x0, x0, &m0);
+    SM9FP4_Sub(&m0, &tmp, &m0);
+
+    // det = U(x2)m2 + U(x1)m1 + x0m0
+    _SM9FP4_MontMulU(x2, &tmp);
+    SM9FP4_MontMul(&tmp, &m2, &det);
+    _SM9FP4_MontMulU(x1, &tmp);
+    SM9FP4_MontMul(&tmp, &m1, &tmp);
+    SM9FP4_Add(&det, &tmp, &det);
+    SM9FP4_MontMul(x0, &m0, &tmp);
+    SM9FP4_Add(&det, &tmp, &det);
+
+    // y2 = m1 / det
+    // y1 = m2 / det
+    // y0 = m0 / det
+    SM9FP4_MontInv(&det, &det);
+    SM9FP4_MontMul(&m1, &det, y2);
+    SM9FP4_MontMul(&m2, &det, y1);
+    SM9FP4_MontMul(&m0, &det, y0);
+
+    *y = y_tmp;
+}
+
+static
+void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y)
+{
+    int32_t i = 0;
+    int32_t j = 0;
+    int32_t w = 0;
+    uint32_t wvalue = 0;
+    SM9FP12Mont y_tmp = { 0 };
+
+    // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
+    SM9FP12Mont table[SCALARMUL_TSIZE] = { *x };
+    SM9FP12_MontMul(x, x, &y_tmp);
+    for (i = 0; i < SCALARMUL_TSIZE - 1; i++)
+    {
+        SM9FP12_MontMul(table + i, &y_tmp, table + i + 1);
+    }
+
+    // set to 1 in fp12
+    for (i = 1; i < 12; i++) UInt256_SetZero(y_tmp.fp1 + i); y_tmp.fp1[0] = *CONSTS_FP1_MONT_ONE;
+
+    i = 255;
+    while (i >= 0)
+    {
+        wvalue = (e->u64[i / 64] >> (i % 64)) & 0x1;
+
+        if (wvalue == 0)
+        {
+            SM9FP12_MontMul(&y_tmp, &y_tmp, &y_tmp);
+            i--;
+        }
+        else
+        {
+            // find a longest 1...1 bits in window size
+            j = i;
+            for (w = i - 1; w >= 0 && w > i - SCALARMUL_WSIZE; w--)
+            {
+                if ((e->u64[w / 64] >> (w % 64)) & 0x1)
+                {
+                    wvalue = (wvalue << (j - w)) | 0x1;
+                    j = w;
+                }
+            }
+
+            while (i >= j)
+            {
+                SM9FP12_MontMul(&y_tmp, &y_tmp, &y_tmp);
+                i--;
+            }
+
+            SM9FP12_MontMul(&y_tmp, table + (wvalue >> 1), &y_tmp);
+        }
+    }
+
+    *y = y_tmp;
+}
+
+static
+void SM9FP12_MontFrob1(const SM9FP12Mont* x, SM9FP12Mont* y);
+
+static
+void SM9FP12_MontFrob2(const SM9FP12Mont* x, SM9FP12Mont* y);
+
+static
+void SM9FP12_MontFrob2(const SM9FP12Mont* x, SM9FP12Mont* y);
+
+static
+void SM9FP12_MontFrob6(const SM9FP12Mont* x, SM9FP12Mont* y);
+
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FP12 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> R-ate Pairing >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+static
+void SM9Pairing_RAte(const SM9JacobPoint1Mont* p1, const SM9JacobPoint2Mont* p2, SM9FP12Mont* result);
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< R-ate Pairing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
