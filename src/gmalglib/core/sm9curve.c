@@ -956,7 +956,7 @@ int SM9FP2_MontHasSqrt(const SM9FP2Mont* x, SM9FP2Mont* y)
     SM9FP1Mont* y1 = y_tmp.fp1 + 1;
     SM9FP1Mont* y0 = y_tmp.fp1;
 
-    // XXX: w^2 = x0^2 + 2(x1^2)
+    // w^2 = x0^2 + 2(x1^2)
     SM9FP1Mont w = { 0 };
     SM9FP1_MontMul(x0, x0, y0);
     SM9FP1_MontMul(x1, x1, y1);
