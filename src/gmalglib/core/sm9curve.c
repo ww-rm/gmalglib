@@ -965,14 +965,13 @@ int SM9FP2_MontHasSqrt(const SM9FP2Mont* x, SM9FP2Mont* y)
     if (!SM9FP1_MontHasSqrt(&w, &w))
         return 0;
 
-    // y0^2 = (x0 + w) / 2
+    // y0^2 = (x0 + w) / 2, or y0^2 = (x0 - w) / 2
     SM9FP1_Add(x0, &w, y0);
     SM9FP1_Div2(y0, y0);
     if (!SM9FP1_MontHasSqrt(y0, y0))
     {
-        // try another w
-        SM9FP1_Neg(&w, &w);
-        SM9FP1_Add(x0, &w, y0);
+        // try negative w
+        SM9FP1_Sub(x0, &w, y0);
         SM9FP1_Div2(y0, y0);
         if (!SM9FP1_MontHasSqrt(y0, y0))
             return 0;
