@@ -910,6 +910,13 @@ void _SM9FP2_MontMulU(const SM9FP2Mont* x, SM9FP2Mont* y)
 }
 
 static
+void SM9FP2_MontMulFP1(const SM9FP2Mont* x, const SM9FP1Mont* y, SM9FP2Mont* z)
+{
+    z->fp1[1] = x->fp1[1];
+    SM9FP1_MontMul(x->fp1, y, z->fp1);
+}
+
+static
 void SM9FP2_ToMont(const SM9FP2* x, SM9FP2Mont* y)
 {
     SM9FP1_ToMont(x->fp1 + 1, y->fp1 + 1);
@@ -1990,6 +1997,190 @@ void SM9FP12Mont_Print(const SM9FP12Mont* x)
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FP12 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> R-ate Pairing >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+static
+void _SM9Pairing_LinearDbl(const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont* Q, SM9FP12Mont* g_num, SM9FP12Mont* g_den)
+{
+    // set fp12 zero
+    for (int i = 0; i < 12; i++) UInt256_SetZero(g_num->fp1 + i);
+    for (int i = 0; i < 12; i++) UInt256_SetZero(g_den->fp1 + i);
+
+    // (((0, 6), (3, 9)), ((1, 7), (4, 10)), ((2, 8), (5, 11)))
+    SM9FP2Mont* g_num_0 = g_num->fp2;       // (0, 6)
+    SM9FP2Mont* g_num_2 = g_num->fp2 + 4;   // (2, 8)
+    SM9FP2Mont* g_num_3 = g_num->fp2 + 1;   // (3, 9)
+    SM9FP2Mont* g_den_3 = g_den->fp2 + 1;   // (3, 9)
+
+    SM9FP1Mont _tmp_fp1 = { 0 }, * tmp_fp1 = &_tmp_fp1;
+    SM9FP2Mont _tmp = { 0 }, * tmp = &_tmp;
+
+    // t1 = yV
+
+    // t2 = (3/2)xV^2
+    SM9FP2_MontMul(&V->x, &V->x, g_num_2);          // xV^2
+    SM9FP2_Add(g_num_2, g_num_2, tmp);
+    SM9FP2_Add(tmp, g_num_2, g_num_2);
+    SM9FP2_Div2(g_num_2, g_num_2);                  // (3/2)xV^2
+
+    // g_num_0
+    SM9FP2_MontMul(&V->y, &V->y, g_num_0);          // yV^2
+    SM9FP2_MontMul(g_num_2, &V->x, tmp);            // (3/2)xV^3
+    SM9FP2_Sub(g_num_0, tmp, g_num_0);              // yV^2 - (3/2)xV^3
+    SM9FP1_MontMul(&Q->z, &Q->z, tmp_fp1);          // zQ^2
+    SM9FP1_MontMul(tmp_fp1, &Q->z, tmp_fp1);        // zQ^3
+    SM9FP2_MontMulFP1(g_num_0, tmp_fp1, g_num_0);   // zQ^3( yV^2 - (3/2)xV^3 )
+
+    // g_num_2
+    SM9FP2_MontMul(&V->z, &V->z, g_num_3);          // zV^2
+    SM9FP2_MontMul(g_num_2, g_num_3, g_num_2);      // (3/2)xV^2 * zV^2
+    SM9FP2_MontMulFP1(g_num_2, &Q->x, g_num_2);
+    SM9FP2_MontMulFP1(g_num_2, &Q->z, g_num_2);     // (3/2)xQ * zQ * xV^2 * zV^2
+
+    // g_num_3
+    SM9FP2_MontMul(g_num_3, &V->z, g_num_3);        // zV^3
+    SM9FP2_MontMul(&V->y, g_num_3, g_den_3);        // yV * zV^3
+    SM9FP2_MontMulFP1(g_den_3, &Q->y, g_num_3);     // yQ * yV * zV^3
+    SM9FP2_Neg(g_num_3, g_num_3);                   // - yQ * yV * zV^3
+
+    // g_den_3
+    SM9FP2_MontMulFP1(g_den_3, tmp_fp1, g_den_3);   // zQ^3 * yV * zV^3
+}
+
+static
+void SM9Pairing_LinearDbl(const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont* Q, SM9FP12Mont* g_num, SM9FP12Mont* g_den)
+{
+    // just return 1 in fp12
+    if (SM9JacobPoint2Mont_IsInf(V) || SM9JacobPoint1Mont_IsInf(Q))
+    {
+        for (int i = 1; i < 12; i++) UInt256_SetZero(g_num->fp1 + i);
+        g_num->fp1[0] = *CONSTS_FP1_MONT_ONE;
+
+        for (int i = 1; i < 12; i++) UInt256_SetZero(g_den->fp1 + i);
+        g_den->fp1[0] = *CONSTS_FP1_MONT_ONE;
+    }
+    else
+    {
+        _SM9Pairing_LinearDbl(V, Q, g_num, g_den);
+    }
+}
+
+static
+void _SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont* Q, SM9FP12Mont* g_num, SM9FP12Mont* g_den)
+{
+    // set fp12 zero
+    for (int i = 0; i < 12; i++) UInt256_SetZero(g_num->fp1 + i);
+    for (int i = 0; i < 12; i++) UInt256_SetZero(g_den->fp1 + i);
+
+    // (((0, 6), (3, 9)), ((1, 7), (4, 10)), ((2, 8), (5, 11)))
+    SM9FP2Mont* g_num_0 = g_num->fp2;       // (0, 6)
+    SM9FP2Mont* g_num_2 = g_num->fp2 + 4;   // (2, 8)
+    SM9FP2Mont* g_num_3 = g_num->fp2 + 1;   // (3, 9)
+    SM9FP2Mont* g_den_2 = g_den->fp2 + 4;   // (2, 8)
+    SM9FP2Mont* g_den_3 = g_den->fp2 + 1;   // (3, 9)
+
+    SM9FP2Mont _t1 = { 0 }, * t1 = &_t1;
+    SM9FP2Mont _t2 = { 0 }, * t2 = &_t2;
+    SM9FP1Mont _tmp_fp1 = { 0 }, * tmp_fp1 = &_tmp_fp1;
+    SM9FP2Mont _tmp = { 0 }, * tmp = &_tmp;
+
+    // t1-pre
+    SM9FP2_MontMul(&V->z, &V->z, g_num_2);          // zV^2
+    SM9FP2_MontMul(g_num_2, &U->x, t1);             // xU * zV^2
+    SM9FP2_MontMul(&U->z, &U->z, t2);               // zU^2
+    SM9FP2_MontMul(t2, &V->x, tmp);                 // xV * zU^2
+    SM9FP2_Sub(t1, tmp, t1);                        // xU * zV^2 - xV * zU^2
+
+    // t2-pre
+    SM9FP2_MontMul(g_num_2, &V->z, g_num_3);        // zV^3
+    SM9FP2_MontMul(g_num_3, &U->y, tmp);            // yU * zV^3
+    SM9FP2_MontMul(t2, &U->z, t2);                  // zU^3
+    SM9FP2_MontMul(t2, &V->y, t2);                  // yV * zU^3
+    SM9FP2_Sub(tmp, t2, t2);                        // yU * zV^3 - yV * zU^3
+
+    if (UInt256_IsZero(t1->fp1) && UInt256_IsZero(t1->fp1 + 1))
+    {
+        // U, V are same points
+        if (UInt256_IsZero(t2->fp1) && UInt256_IsZero(t2->fp1 + 1))
+        {
+            // t1
+            *t1 = V->y;                             // yV
+
+            // t2
+            SM9FP2_MontMul(&V->x, &V->x, t2);       // xV^2
+            SM9FP2_Add(t2, t2, tmp);
+            SM9FP2_Add(tmp, t2, t2);
+            SM9FP2_Div2(t2, t2);                    // (3/2)xV^2
+        }
+        // U, V are opposite points
+        else
+        {
+            // set g_num_3 to zero
+            UInt256_SetZero(g_num_3->fp1 + 1); UInt256_SetZero(g_num_3->fp1);
+
+            // g_num_0
+            SM9FP1_MontMul(&Q->z, &Q->z, tmp_fp1);          // zQ^2
+            SM9FP2_MontMulFP1(&V->x, tmp_fp1, g_num_0);     // zQ^2 * xV
+            SM9FP2_Neg(g_num_0, g_num_0);                   // - zQ^2 * xV
+
+            // g_den_2
+            SM9FP2_MontMulFP1(g_num_2, tmp_fp1, g_den_2);   // zQ^2 * zV^2
+
+            // g_num_2
+            SM9FP2_MontMulFP1(g_num_2, &Q->x, g_num_2);     // xQ * zV^2
+
+            return;
+        }
+    }
+    // U, V are different points
+    else
+    {
+        // t1
+        SM9FP2_MontMul(t1, &U->z, t1);
+        SM9FP2_MontMul(t1, &V->z, t1);              // zU * zV * (xU * zV^2 - xV * zU^2)
+
+        // t2
+        SM9FP2_MontMul(t2, &V->z, t2);              // zV( yU * zV^3 - yV * zU^3 )
+    }
+
+    // g_num_0
+    SM9FP2_MontMul(t1, &V->y, g_num_0);             // t1 * yV
+    SM9FP2_MontMul(t2, &V->x, tmp);                 // t2 * xV
+    SM9FP2_Sub(g_num_0, tmp, g_num_0);              // t1 * yV - t2 * xV
+    SM9FP1_MontMul(&Q->z, &Q->z, tmp_fp1);          // zQ^2
+    SM9FP1_MontMul(tmp_fp1, &Q->z, tmp_fp1);        // zQ^3
+    SM9FP2_MontMulFP1(g_num_0, tmp_fp1, g_num_0);   // zQ^3( t1 * yV - t2 * xV )
+
+    // g_num_2
+    SM9FP2_MontMul(g_num_2, t2, g_num_2);           // t2 * zV^2
+    SM9FP2_MontMulFP1(g_num_2, &Q->z, g_num_2);
+    SM9FP2_MontMulFP1(g_num_2, &Q->x, g_num_2);     // xQ * zQ * t2 * zV^2
+
+    // g_num_3
+    SM9FP2_MontMul(t1, g_num_3, g_den_3);           // t1 * zV^3
+    SM9FP2_MontMulFP1(g_den_3, &Q->y, g_num_3);     // yQ * t1 * zV^3
+    SM9FP2_Neg(g_num_3, g_num_3);                   // - yQ * t1 * zV^3
+
+    // g_den_3
+    SM9FP2_MontMulFP1(g_den_3, tmp_fp1, g_den_3);   // zQ ^ 3 * t1 * zV ^ 3
+}
+
+static
+void SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont* Q, SM9FP12Mont* g_num, SM9FP12Mont* g_den)
+{
+    // just return 1 in fp12
+    if (SM9JacobPoint2Mont_IsInf(U) || SM9JacobPoint2Mont_IsInf(V) || SM9JacobPoint1Mont_IsInf(Q))
+    {
+        for (int i = 1; i < 12; i++) UInt256_SetZero(g_num->fp1 + i);
+        g_num->fp1[0] = *CONSTS_FP1_MONT_ONE;
+
+        for (int i = 1; i < 12; i++) UInt256_SetZero(g_den->fp1 + i);
+        g_den->fp1[0] = *CONSTS_FP1_MONT_ONE;
+    }
+    else
+    {
+        _SM9Pairing_LinearAdd(U, V, Q, g_num, g_den);
+    }
+}
 
 void SM9Pairing_RAte(const SM9JacobPoint1Mont* p1, const SM9JacobPoint2Mont* p2, SM9FP12Mont* result);
 

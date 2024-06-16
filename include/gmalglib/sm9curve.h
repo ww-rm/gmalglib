@@ -39,6 +39,7 @@ typedef union _SM9FP4 {
 
 typedef union _SM9FP12 {
     SM9FP4 fp4[3];
+    SM9FP2 fp2[6];
     SM9FP1 fp1[12];
 } SM9FP12, SM9FP12Mont;
 
