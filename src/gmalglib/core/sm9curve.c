@@ -2031,6 +2031,8 @@ void SM9FP12Mont_Print(const SM9FP12Mont* x)
 static
 void _SM9Pairing_LinearDbl(const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont* Q, SM9FP12Mont* g_num, SM9FP12Mont* g_den)
 {
+    // NOTE: See https://ww-rm.github.io/posts/2024/06/16/sm9gfn/ for details
+
     // set fp12 zero
     for (int i = 0; i < 12; i++) UInt256_SetZero(g_num->fp1 + i);
     for (int i = 0; i < 12; i++) UInt256_SetZero(g_den->fp1 + i);
@@ -2097,6 +2099,8 @@ void SM9Pairing_LinearDbl(const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont*
 static
 void _SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont* Q, SM9FP12Mont* g_num, SM9FP12Mont* g_den)
 {
+    // NOTE: See https://ww-rm.github.io/posts/2024/06/16/sm9gfn/ for details
+
     // set fp12 zero
     for (int i = 0; i < 12; i++) UInt256_SetZero(g_num->fp1 + i);
     for (int i = 0; i < 12; i++) UInt256_SetZero(g_den->fp1 + i);
