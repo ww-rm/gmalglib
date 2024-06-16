@@ -930,62 +930,6 @@ void SM9FP2_FromMont(const SM9FP2Mont* x, SM9FP2* y)
 }
 
 static
-void SM9FP2_MontPow(const SM9FP2Mont* x, const UInt256* e, SM9FP2Mont* y)
-{
-    int32_t i = 0;
-    int32_t j = 0;
-    int32_t w = 0;
-    uint32_t wvalue = 0;
-    SM9FP2Mont y_tmp = { 0 };
-
-    // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
-    SM9FP2Mont table[SCALARMUL_TSIZE] = { *x };
-    SM9FP2_MontMul(x, x, &y_tmp);
-    for (i = 0; i < SCALARMUL_TSIZE - 1; i++)
-    {
-        SM9FP2_MontMul(table + i, &y_tmp, table + i + 1);
-    }
-
-    // set to 1 in fp2
-    UInt256_SetZero(y_tmp.fp1 + 1); y_tmp.fp1[0] = *CONSTS_FP1_MONT_ONE;
-
-    i = 255;
-    while (i >= 0)
-    {
-        wvalue = (e->u64[i / 64] >> (i % 64)) & 0x1;
-
-        if (wvalue == 0)
-        {
-            SM9FP2_MontMul(&y_tmp, &y_tmp, &y_tmp);
-            i--;
-        }
-        else
-        {
-            // find a longest 1...1 bits in window size
-            j = i;
-            for (w = i - 1; w >= 0 && w > i - SCALARMUL_WSIZE; w--)
-            {
-                if ((e->u64[w / 64] >> (w % 64)) & 0x1)
-                {
-                    wvalue = (wvalue << (j - w)) | 0x1;
-                    j = w;
-                }
-            }
-
-            while (i >= j)
-            {
-                SM9FP2_MontMul(&y_tmp, &y_tmp, &y_tmp);
-                i--;
-            }
-
-            SM9FP2_MontMul(&y_tmp, table + (wvalue >> 1), &y_tmp);
-        }
-    }
-
-    *y = y_tmp;
-}
-
-static
 int SM9FP2_MontHasSqrt(const SM9FP2Mont* x, SM9FP2Mont* y)
 {
     SM9FP2Mont y_tmp = { 0 };
@@ -1708,27 +1652,6 @@ void SM9FP4_MontInv(const SM9FP4Mont* x, SM9FP4Mont* y)
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FP4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FP12 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-static
-void SM9FP12_Add(const SM9FP12* x, const SM9FP12* y, SM9FP12* z)
-{
-    for (int i = 0; i < 12; i++)
-        SM9FP1_Add(x->fp1 + i, y->fp1 + i, z->fp1 + i);
-}
-
-static
-void SM9FP12_Sub(const SM9FP12* x, const SM9FP12* y, SM9FP12* z)
-{
-    for (int i = 0; i < 12; i++)
-        SM9FP1_Sub(x->fp1 + i, y->fp1 + i, z->fp1 + i);
-}
-
-static
-void SM9FP12_Neg(const SM9FP12* x, SM9FP12* y)
-{
-    for (int i = 0; i < 12; i++)
-        SM9FP1_Neg(x->fp1 + i, y->fp1 + i);
-}
 
 void SM9FP12_MontMul(const SM9FP12Mont* x, const SM9FP12Mont* y, SM9FP12Mont* z)
 {
