@@ -911,7 +911,7 @@ void _SM9FP2_MontMulU(const SM9FP2Mont* x, SM9FP2Mont* y)
 static
 void SM9FP2_MontMulFP1(const SM9FP2Mont* x, const SM9FP1Mont* y, SM9FP2Mont* z)
 {
-    z->fp1[1] = x->fp1[1];
+    SM9FP1_MontMul(x->fp1 + 1, y, z->fp1 + 1);
     SM9FP1_MontMul(x->fp1, y, z->fp1);
 }
 
@@ -2232,11 +2232,11 @@ void _SM9Pairing_Miller_DblAndAdd(const SM9JacobPoint2Mont* Q, const SM9JacobPoi
     SM9JacobPoint2Mont_Dbl(T_tmp, T_tmp)
 
 #define _MILLER_ADD \
-    SM9Pairing_LinearAdd(T, Q, P, g_num, g_den), \
+    SM9Pairing_LinearAdd(T_tmp, Q, P, g_num, g_den), \
     SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
     SM9JacobPoint2Mont_Add(T_tmp, Q, T_tmp)
 
-    _MILLER_DBL;
+    _MILLER_DBL; 
     _MILLER_DBL;
     _MILLER_DBL; _MILLER_ADD;
     _MILLER_DBL;
@@ -2317,13 +2317,37 @@ void SM9Pairing_Miller(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mont* P,
 static
 void SM9JacobPoint2Mont_Pi1(const SM9JacobPoint2Mont* x, SM9JacobPoint2Mont* y)
 {
+    // Frobenius 1 in FP12
+    // (((    11,  5), (     8,  2)), ((    10,  4), (     7,  1)), ((     9,  3), (     6,  0)))
+    // (((p - w5, w5), (p - w2, w2)), ((p - w4, w4), (p - w1, w1)), ((p - w3, w3), (p - w0, w0)))
 
+    // x: (p - w0, w0)
+    SM9FP1_Neg(x->x.fp1 + 1, y->x.fp1 + 1); y->x.fp1[0] = x->x.fp1[0];
+
+    // y: (p - w0, w0)
+    SM9FP1_Neg(x->y.fp1 + 1, y->y.fp1 + 1); y->y.fp1[0] = x->y.fp1[0];
+
+    // z: (p - w1, w1)
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F1, x->z.fp1 + 1, y->z.fp1 + 1); SM9FP1_Neg(y->z.fp1 + 1, y->z.fp1 + 1);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F1, x->z.fp1, y->z.fp1);
 }
 
 static
 void SM9JacobPoint2Mont_Pi2(const SM9JacobPoint2Mont* x, SM9JacobPoint2Mont* y)
 {
+    // Frobenius 2 in FP12
+    // (((    11,      5), ( 8,  2)), ((    10,      4), ( 7,  1)), ((     9,      3), ( 6,  0)))
+    // (((p - w4, p - w4), (w4, w4)), ((p - w2, p - w2), (w2, w2)), ((p - w0, p - w0), (w0, w0)))
 
+    // x: (w0, w0)
+    y->x = x->x;
+
+    // y: (w0, w0)
+    y->y = x->y;
+
+    // z: (w2, w2)
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->z.fp1 + 1, y->z.fp1 + 1);
+    SM9FP1_MontMul(CONSTS_FP1_MONT_FP12_FROB_F2, x->z.fp1, y->z.fp1);
 }
 
 static
