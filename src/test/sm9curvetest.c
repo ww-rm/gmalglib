@@ -285,6 +285,22 @@ void test_fp12()
     //SM9FP12Mont_Print(&x); printf("\n");
 }
 
+void test_pairing()
+{
+    SM9JacobPoint1Mont G1 = { 0 };
+    SM9JacobPoint1Mont_FromPoint(SM9_PARAMS_G1, &G1);
+    //SM9JacobPoint1Mont_Print(&G1);
+
+    SM9JacobPoint2Mont G2 = { 0 };
+    SM9JacobPoint2Mont_FromPoint(SM9_PARAMS_G2, &G2);
+    //SM9JacobPoint2Mont_Print(&G2);
+
+    SM9FP12Mont f = { 0 };
+
+    SM9Pairing_RAte(&G1, &G2, &f);
+    SM9FP12Mont_Print(&f);
+}
+
 int main()
 {
     test_curve1();
@@ -301,6 +317,8 @@ int main()
     //make_table2();
 
     //test_fp12();
+
+    test_pairing();
 
     return 0;
 }
