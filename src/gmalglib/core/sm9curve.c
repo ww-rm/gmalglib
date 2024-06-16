@@ -786,7 +786,6 @@ void SM9JacobPoint1Mont_MulG1(const UInt256* k, SM9JacobPoint1Mont* X)
     }
 }
 
-
 #ifdef _DEBUG
 
 void SM9FP1Mont_Print(const SM9FP1Mont* x)
@@ -1904,6 +1903,39 @@ void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y)
 }
 
 static
+void SM9FP12_MontPowU64(const SM9FP12Mont* x, uint64_t e, SM9FP12Mont* y)
+{
+    int32_t i = 0;
+    SM9FP12Mont _y_tmp = { 0 }, * y_tmp = &_y_tmp;
+    y_tmp->fp1[0] = *CONSTS_FP1_MONT_ONE;
+
+    // find first 1 bit
+    for (i = 0; i < 64; i++)
+    {
+        if (e & 0x8000000000000000)
+        {
+            *y_tmp = *x;
+            e <<= 1;
+            i++;
+            break;
+        }
+        e <<= 1;
+    }
+
+    for (; i < 64; i++)
+    {
+        SM9FP12_MontMul(y_tmp, y_tmp, y_tmp);
+        if (e & 0x8000000000000000)
+        {
+            SM9FP12_MontMul(y_tmp, x, y_tmp);
+        }
+        e <<= 1;
+    }
+
+    *y = *y_tmp;
+}
+
+static
 void SM9FP12_MontFrob1(const SM9FP12Mont* x, SM9FP12Mont* y)
 {
     // (((p - w5, w5), (p - w2, w2)), ((p - w4, w4), (p - w1, w1)), ((p - w3, w3), (p - w0, w0)))
@@ -1991,8 +2023,6 @@ void SM9FP12Mont_Print(const SM9FP12Mont* x)
 }
 
 #endif // _DEBUG
-
-
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< FP12 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -2182,6 +2212,224 @@ void SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont*
     }
 }
 
-void SM9Pairing_RAte(const SM9JacobPoint1Mont* p1, const SM9JacobPoint2Mont* p2, SM9FP12Mont* result);
+static
+void _SM9Pairing_Miller_DblAndAdd(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mont* P, SM9JacobPoint2Mont* T, SM9FP12Mont* f_num, SM9FP12Mont* f_den)
+{
+    // 6t + 2 = 0b100100000000000000000000000000000000000010000101011101100100111110
+    int32_t i = 0;
+    SM9FP12Mont _g_num = { 0 }, * g_num = &_g_num;
+    SM9FP12Mont _g_den = { 0 }, * g_den = &_g_den;
+
+    // set T to Q and f to 1
+    SM9JacobPoint2Mont _T_tmp = *Q, * T_tmp = &_T_tmp;
+    for (i = 1; i < 12; i++) UInt256_SetZero(f_num->fp1 + i); f_num->fp1[0] = *CONSTS_FP1_MONT_ONE;
+    for (i = 1; i < 12; i++) UInt256_SetZero(f_den->fp1 + i); f_den->fp1[0] = *CONSTS_FP1_MONT_ONE;
+
+#define _MILLER_DBL \
+    SM9Pairing_LinearDbl(T_tmp, P, g_num, g_den), \
+    SM9FP12_MontMul(f_num, f_num, f_num), SM9FP12_MontMul(f_den, f_den, f_den), \
+    SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
+    SM9JacobPoint2Mont_Dbl(T_tmp, T_tmp)
+
+#define _MILLER_ADD \
+    SM9Pairing_LinearAdd(T, Q, P, g_num, g_den), \
+    SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
+    SM9JacobPoint2Mont_Add(T_tmp, Q, T_tmp)
+
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+
+#undef _MILLER_DBL
+#undef _MILLER_ADD
+
+    *T = *T_tmp;
+}
+
+static
+void SM9Pairing_Miller(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mont* P, SM9JacobPoint2Mont* T, SM9FP12Mont* f_num, SM9FP12Mont* f_den)
+{
+    _SM9Pairing_Miller_DblAndAdd(Q, P, T, f_num, f_den);
+}
+
+static
+void SM9JacobPoint2Mont_Pi1(const SM9JacobPoint2Mont* x, SM9JacobPoint2Mont* y)
+{
+
+}
+
+static
+void SM9JacobPoint2Mont_Pi2(const SM9JacobPoint2Mont* x, SM9JacobPoint2Mont* y)
+{
+
+}
+
+static
+void SM9Pairing_FinalExp(const SM9FP12Mont* f_in, SM9FP12Mont* f_out)
+{
+    SM9FP12Mont _f = { 0 }, * f = &_f;
+    SM9FP12Mont _f_num = { 0 }, * f_num = &_f_num;
+    SM9FP12Mont _f_den = { 0 }, * f_den = &_f_den;
+    SM9FP12Mont _tmp1 = { 0 }, * tmp1 = &_tmp1;
+    SM9FP12Mont _tmp2 = { 0 }, * tmp2 = &_tmp2;
+    SM9FP12Mont _y = { 0 }, * y = &_y;
+
+#define _M  SM9FP12_MontMul
+#define _I  SM9FP12_MontInv
+#define _P  SM9FP12_MontPowU64
+#define _F1 SM9FP12_MontFrob1
+#define _F2 SM9FP12_MontFrob2
+#define _F3 SM9FP12_MontFrob3
+#define _F6 SM9FP12_MontFrob6
+
+    // easy part
+    _F6(f_in, f);                           // F6(f)
+    _I(f_in, tmp1);                         // I(f)
+    _M(f, tmp1, f);                         // f = F6(f)I(f)
+    _F2(f, tmp1);                           // F2(f)
+    _M(tmp1, f, f);                         // f = F2(f)f
+
+    // hard part
+    // y6, y5, y4, y3, y2, y1, y0
+    //  -,  -,  -,  -,  +,  -,  +
+
+    // y0
+    _F1(f, y);                              // f_p
+    _F2(f, tmp1);                           // f_p2
+    _M(y, tmp1, y);                         // f_p * f_p2
+    _F3(f, tmp1);                           // f_p3
+    _M(y, tmp1, f_num);                     // f_p * f_p2 * f_p3
+
+    // y2
+    _P(f, 0x600000000058F98A, tmp1);        // f_t
+    _P(tmp1, 0x600000000058F98A, tmp2);     // f_t2
+    _F2(tmp2, y);                           // f_t2_p2
+    _P(y, 6, y);                            // f_t2_p2^6
+    _M(f_num, y, f_num);                    // y2 * y0
+
+    // y1
+    _M(f, f, f_den);                        // f * f
+
+    // y3
+    _F1(tmp1, y);                           // f_t_p
+    _P(y, 12, y);                           // f_t_p^12
+    _M(f_den, y, f_den);                    // y3 * y1
+
+    // y4
+    _F1(tmp2, y);                           // f_t2_p
+    _M(y, tmp1, y);                         // f_t2_p * f_t
+    _P(y, 18, y);                           // (f_t2_p * f_t)^18
+    _M(f_den, y, f_den);                    // y4 * y3 * y1
+
+    // y5
+    _P(tmp2, 30, y);                        // f_t2^30
+    _M(f_den, y, f_den);                    // y5 * y4 * y3 * y1
+
+    // y6
+    _P(tmp2, 0x600000000058F98A, tmp1);     // f_t3
+    _F1(tmp1, y);                           // f_t3_p
+    _M(y, tmp1, y);                         // f_t3_p * f_t3
+    _P(y, 36, y);                           // (f_t3_p * f_t3)^36
+    _M(f_den, y, f_den);                    // y6 * y5 * y4 * y3 * y1
+
+    _I(f_den, f_den);
+    _M(f_num, f_den, f_out);
+
+#undef _M
+#undef _I
+#undef _P
+#undef _F1
+#undef _F2
+#undef _F3
+#undef _F6
+}
+
+void SM9Pairing_RAte(const SM9JacobPoint1Mont* P, const SM9JacobPoint2Mont* Q, SM9FP12Mont* f)
+{
+    SM9JacobPoint2Mont _T = { 0 }, * T = &_T;
+    SM9FP12Mont _f_num = { 0 }, * f_num = &_f_num;
+    SM9FP12Mont _f_den = { 0 }, * f_den = &_f_den;
+    SM9FP12Mont _g_num = { 0 }, * g_num = &_g_num;
+    SM9FP12Mont _g_den = { 0 }, * g_den = &_g_den;
+    SM9JacobPoint2Mont _Q_pi = { 0 }, * Q_pi = &_Q_pi;
+
+    SM9Pairing_Miller(Q, P, T, f_num, f_den);
+
+    SM9JacobPoint2Mont_Pi1(Q, Q_pi);
+    SM9Pairing_LinearAdd(T, Q_pi, P, g_num, g_den);
+    SM9FP12_MontMul(f_num, g_num, f_num); SM9FP12_MontMul(f_den, g_den, f_den);
+    SM9JacobPoint2Mont_Add(T, Q_pi, T);
+
+    SM9JacobPoint2Mont_Pi2(Q, Q_pi); 
+    SM9JacobPoint2Mont_Neg(Q_pi, Q_pi);
+    SM9Pairing_LinearAdd(T, Q_pi, P, g_num, g_den);
+    SM9FP12_MontMul(f_num, g_num, f_num); SM9FP12_MontMul(f_den, g_den, f_den);
+
+    SM9FP12_MontInv(f_den, f_den);
+    SM9FP12_MontMul(f_num, f_den, f);
+    SM9Pairing_FinalExp(f, f);
+}
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< R-ate Pairing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
