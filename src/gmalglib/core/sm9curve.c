@@ -1712,7 +1712,7 @@ void SM9FP12_ToMont(const SM9FP12* x, SM9FP12Mont* y)
         SM9FP1_ToMont(x->fp1 + i, y->fp1 + i);
 }
 
-static
+
 void SM9FP12_FromMont(const SM9FP12Mont* x, SM9FP12* y)
 {
     for (int i = 0; i < 12; i++)
@@ -2139,18 +2139,117 @@ void SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont*
     }
 }
 
+//static
+//void _SM9Pairing_Miller_DblAndAdd(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mont* P, SM9JacobPoint2Mont* T, SM9FP12Mont* f_num, SM9FP12Mont* f_den)
+//{
+//    // 6t + 2 = 0b100100000000000000000000000000000000000010000101011101100100111110
+//    int32_t i = 0;
+//    SM9FP12Mont _g_num = { 0 }, * g_num = &_g_num;
+//    SM9FP12Mont _g_den = { 0 }, * g_den = &_g_den;
+//
+//    // set T to Q and f to 1
+//    SM9JacobPoint2Mont _T_tmp = *Q, * T_tmp = &_T_tmp;
+//    for (i = 1; i < 12; i++) UInt256_SetZero(f_num->fp1 + i); f_num->fp1[0] = *CONSTS_FP1_MONT_ONE;
+//    for (i = 1; i < 12; i++) UInt256_SetZero(f_den->fp1 + i); f_den->fp1[0] = *CONSTS_FP1_MONT_ONE;
+//
+//#define _MILLER_DBL \
+//    SM9Pairing_LinearDbl(T_tmp, P, g_num, g_den), \
+//    SM9FP12_MontMul(f_num, f_num, f_num), SM9FP12_MontMul(f_den, f_den, f_den), \
+//    SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
+//    SM9JacobPoint2Mont_Dbl(T_tmp, T_tmp)
+//
+//#define _MILLER_ADD \
+//    SM9Pairing_LinearAdd(T_tmp, Q, P, g_num, g_den), \
+//    SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
+//    SM9JacobPoint2Mont_Add(T_tmp, Q, T_tmp)
+//
+//    _MILLER_DBL; 
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//    _MILLER_DBL;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL; _MILLER_ADD;
+//    _MILLER_DBL;
+//
+//#undef _MILLER_DBL
+//#undef _MILLER_ADD
+//
+//    *T = *T_tmp;
+//}
+
 static
-void _SM9Pairing_Miller_DblAndAdd(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mont* P, SM9JacobPoint2Mont* T, SM9FP12Mont* f_num, SM9FP12Mont* f_den)
+void _SM9Pairing_Miller_NAF(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mont* P, SM9JacobPoint2Mont* T, SM9FP12Mont* f_num, SM9FP12Mont* f_den)
 {
     // 6t + 2 = 0b100100000000000000000000000000000000000010000101011101100100111110
     int32_t i = 0;
     SM9FP12Mont _g_num = { 0 }, * g_num = &_g_num;
     SM9FP12Mont _g_den = { 0 }, * g_den = &_g_den;
+    SM9JacobPoint2Mont _Q_neg = { 0 }, * Q_neg = &_Q_neg;
 
     // set T to Q and f to 1
     SM9JacobPoint2Mont _T_tmp = *Q, * T_tmp = &_T_tmp;
     for (i = 1; i < 12; i++) UInt256_SetZero(f_num->fp1 + i); f_num->fp1[0] = *CONSTS_FP1_MONT_ONE;
     for (i = 1; i < 12; i++) UInt256_SetZero(f_den->fp1 + i); f_den->fp1[0] = *CONSTS_FP1_MONT_ONE;
+
+    SM9JacobPoint2Mont_Neg(Q, Q_neg);
 
 #define _MILLER_DBL \
     SM9Pairing_LinearDbl(T_tmp, P, g_num, g_den), \
@@ -2163,43 +2262,11 @@ void _SM9Pairing_Miller_DblAndAdd(const SM9JacobPoint2Mont* Q, const SM9JacobPoi
     SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
     SM9JacobPoint2Mont_Add(T_tmp, Q, T_tmp)
 
-    _MILLER_DBL; 
-    _MILLER_DBL;
-    _MILLER_DBL; _MILLER_ADD;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
-    _MILLER_DBL;
+#define _MILLER_SUB \
+    SM9Pairing_LinearAdd(T_tmp, Q_neg, P, g_num, g_den), \
+    SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
+    SM9JacobPoint2Mont_Add(T_tmp, Q_neg, T_tmp)
+
     _MILLER_DBL;
     _MILLER_DBL;
     _MILLER_DBL; _MILLER_ADD;
@@ -2207,30 +2274,68 @@ void _SM9Pairing_Miller_DblAndAdd(const SM9JacobPoint2Mont* Q, const SM9JacobPoi
     _MILLER_DBL;
     _MILLER_DBL;
     _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
     _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
     _MILLER_DBL;
     _MILLER_DBL; _MILLER_ADD;
     _MILLER_DBL;
     _MILLER_DBL; _MILLER_ADD;
     _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_SUB;
+    _MILLER_DBL;
+    _MILLER_DBL; _MILLER_SUB;
+    _MILLER_DBL;
+    _MILLER_DBL;
     _MILLER_DBL; _MILLER_ADD;
     _MILLER_DBL;
     _MILLER_DBL; _MILLER_ADD;
-    _MILLER_DBL; _MILLER_ADD;
     _MILLER_DBL;
     _MILLER_DBL;
-    _MILLER_DBL; _MILLER_ADD;
     _MILLER_DBL;
     _MILLER_DBL;
-    _MILLER_DBL; _MILLER_ADD;
-    _MILLER_DBL; _MILLER_ADD;
-    _MILLER_DBL; _MILLER_ADD;
-    _MILLER_DBL; _MILLER_ADD;
-    _MILLER_DBL; _MILLER_ADD;
+    _MILLER_DBL; _MILLER_SUB;
     _MILLER_DBL;
 
 #undef _MILLER_DBL
 #undef _MILLER_ADD
+#undef _MILLER_SUB
 
     *T = *T_tmp;
 }
@@ -2238,7 +2343,7 @@ void _SM9Pairing_Miller_DblAndAdd(const SM9JacobPoint2Mont* Q, const SM9JacobPoi
 static
 void SM9Pairing_Miller(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mont* P, SM9JacobPoint2Mont* T, SM9FP12Mont* f_num, SM9FP12Mont* f_den)
 {
-    _SM9Pairing_Miller_DblAndAdd(Q, P, T, f_num, f_den);
+     _SM9Pairing_Miller_NAF(Q, P, T, f_num, f_den);
 }
 
 static
