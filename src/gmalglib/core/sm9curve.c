@@ -211,6 +211,30 @@ void SM9FP1_MontMul(const SM9FP1Mont* x, const SM9FP1Mont* y, SM9FP1Mont* z)
 }
 
 static
+void SM9FP1_MontSqr(const SM9FP1Mont* x, SM9FP1Mont* y)
+{
+    UInt512 _xsqr = { 0 }, * xsqr = &_xsqr;
+    UInt512 _y_tmp = { 0 }, * y_tmp = &_y_tmp;
+    uint8_t carry = 0;
+
+    UInt256_Sqr(x, xsqr);
+    UInt256_Mul(xsqr->u256, CONSTS_P_PRIME, y_tmp);
+    UInt256_Mul(y_tmp->u256, CONSTS_P, y_tmp);
+
+    carry = UInt512_Add(xsqr, y_tmp, y_tmp);
+    *y = y_tmp->u256[1];
+
+    if (carry)
+    {
+        UInt256_Add(y, CONSTS_NEG_P, y);
+    }
+    else if (UInt256_Cmp(y, CONSTS_P) >= 0)
+    {
+        UInt256_Sub(y, CONSTS_P, y);
+    }
+}
+
+static
 void SM9FP1_ToMont(const SM9FP1* x, SM9FP1Mont* y)
 {
     SM9FP1_MontMul(x, CONSTS_FP1_R2, y);
@@ -233,7 +257,7 @@ void SM9FP1_MontPow(const SM9FP1Mont* x, const UInt256* e, SM9FP1Mont* y)
 
     // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
     SM9FP1Mont table[SCALARMUL_TSIZE] = { *x };
-    SM9FP1_MontMul(x, x, &y_tmp);
+    SM9FP1_MontSqr(x, &y_tmp);
     for (i = 0; i < SCALARMUL_TSIZE - 1; i++)
     {
         SM9FP1_MontMul(table + i, &y_tmp, table + i + 1);
@@ -247,7 +271,7 @@ void SM9FP1_MontPow(const SM9FP1Mont* x, const UInt256* e, SM9FP1Mont* y)
 
         if (wvalue == 0)
         {
-            SM9FP1_MontMul(&y_tmp, &y_tmp, &y_tmp);
+            SM9FP1_MontSqr(&y_tmp, &y_tmp);
             i--;
         }
         else
@@ -265,7 +289,7 @@ void SM9FP1_MontPow(const SM9FP1Mont* x, const UInt256* e, SM9FP1Mont* y)
 
             while (i >= j)
             {
-                SM9FP1_MontMul(&y_tmp, &y_tmp, &y_tmp);
+                SM9FP1_MontSqr(&y_tmp, &y_tmp);
                 i--;
             }
 
@@ -332,10 +356,10 @@ int SM9JacobPoint1Mont_IsOnCurve(const SM9JacobPoint1Mont* X)
     if (UInt256_Cmp(&X->z, CONSTS_FP1_MONT_ONE) == 0)
     {
         // left = y^2
-        SM9FP1_MontMul(&X->y, &X->y, &left);
+        SM9FP1_MontSqr(&X->y, &left);
 
         // right = x^3 + b
-        SM9FP1_MontMul(&X->x, &X->x, &right);
+        SM9FP1_MontSqr(&X->x, &right);
         SM9FP1_MontMul(&right, &X->x, &right);
         SM9FP1_Add(&right, CONSTS_FP1_MONT_B, &right);
     }
@@ -343,14 +367,14 @@ int SM9JacobPoint1Mont_IsOnCurve(const SM9JacobPoint1Mont* X)
     {
 
         // left = y^2
-        SM9FP1_MontMul(&X->y, &X->y, &left);                    // y^2
+        SM9FP1_MontSqr(&X->y, &left);                           // y^2
 
         // right = x^3 + bz^6
-        SM9FP1_MontMul(&X->z, &X->z, &tmp);                     // z^2
-        SM9FP1_MontMul(&tmp, &tmp, &right);                     // z^4
+        SM9FP1_MontSqr(&X->z, &tmp);                            // z^2
+        SM9FP1_MontSqr(&tmp, &right);                           // z^4
         SM9FP1_MontMul(&tmp, &right, &right);                   // z^6
         SM9FP1_MontMul(CONSTS_FP1_MONT_B, &right, &right);      // bz^6
-        SM9FP1_MontMul(&X->x, &X->x, &tmp);                     // x^2
+        SM9FP1_MontSqr(&X->x, &tmp);                            // x^2
         SM9FP1_MontMul(&tmp, &X->x, &tmp);                      // x^3
         SM9FP1_Add(&tmp, &right, &right);                       // x^3 + bz^6
     }
@@ -372,8 +396,8 @@ int SM9JacobPoint1Mont_IsEqual(const SM9JacobPoint1Mont* X, const SM9JacobPoint1
     // t2 = x2 * z1^2
     // t4 = y1 * z2^3
     // t5 = y2 * z1^3
-    SM9FP1_MontMul(&Y->z, &Y->z, &t4);         // z2^2
-    SM9FP1_MontMul(&X->z, &X->z, &t5);         // z1^2
+    SM9FP1_MontSqr(&Y->z, &t4);                 // z2^2
+    SM9FP1_MontSqr(&X->z, &t5);                 // z1^2
 
     SM9FP1_MontMul(&X->x, &t4, &t1);           // x1 * z2^2
     SM9FP1_MontMul(&Y->x, &t5, &t2);           // x2 * z1^2
@@ -448,10 +472,10 @@ int SM9Point1_IsOnCurve(const SM9Point1* X)
     SM9FP1_ToMont(&X->y, &y);
 
     // left = y^2
-    SM9FP1_MontMul(&y, &y, &left);
+    SM9FP1_MontSqr(&y, &left);
 
     // right = x^3 + b
-    SM9FP1_MontMul(&x, &x, &right);
+    SM9FP1_MontSqr(&x, &right);
     SM9FP1_MontMul(&right, &x, &right);
     SM9FP1_Add(&right, CONSTS_FP1_MONT_B, &right);
 
@@ -531,7 +555,7 @@ int SM9Point1_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9Point1* X)
         SM9FP1_ToMont(&X->x, &X->x);
 
         // compute y, x^3 + b
-        SM9FP1_MontMul(&X->x, &X->x, &X->y);
+        SM9FP1_MontSqr(&X->x, &X->y);
         SM9FP1_MontMul(&X->x, &X->y, &X->y);
         SM9FP1_Add(&X->y, CONSTS_FP1_MONT_B, &X->y);
         if (!SM9FP1_MontHasSqrt(&X->y, &X->y))
@@ -582,7 +606,7 @@ void _SM9JacobPoint1Mont_Dbl(const SM9JacobPoint1Mont* X, SM9JacobPoint1Mont* Y)
 
     // a == 0 (mod p)
     // t1 = 3x^2
-    SM9FP1_MontMul(&X->x, &X->x, &t1);          // x^2
+    SM9FP1_MontSqr(&X->x, &t1);                 // x^2
     SM9FP1_Add(&t1, &t1, &t2);                  // 2x^2
     SM9FP1_Add(&t1, &t2, &t1);                  // 3x^2
 
@@ -591,15 +615,15 @@ void _SM9JacobPoint1Mont_Dbl(const SM9JacobPoint1Mont* X, SM9JacobPoint1Mont* Y)
     SM9FP1_MontMul(&t3, &X->z, &Y->z);
 
     // t3 = 8y^4
-    SM9FP1_MontMul(&t3, &t3, &t2);              // 4y^2
-    SM9FP1_MontMul(&t2, &t2, &t3);              // 16y^4
+    SM9FP1_MontSqr(&t3, &t2);                   // 4y^2
+    SM9FP1_MontSqr(&t2, &t3);                   // 16y^4
     SM9FP1_Div2(&t3, &t3);                      // 8y^4
 
     // t2 = 4xy^2
     SM9FP1_MontMul(&X->x, &t2, &t2);            // 4xy^2
 
     // x' = t1^2 - 2t2
-    SM9FP1_MontMul(&t1, &t1, &Y->x);
+    SM9FP1_MontSqr(&t1, &Y->x);
     SM9FP1_Sub(&Y->x, &t2, &Y->x);
     SM9FP1_Sub(&Y->x, &t2, &Y->x);
 
@@ -635,8 +659,8 @@ void _SM9JacobPoint1Mont_Add(const SM9JacobPoint1Mont* X, const SM9JacobPoint1Mo
     // t2 = x2 * z1^2
     // t4 = y1 * z2^3
     // t5 = y2 * z1^3
-    SM9FP1_MontMul(&Y->z, &Y->z, &t4);          // z2^2
-    SM9FP1_MontMul(&X->z, &X->z, &t5);          // z1^2
+    SM9FP1_MontSqr(&Y->z, &t4);                 // z2^2
+    SM9FP1_MontSqr(&X->z, &t5);                 // z1^2
 
     SM9FP1_MontMul(&X->x, &t4, &t1);            // x1 * z2^2
     SM9FP1_MontMul(&Y->x, &t5, &t2);            // x2 * z1^2
@@ -666,9 +690,9 @@ void _SM9JacobPoint1Mont_Add(const SM9JacobPoint1Mont* X, const SM9JacobPoint1Mo
     SM9FP1_MontMul(&Z->z, &t3, &Z->z);          // z1 * z2 * t3
 
     // x3 = t6^2 - (t1 + t2) * t3^2
-    SM9FP1_MontMul(&t6, &t6, &Z->x);            // t6^2
+    SM9FP1_MontSqr(&t6, &Z->x);                 // t6^2
     SM9FP1_Add(&t1, &t2, &t2);                  // t1 + t2
-    SM9FP1_MontMul(&t3, &t3, &t5);              // t3^2
+    SM9FP1_MontSqr(&t3, &t5);                   // t3^2
     SM9FP1_MontMul(&t2, &t5, &t2);              // (t1 + t2) * t3^2
     SM9FP1_Sub(&Z->x, &t2, &Z->x);              // t6^2 - (t1 + t2) * t3^2
 
@@ -898,6 +922,33 @@ void SM9FP2_MontMul(const SM9FP2Mont* x, const SM9FP2Mont* y, SM9FP2Mont* z)
     *z = z_tmp;
 }
 
+static
+void SM9FP2_MontSqr(const SM9FP2Mont* x, SM9FP2Mont* y)
+{
+    SM9FP2Mont y_tmp = { 0 };
+    const SM9FP1Mont* x1 = x->fp1 + 1;
+    const SM9FP1Mont* x0 = x->fp1;
+    SM9FP1Mont* y1 = y_tmp.fp1 + 1;
+    SM9FP1Mont* y0 = y_tmp.fp1;
+
+    SM9FP1Mont _x1x0 = { 0 };
+    const SM9FP1Mont* x1x0 = &_x1x0;
+
+    SM9FP1_MontMul(x1, x0, &_x1x0);
+
+    // y0 = x0^2 - 2x1^2 = (x0 - 2x1)(x0 + x1) + x1x0
+    SM9FP1_Sub(x0, x1, y0);
+    SM9FP1_Sub(y0, x1, y0);
+    SM9FP1_Add(x0, x1, y1);
+    SM9FP1_MontMul(y0, y1, y0);
+    SM9FP1_Add(y0, x1x0, y0);
+
+    // y1 = 2x1x0
+    SM9FP1_Add(x1x0, x1x0, y1);
+
+    *y = y_tmp;
+}
+
 static inline
 void _SM9FP2_MontMulU(const SM9FP2Mont* x, SM9FP2Mont* y)
 {
@@ -940,8 +991,8 @@ int SM9FP2_MontHasSqrt(const SM9FP2Mont* x, SM9FP2Mont* y)
 
     // w^2 = x0^2 + 2(x1^2)
     SM9FP1Mont w = { 0 };
-    SM9FP1_MontMul(x0, x0, y0);
-    SM9FP1_MontMul(x1, x1, y1);
+    SM9FP1_MontSqr(x0, y0);
+    SM9FP1_MontSqr(x1, y1);
     SM9FP1_Add(y0, y1, &w);
     SM9FP1_Add(&w, y1, &w);
     if (!SM9FP1_MontHasSqrt(&w, &w))
@@ -979,8 +1030,8 @@ void SM9FP2_MontInv(const SM9FP2Mont* x, SM9FP2Mont* y)
     SM9FP1Mont* y0 = y_tmp.fp1;
 
     // det = x0^2 + 2(x1^2)
-    SM9FP1_MontMul(x0, x0, y0);
-    SM9FP1_MontMul(x1, x1, y1);
+    SM9FP1_MontSqr(x0, y0);
+    SM9FP1_MontSqr(x1, y1);
     SM9FP1_Add(y0, y1, y0);
     SM9FP1_Add(y0, y1, y0);
     SM9FP1_MontInv(y0, y0);
@@ -1020,10 +1071,10 @@ int SM9JacobPoint2Mont_IsOnCurve(const SM9JacobPoint2Mont* X)
     if (UInt256_IsZero(X->z.fp1 + 1) && UInt256_Cmp(X->z.fp1, CONSTS_FP1_MONT_ONE) == 0)
     {
         // left = y^2
-        SM9FP2_MontMul(&X->y, &X->y, &left);
+        SM9FP2_MontSqr(&X->y, &left);
 
         // right = x^3 + b
-        SM9FP2_MontMul(&X->x, &X->x, &right);
+        SM9FP2_MontSqr(&X->x, &right);
         SM9FP2_MontMul(&right, &X->x, &right);
         SM9FP2_Add(&right, CONSTS_FP2_MONT_BETA_B, &right);
     }
@@ -1031,14 +1082,14 @@ int SM9JacobPoint2Mont_IsOnCurve(const SM9JacobPoint2Mont* X)
     {
 
         // left = y^2
-        SM9FP2_MontMul(&X->y, &X->y, &left);                        // y^2
+        SM9FP2_MontSqr(&X->y, &left);                               // y^2
 
         // right = x^3 + bz^6
-        SM9FP2_MontMul(&X->z, &X->z, &tmp);                         // z^2
-        SM9FP2_MontMul(&tmp, &tmp, &right);                         // z^4
+        SM9FP2_MontSqr(&X->z, &tmp);                                // z^2
+        SM9FP2_MontSqr(&tmp, &right);                               // z^4
         SM9FP2_MontMul(&tmp, &right, &right);                       // z^6
         SM9FP2_MontMul(CONSTS_FP2_MONT_BETA_B, &right, &right);     // bz^6
-        SM9FP2_MontMul(&X->x, &X->x, &tmp);                         // x^2
+        SM9FP2_MontSqr(&X->x, &tmp);                                // x^2
         SM9FP2_MontMul(&tmp, &X->x, &tmp);                          // x^3
         SM9FP2_Add(&tmp, &right, &right);                           // x^3 + bz^6
     }
@@ -1061,8 +1112,8 @@ int SM9JacobPoint2Mont_IsEqual(const SM9JacobPoint2Mont* X, const SM9JacobPoint2
     // t2 = x2 * z1^2
     // t4 = y1 * z2^3
     // t5 = y2 * z1^3
-    SM9FP2_MontMul(&Y->z, &Y->z, &t4);         // z2^2
-    SM9FP2_MontMul(&X->z, &X->z, &t5);         // z1^2
+    SM9FP2_MontSqr(&Y->z, &t4);                 // z2^2
+    SM9FP2_MontSqr(&X->z, &t5);                 // z1^2
 
     SM9FP2_MontMul(&X->x, &t4, &t1);           // x1 * z2^2
     SM9FP2_MontMul(&Y->x, &t5, &t2);           // x2 * z1^2
@@ -1137,10 +1188,10 @@ int SM9Point2_IsOnCurve(const SM9Point2* X)
     SM9FP2_ToMont(&X->y, &y);
 
     // left = y^2
-    SM9FP2_MontMul(&y, &y, &left);
+    SM9FP2_MontSqr(&y, &left);
 
     // right = x^3 + b
-    SM9FP2_MontMul(&x, &x, &right);
+    SM9FP2_MontSqr(&x, &right);
     SM9FP2_MontMul(&right, &x, &right);
     SM9FP2_Add(&right, CONSTS_FP2_MONT_BETA_B, &right);
 
@@ -1231,7 +1282,7 @@ int SM9Point2_FromBytes(const uint8_t* bytes, uint64_t bytes_len, SM9Point2* X)
         SM9FP2_ToMont(&X->x, &X->x);
 
         // compute y, x^3 + b
-        SM9FP2_MontMul(&X->x, &X->x, &X->y);
+        SM9FP2_MontSqr(&X->x, &X->y);
         SM9FP2_MontMul(&X->x, &X->y, &X->y);
         SM9FP2_Add(&X->y, CONSTS_FP2_MONT_BETA_B, &X->y);
 
@@ -1283,7 +1334,7 @@ void _SM9JacobPoint2Mont_Dbl(const SM9JacobPoint2Mont* X, SM9JacobPoint2Mont* Y)
 
     // a == 0 (mod p)
     // t1 = 3x^2
-    SM9FP2_MontMul(&X->x, &X->x, &t1);          // x^2
+    SM9FP2_MontSqr(&X->x, &t1);                 // x^2
     SM9FP2_Add(&t1, &t1, &t2);                  // 2x^2
     SM9FP2_Add(&t1, &t2, &t1);                  // 3x^2
 
@@ -1292,15 +1343,15 @@ void _SM9JacobPoint2Mont_Dbl(const SM9JacobPoint2Mont* X, SM9JacobPoint2Mont* Y)
     SM9FP2_MontMul(&t3, &X->z, &Y->z);
 
     // t3 = 8y^4
-    SM9FP2_MontMul(&t3, &t3, &t2);              // 4y^2
-    SM9FP2_MontMul(&t2, &t2, &t3);              // 16y^4
+    SM9FP2_MontSqr(&t3, &t2);                   // 4y^2
+    SM9FP2_MontSqr(&t2, &t3);                   // 16y^4
     SM9FP2_Div2(&t3, &t3);                      // 8y^4
 
     // t2 = 4xy^2
     SM9FP2_MontMul(&X->x, &t2, &t2);            // 4xy^2
 
     // x' = t1^2 - 2t2
-    SM9FP2_MontMul(&t1, &t1, &Y->x);
+    SM9FP2_MontSqr(&t1, &Y->x);
     SM9FP2_Sub(&Y->x, &t2, &Y->x);
     SM9FP2_Sub(&Y->x, &t2, &Y->x);
 
@@ -1336,8 +1387,8 @@ void _SM9JacobPoint2Mont_Add(const SM9JacobPoint2Mont* X, const SM9JacobPoint2Mo
     // t2 = x2 * z1^2
     // t4 = y1 * z2^3
     // t5 = y2 * z1^3
-    SM9FP2_MontMul(&Y->z, &Y->z, &t4);          // z2^2
-    SM9FP2_MontMul(&X->z, &X->z, &t5);          // z1^2
+    SM9FP2_MontSqr(&Y->z, &t4);                 // z2^2
+    SM9FP2_MontSqr(&X->z, &t5);                 // z1^2
 
     SM9FP2_MontMul(&X->x, &t4, &t1);            // x1 * z2^2
     SM9FP2_MontMul(&Y->x, &t5, &t2);            // x2 * z1^2
@@ -1367,9 +1418,9 @@ void _SM9JacobPoint2Mont_Add(const SM9JacobPoint2Mont* X, const SM9JacobPoint2Mo
     SM9FP2_MontMul(&Z->z, &t3, &Z->z);          // z1 * z2 * t3
 
     // x3 = t6^2 - (t1 + t2) * t3^2
-    SM9FP2_MontMul(&t6, &t6, &Z->x);            // t6^2
+    SM9FP2_MontSqr(&t6, &Z->x);                 // t6^2
     SM9FP2_Add(&t1, &t2, &t2);                  // t1 + t2
-    SM9FP2_MontMul(&t3, &t3, &t5);              // t3^2
+    SM9FP2_MontSqr(&t3, &t5);                   // t3^2
     SM9FP2_MontMul(&t2, &t5, &t2);              // (t1 + t2) * t3^2
     SM9FP2_Sub(&Z->x, &t2, &Z->x);              // t6^2 - (t1 + t2) * t3^2
 
@@ -1631,9 +1682,9 @@ void SM9FP4_MontInv(const SM9FP4Mont* x, SM9FP4Mont* y)
     SM9FP2Mont* y0 = y_tmp.fp2;
 
     // det = x0^2 - U(x1^2)
-    SM9FP2_MontMul(x1, x1, y0);
+    SM9FP2_MontSqr(x1, y0);
     _SM9FP2_MontMulU(y0, y1);
-    SM9FP2_MontMul(x0, x0, y0);
+    SM9FP2_MontSqr(x0, y0);
     SM9FP2_Sub(y0, y1, y0);
 
     // 1 / det
@@ -1972,21 +2023,21 @@ void _SM9Pairing_LinearDbl(const SM9JacobPoint2Mont* V, const SM9JacobPoint1Mont
     // t1 = yV
 
     // t2 = (3/2)xV^2
-    SM9FP2_MontMul(&V->x, &V->x, g_num_2);          // xV^2
+    SM9FP2_MontSqr(&V->x, g_num_2);                 // xV^2
     SM9FP2_Add(g_num_2, g_num_2, tmp);
     SM9FP2_Add(tmp, g_num_2, g_num_2);
     SM9FP2_Div2(g_num_2, g_num_2);                  // (3/2)xV^2
 
     // g_num_0
-    SM9FP2_MontMul(&V->y, &V->y, g_num_0);          // yV^2
+    SM9FP2_MontSqr(&V->y, g_num_0);                 // yV^2
     SM9FP2_MontMul(g_num_2, &V->x, tmp);            // (3/2)xV^3
     SM9FP2_Sub(g_num_0, tmp, g_num_0);              // yV^2 - (3/2)xV^3
-    SM9FP1_MontMul(&Q->z, &Q->z, tmp_fp1);          // zQ^2
+    SM9FP1_MontSqr(&Q->z, tmp_fp1);                 // zQ^2
     SM9FP1_MontMul(tmp_fp1, &Q->z, tmp_fp1);        // zQ^3
     SM9FP2_MontMulFP1(g_num_0, tmp_fp1, g_num_0);   // zQ^3( yV^2 - (3/2)xV^3 )
 
     // g_num_2
-    SM9FP2_MontMul(&V->z, &V->z, g_num_3);          // zV^2
+    SM9FP2_MontSqr(&V->z, g_num_3);                 // zV^2
     SM9FP2_MontMul(g_num_2, g_num_3, g_num_2);      // (3/2)xV^2 * zV^2
     SM9FP2_MontMulFP1(g_num_2, &Q->x, g_num_2);
     SM9FP2_MontMulFP1(g_num_2, &Q->z, g_num_2);     // (3/2)xQ * zQ * xV^2 * zV^2
@@ -2041,9 +2092,9 @@ void _SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont
     SM9FP2Mont _tmp = { 0 }, * tmp = &_tmp;
 
     // t1-pre
-    SM9FP2_MontMul(&V->z, &V->z, g_num_2);          // zV^2
+    SM9FP2_MontSqr(&V->z, g_num_2);                 // zV^2
     SM9FP2_MontMul(g_num_2, &U->x, t1);             // xU * zV^2
-    SM9FP2_MontMul(&U->z, &U->z, t2);               // zU^2
+    SM9FP2_MontSqr(&U->z, t2);                      // zU^2
     SM9FP2_MontMul(t2, &V->x, tmp);                 // xV * zU^2
     SM9FP2_Sub(t1, tmp, t1);                        // xU * zV^2 - xV * zU^2
 
@@ -2063,7 +2114,7 @@ void _SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont
             *t1 = V->y;                             // yV
 
             // t2
-            SM9FP2_MontMul(&V->x, &V->x, t2);       // xV^2
+            SM9FP2_MontSqr(&V->x, t2);              // xV^2
             SM9FP2_Add(t2, t2, tmp);
             SM9FP2_Add(tmp, t2, t2);
             SM9FP2_Div2(t2, t2);                    // (3/2)xV^2
@@ -2075,7 +2126,7 @@ void _SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont
             UInt256_SetZero(g_num_3->fp1 + 1); UInt256_SetZero(g_num_3->fp1);
 
             // g_num_0
-            SM9FP1_MontMul(&Q->z, &Q->z, tmp_fp1);          // zQ^2
+            SM9FP1_MontSqr(&Q->z, tmp_fp1);                 // zQ^2
             SM9FP2_MontMulFP1(&V->x, tmp_fp1, g_num_0);     // zQ^2 * xV
             SM9FP2_Neg(g_num_0, g_num_0);                   // - zQ^2 * xV
 
@@ -2103,7 +2154,7 @@ void _SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont
     SM9FP2_MontMul(t1, &V->y, g_num_0);             // t1 * yV
     SM9FP2_MontMul(t2, &V->x, tmp);                 // t2 * xV
     SM9FP2_Sub(g_num_0, tmp, g_num_0);              // t1 * yV - t2 * xV
-    SM9FP1_MontMul(&Q->z, &Q->z, tmp_fp1);          // zQ^2
+    SM9FP1_MontSqr(&Q->z, tmp_fp1);                 // zQ^2
     SM9FP1_MontMul(tmp_fp1, &Q->z, tmp_fp1);        // zQ^3
     SM9FP2_MontMulFP1(g_num_0, tmp_fp1, g_num_0);   // zQ^3( t1 * yV - t2 * xV )
 

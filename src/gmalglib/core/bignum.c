@@ -115,6 +115,12 @@ void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
     *z = *z_tmp;
 }
 
+void UInt256_Sqr(const UInt256* x, UInt512* y)
+{
+    // TODO: optimize
+    UInt256_Mul(x, x, y);
+}
+
 uint8_t UInt512_Add(const UInt512* x, const UInt512* y, UInt512* z)
 {
     uint32_t i = 0;

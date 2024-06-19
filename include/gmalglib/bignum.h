@@ -39,6 +39,8 @@ uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z);
 
 void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z);
 
+void UInt256_Sqr(const UInt256* x, UInt512* y);
+
 uint8_t UInt512_Add(const UInt512* x, const UInt512* y, UInt512* z);
 
 #ifdef _DEBUG
