@@ -1663,6 +1663,35 @@ void SM9FP4_MontMul(const SM9FP4Mont* x, const SM9FP4Mont* y, SM9FP4Mont* z)
     *z = z_tmp;
 }
 
+static
+void SM9FP4_MontSqr(const SM9FP4Mont* x, SM9FP4Mont* y)
+{
+    SM9FP4Mont y_tmp = { 0 };
+    const SM9FP2Mont* x1 = x->fp2 + 1;
+    const SM9FP2Mont* x0 = x->fp2;
+    SM9FP2Mont* y1 = y_tmp.fp2 + 1;
+    SM9FP2Mont* y0 = y_tmp.fp2;
+
+    SM9FP2Mont _x1x0 = { 0 };
+    const SM9FP2Mont* x1x0 = &_x1x0;
+
+    SM9FP2_MontMul(x1, x0, &_x1x0);
+
+    // y0 = x0^2 + U(x1^2) = (U(x1) + x0)(x1 + x0) - U(x1x0) - x1x0
+    _SM9FP2_MontMulU(x1, y1);
+    SM9FP2_Add(y1, x0, y0);
+    SM9FP2_Add(x1, x0, y1);
+    SM9FP2_MontMul(y0, y1, y0);
+    _SM9FP2_MontMulU(x1x0, y1);
+    SM9FP2_Sub(y0, y1, y0);
+    SM9FP2_Sub(y0, x1x0, y0);
+
+    // y1 = 2x1x0
+    SM9FP2_Add(x1x0, x1x0, y1);
+
+    *y = y_tmp;
+}
+
 static inline
 void _SM9FP4_MontMulU(const SM9FP4Mont* x, SM9FP4Mont* y)
 {
@@ -1785,20 +1814,20 @@ void SM9FP12_MontInv(const SM9FP12Mont* x, SM9FP12Mont* y)
     SM9FP4Mont det = { 0 };
 
     // m2 = U(x2^2) -   x1x0
-    SM9FP4_MontMul(x2, x2, &tmp);
+    SM9FP4_MontSqr(x2, &tmp);
     _SM9FP4_MontMulU(&tmp, &m2);
     SM9FP4_MontMul(x1, x0, &tmp);
     SM9FP4_Sub(&m2, &tmp, &m2);
 
     // m1 =   x1^2  -   x2x0
-    SM9FP4_MontMul(x1, x1, &m1);
+    SM9FP4_MontSqr(x1, &m1);
     SM9FP4_MontMul(x2, x0, &tmp);
     SM9FP4_Sub(&m1, &tmp, &m1);
 
     // m0 =   x0^2  - U(x2x1)
     SM9FP4_MontMul(x2, x1, &m0);
     _SM9FP4_MontMulU(&m0, &tmp);
-    SM9FP4_MontMul(x0, x0, &m0);
+    SM9FP4_MontSqr(x0, &m0);
     SM9FP4_Sub(&m0, &tmp, &m0);
 
     // det = U(x2)m2 + U(x1)m1 + x0m0
