@@ -1631,6 +1631,13 @@ void SM9FP4_Sub(const SM9FP4* x, const SM9FP4* y, SM9FP4* z)
 }
 
 static
+void SM9FP4_Div2(const SM9FP4* x, SM9FP4* y)
+{
+    SM9FP2_Div2(x->fp2 + 1, y->fp2 + 1);
+    SM9FP2_Div2(x->fp2, y->fp2);
+}
+
+static
 void SM9FP4_MontMul(const SM9FP4Mont* x, const SM9FP4Mont* y, SM9FP4Mont* z)
 {
     SM9FP4Mont z_tmp = { 0 };
@@ -1786,6 +1793,45 @@ void SM9FP12_MontMul(const SM9FP12Mont* x, const SM9FP12Mont* y, SM9FP12Mont* z)
 }
 
 static
+void SM9FP12_MontSqr(const SM9FP12Mont* x, SM9FP12Mont* y)
+{
+    SM9FP12Mont y_tmp = { 0 };
+    SM9FP4Mont tmp = { 0 }, m2 = { 0 }, m1 = { 0 }, m0 = { 0 };
+    const SM9FP4Mont* x2 = x->fp4 + 2;
+    const SM9FP4Mont* x1 = x->fp4 + 1;
+    const SM9FP4Mont* x0 = x->fp4;
+    SM9FP4Mont* y2 = y_tmp.fp4 + 2;
+    SM9FP4Mont* y1 = y_tmp.fp4 + 1;
+    SM9FP4Mont* y0 = y_tmp.fp4;
+
+    // y2 =   x1^2  +   2x2x0
+    // y1 = U(x2^2) +   2x1x0
+    // y0 =   x0^2  + U(2x2x1)
+
+    SM9FP4_MontSqr(x0, y0);             // x0^2
+    SM9FP4_MontSqr(x2, y1);             // x2^2
+    SM9FP4_Add(x2, x0, &m0);            // x2 + x0
+    SM9FP4_Sub(&m0, x1, &m1);           //
+    SM9FP4_MontSqr(&m1, &m1);           // (x2 + x0 - x1)^2
+    SM9FP4_Add(&m0, x1, &m0);           //
+    SM9FP4_MontSqr(&m0, &m0);           // (x2 + x0 + x1)^2
+    SM9FP4_MontMul(x2, x1, &m2);        // x2x1
+    SM9FP4_Add(&m2, &m2, &m2);          // 2x2x1
+    SM9FP4_Add(&m1, &m0, &m1);          // (x2 + x0 - x1)^2 + (x2 + x0 + x1)^2
+    SM9FP4_Div2(&m1, &m1);              // x2^2 + x1^2 + x0^2 + 2x2x0
+    SM9FP4_Sub(&m1, y1, y2);            // x1^2 + x0^2 + 2x2x0
+    SM9FP4_Sub(y2, y0, y2);             // x1^2 + 2x2x0
+    _SM9FP4_MontMulU(y1, &tmp);         // U(x2^2)
+    SM9FP4_Add(&tmp, &m0, y1);          // (x2 + x0 + x1)^2 + U(x2^2)
+    SM9FP4_Sub(y1, &m2, y1);            // (x2 + x0 + x1)^2 + U(x2^2) - 2x2x1
+    SM9FP4_Sub(y1, &m1, y1);            // (x2 + x0 + x1)^2 + U(x2^2) - 2x2x1 - x2^2 - x1^2 - x0^2 - 2x2x0 = U(x2^2) + 2x1x0
+    _SM9FP4_MontMulU(&m2, &tmp);        // U(2x2x1)
+    SM9FP4_Add(&tmp, y0, y0);           // x0^2 + U(2x2x1)
+
+    *y = y_tmp;
+}
+
+static
 void SM9FP12_ToMont(const SM9FP12* x, SM9FP12Mont* y)
 {
     for (int i = 0; i < 12; i++)
@@ -1860,7 +1906,7 @@ void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y)
 
     // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
     SM9FP12Mont table[SCALARMUL_TSIZE] = { *x };
-    SM9FP12_MontMul(x, x, &y_tmp);
+    SM9FP12_MontSqr(x, &y_tmp);
     for (i = 0; i < SCALARMUL_TSIZE - 1; i++)
     {
         SM9FP12_MontMul(table + i, &y_tmp, table + i + 1);
@@ -1876,7 +1922,7 @@ void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y)
 
         if (wvalue == 0)
         {
-            SM9FP12_MontMul(&y_tmp, &y_tmp, &y_tmp);
+            SM9FP12_MontSqr(&y_tmp, &y_tmp);
             i--;
         }
         else
@@ -1894,7 +1940,7 @@ void SM9FP12_MontPow(const SM9FP12Mont* x, const UInt256* e, SM9FP12Mont* y)
 
             while (i >= j)
             {
-                SM9FP12_MontMul(&y_tmp, &y_tmp, &y_tmp);
+                SM9FP12_MontSqr(&y_tmp, &y_tmp);
                 i--;
             }
 
@@ -1927,7 +1973,7 @@ void SM9FP12_MontPowU64(const SM9FP12Mont* x, uint64_t e, SM9FP12Mont* y)
 
     for (; i < 64; i++)
     {
-        SM9FP12_MontMul(y_tmp, y_tmp, y_tmp);
+        SM9FP12_MontSqr(y_tmp, y_tmp);
         if (e & 0x8000000000000000)
         {
             SM9FP12_MontMul(y_tmp, x, y_tmp);
@@ -2234,7 +2280,7 @@ void SM9Pairing_LinearAdd(const SM9JacobPoint2Mont* U, const SM9JacobPoint2Mont*
 //
 //#define _MILLER_DBL \
 //    SM9Pairing_LinearDbl(T_tmp, P, g_num, g_den), \
-//    SM9FP12_MontMul(f_num, f_num, f_num), SM9FP12_MontMul(f_den, f_den, f_den), \
+//    SM9FP12_MontSqr(f_num, f_num), SM9FP12_MontSqr(f_den, f_den), \
 //    SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
 //    SM9JacobPoint2Mont_Dbl(T_tmp, T_tmp)
 //
@@ -2333,7 +2379,7 @@ void _SM9Pairing_Miller_NAF(const SM9JacobPoint2Mont* Q, const SM9JacobPoint1Mon
 
 #define _MILLER_DBL \
     SM9Pairing_LinearDbl(T_tmp, P, g_num, g_den), \
-    SM9FP12_MontMul(f_num, f_num, f_num), SM9FP12_MontMul(f_den, f_den, f_den), \
+    SM9FP12_MontSqr(f_num, f_num), SM9FP12_MontSqr(f_den, f_den), \
     SM9FP12_MontMul(f_num, g_num, f_num), SM9FP12_MontMul(f_den, g_den, f_den), \
     SM9JacobPoint2Mont_Dbl(T_tmp, T_tmp)
 
@@ -2473,6 +2519,7 @@ void SM9Pairing_FinalExp(const SM9FP12Mont* f_in, SM9FP12Mont* f_out)
     SM9FP12Mont _y = { 0 }, * y = &_y;
 
 #define _M  SM9FP12_MontMul
+#define _Q  SM9FP12_MontSqr
 #define _I  SM9FP12_MontInv
 #define _P  SM9FP12_MontPowU64
 #define _F1 SM9FP12_MontFrob1
@@ -2506,7 +2553,7 @@ void SM9Pairing_FinalExp(const SM9FP12Mont* f_in, SM9FP12Mont* f_out)
     _M(f_num, y, f_num);                    // y2 * y0
 
     // y1
-    _M(f, f, f_den);                        // f * f
+    _Q(f, f_den);                           // f * f
 
     // y3
     _F1(tmp1, y);                           // f_t_p
@@ -2534,6 +2581,7 @@ void SM9Pairing_FinalExp(const SM9FP12Mont* f_in, SM9FP12Mont* f_out)
     _M(f_num, f_den, f_out);
 
 #undef _M
+#undef _Q
 #undef _I
 #undef _P
 #undef _F1
