@@ -91,29 +91,82 @@ uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z)
     return (uint8_t)borrow;
 }
 
-void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
-{
-    UInt512 _z_tmp = { 0 };
-    UInt512* z_tmp = &_z_tmp;
-    uint64_t carry = 0;
+#ifdef __SIZEOF_INT128__
 
-    uint32_t i;
-    uint32_t j;
-
-    for (i = 0; i < 8; i++)
+    void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
     {
-        carry = 0;
-        for (j = 0; j < 8; j++)
+        UInt512 _z_tmp = { 0 };
+        UInt512* z_tmp = &_z_tmp;
+        __uint128_t carry = 0;
+
+        for (int i = 0; i < 4; i++)
         {
-            carry += (uint64_t)z_tmp->u32[i + j] + (uint64_t)x->u32[i] * (uint64_t)y->u32[j];
-            z_tmp->u32[i + j] = (uint32_t)carry;
-            carry >>= 32;
+            carry = 0;
+            for (int j = 0; j < 4; j++)
+            {
+                carry += (__uint128_t)z_tmp->u64[i + j] + (__uint128_t)x->u64[i] * (__uint128_t)y->u64[j];
+                z_tmp->u64[i + j] = (uint64_t)carry;
+                carry >>= 64;
+            }
+            z_tmp->u64[i + 4] = (uint64_t)carry;
         }
-        z_tmp->u32[i + 8] = (uint32_t)carry;
+
+        *z = *z_tmp;
     }
 
-    *z = *z_tmp;
-}
+#elif defined(_MSC_VER) && defined(_WIN64)
+
+    #include <intrin.h>
+    #pragma intrinsic(_umul128, _addcarry_u64)
+    void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
+    {
+        UInt512 _z_tmp = { 0 };
+        UInt512* z_tmp = &_z_tmp;
+        uint64_t carry = 0;
+        uint64_t high = 0;
+
+        for (int i = 0; i < 4; i++)
+        {
+            carry = 0;
+            for (int j = 0; j < 4; j++)
+            {
+                carry = _addcarry_u64(0, z_tmp->u64[i + j], carry, z_tmp->u64 + i + j);
+                carry += _addcarry_u64(0, z_tmp->u64[i + j], _umul128(x->u64[i], y->u64[j], &high), z_tmp->u64 + i + j);
+                carry += high;
+            }
+            z_tmp->u64[i + 4] = carry;
+        }
+
+        *z = *z_tmp;
+    }
+
+#else
+
+    void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
+    {
+        UInt512 _z_tmp = { 0 };
+        UInt512* z_tmp = &_z_tmp;
+        uint64_t carry = 0;
+
+        uint32_t i;
+        uint32_t j;
+
+        for (i = 0; i < 8; i++)
+        {
+            carry = 0;
+            for (j = 0; j < 8; j++)
+            {
+                carry += (uint64_t)z_tmp->u32[i + j] + (uint64_t)x->u32[i] * (uint64_t)y->u32[j];
+                z_tmp->u32[i + j] = (uint32_t)carry;
+                carry >>= 32;
+            }
+            z_tmp->u32[i + 8] = (uint32_t)carry;
+        }
+
+        *z = *z_tmp;
+    }
+
+#endif
 
 void UInt256_Sqr(const UInt256* x, UInt512* y)
 {
