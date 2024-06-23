@@ -26,6 +26,9 @@
     <ClInclude Include="..\include\gmalglib\sm3.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gmalglib\sm2table.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gmalglib\core\sm2.c">
@@ -44,6 +47,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gmalglib\core\sm3.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gmalglib\core\sm2table.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

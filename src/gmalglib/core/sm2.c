@@ -5,6 +5,9 @@
 #include <gmalglib/sm3.h>
 #include <gmalglib/sm2.h>
 
+#define SCALARMUL_WSIZE          4
+#define SCALARMUL_TSIZE          (1 << (SCALARMUL_WSIZE - 1))
+
 static const uint8_t _SM2_DEFAULT_UID[SM2_DEFAULT_UID_LENGTH] = {
     0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 
     0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
@@ -106,6 +109,30 @@ void SM2ModN_MontMul(const SM2ModNMont* x, const SM2ModNMont* y, SM2ModNMont* z)
 }
 
 static
+void SM2ModN_MontSqr(const SM2ModNMont* x, SM2ModNMont* y)
+{
+    UInt512 _xsqr = { 0 }, * xsqr = &_xsqr;
+    UInt512 _y_tmp = { 0 }, * y_tmp = &_y_tmp;
+    uint8_t carry = 0;
+
+    UInt256_Sqr(x, xsqr);
+    UInt256_Mul(xsqr->u256, CONSTS_N_PRIME, y_tmp);
+    UInt256_Mul(y_tmp->u256, CONSTS_N, y_tmp);
+
+    carry = UInt512_Add(xsqr, y_tmp, y_tmp);
+    (*y) = y_tmp->u256[1];
+
+    if (carry)
+    {
+        UInt256_Add(y, CONSTS_NEG_N, y);
+    }
+    else if (UInt256_Cmp(y, CONSTS_N) >= 0)
+    {
+        UInt256_Sub(y, CONSTS_N, y);
+    }
+}
+
+static
 void SM2ModN_ToMont(const SM2ModN* x, SM2ModNMont* y)
 {
     SM2ModN_MontMul(x, CONSTS_MODN_R2, y);
@@ -118,41 +145,57 @@ void SM2ModN_FromMont(const SM2ModNMont* x, SM2ModN* y)
 }
 
 static
-void SM2ModN_MontAdd(const SM2ModNMont* x, const SM2ModNMont* y, SM2ModNMont* z)
-{
-    SM2ModN_Add(x, y, z);
-}
-
-static
-void SM2ModN_MontSub(const SM2ModNMont* x, const SM2ModNMont* y, SM2ModNMont* z)
-{
-    SM2ModN_Sub(x, y, z);
-}
-
-static
 void SM2ModN_MontPow(const SM2ModNMont* x, const UInt256* e, SM2ModNMont* y)
 {
-    int32_t i;
-    uint32_t j;
-    uint64_t tmp = 0;
-    SM2ModNMont _y_tmp = *CONSTS_MODN_MONT_ONE;
-    SM2ModNMont* y_tmp = &_y_tmp;
+    int32_t i = 0;
+    int32_t j = 0;
+    int32_t w = 0;
+    uint32_t wvalue = 0;
+    SM2ModNMont y_tmp = { 0 };
 
-    for (i = 3; i >= 0; i--)
+    // pre-compute, save odd points, 1, 3, 5, ..., 2^w - 1
+    SM2ModNMont table[SCALARMUL_TSIZE] = { *x };
+    SM2ModN_MontSqr(x, &y_tmp);
+    for (i = 0; i < SCALARMUL_TSIZE - 1; i++)
     {
-        tmp = e->u64[i];
-        for (j = 0; j < 64; j++)
+        SM2ModN_MontMul(table + i, &y_tmp, table + i + 1);
+    }
+
+    y_tmp = *CONSTS_MODN_MONT_ONE;
+    i = 255;
+    while (i >= 0)
+    {
+        wvalue = (e->u64[i / 64] >> (i % 64)) & 0x1;
+
+        if (wvalue == 0)
         {
-            SM2ModN_MontMul(y_tmp, y_tmp, y_tmp);
-            if (tmp & 0x8000000000000000)
+            SM2ModN_MontSqr(&y_tmp, &y_tmp);
+            i--;
+        }
+        else
+        {
+            // find a longest 1...1 bits in window size
+            j = i;
+            for (w = i - 1; w >= 0 && w > i - SCALARMUL_WSIZE; w--)
             {
-                SM2ModN_MontMul(y_tmp, x, y_tmp);
+                if ((e->u64[w / 64] >> (w % 64)) & 0x1)
+                {
+                    wvalue = (wvalue << (j - w)) | 0x1;
+                    j = w;
+                }
             }
-            tmp <<= 1;
+
+            while (i >= j)
+            {
+                SM2ModN_MontSqr(&y_tmp, &y_tmp);
+                i--;
+            }
+
+            SM2ModN_MontMul(&y_tmp, table + (wvalue >> 1), &y_tmp);
         }
     }
 
-    *y = *y_tmp;
+    *y = y_tmp;
 }
 
 static
@@ -273,7 +316,7 @@ int SM2_Init(SM2* self, const uint8_t* sk, const uint8_t* pk, uint64_t pk_len, c
             return SM2_ERR_INVALID_SK;
 
         SM2ModN_ToMont(&self->sk, &self->sk_modn_mont);
-        SM2ModN_MontAdd(CONSTS_MODN_MONT_ONE, &self->sk_modn_mont, &self->inv_1_plus_sk_modn_mont);
+        SM2ModN_Add(CONSTS_MODN_MONT_ONE, &self->sk_modn_mont, &self->inv_1_plus_sk_modn_mont);
         SM2ModN_MontInv(&self->inv_1_plus_sk_modn_mont, &self->inv_1_plus_sk_modn_mont);
         self->has_sk = 1;
     }
@@ -390,7 +433,7 @@ int _SM2_SignDigest(SM2* self, const uint8_t* digest, SM2ModN* r, SM2ModN* s)
         SM2ModN_ToMont(r, &r_modn_mont);
         SM2ModN_ToMont(&k, &k);
         SM2ModN_MontMul(&r_modn_mont, &self->sk_modn_mont, s);
-        SM2ModN_MontSub(&k, s, s);
+        SM2ModN_Sub(&k, s, s);
         SM2ModN_MontMul(s, &self->inv_1_plus_sk_modn_mont, s);
         if (UInt256_IsZero(s))
             continue;
