@@ -114,6 +114,36 @@ uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z)
         *z = *z_tmp;
     }
 
+    void UInt256_Sqr(const UInt256* x, UInt512* y)
+    {
+        UInt512 _y_tmp = { 0 };
+        UInt512* y_tmp = &_y_tmp;
+        __uint128_t carry = 0;
+        __uint128_t table[4][4] = { 0 };
+        for (int i = 0; i < 4; i++)
+        {
+            table[i][i] = (__uint128_t)x->u64[i] * (__uint128_t)x->u64[i];
+            for (int j = i + 1; j < 4; j++)
+            {
+                table[i][j] = table[j][i] = (__uint128_t)x->u64[i] * (__uint128_t)x->u64[j];
+            }
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            carry = 0;
+            for (int j = 0; j < 4; j++)
+            {
+                carry += (__uint128_t)y_tmp->u64[i + j] + table[i][j];
+                y_tmp->u64[i + j] = (uint64_t)carry;
+                carry >>= 64;
+            }
+            y_tmp->u64[i + 4] = (uint64_t)carry;
+        }
+
+        *y = *y_tmp;
+    }
+
 #elif defined(_MSC_VER) && defined(_WIN64)
 
     #include <intrin.h>
@@ -140,6 +170,38 @@ uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z)
         *z = *z_tmp;
     }
 
+    void UInt256_Sqr(const UInt256* x, UInt512* y)
+    {
+        UInt512 _y_tmp = { 0 };
+        UInt512* y_tmp = &_y_tmp;
+        uint64_t carry = 0;
+        uint64_t high[4][4] = { 0 };
+        uint64_t table[4][4] = { 0 };
+        for (int i = 0; i < 4; i++)
+        {
+            table[i][i] = _umul128(x->u64[i], x->u64[i], &high[i][i]);
+            for (int j = i + 1; j < 4; j++)
+            {
+                table[i][j] = table[j][i] = _umul128(x->u64[i], x->u64[j], &high[i][j]);
+                high[j][i] = high[i][j];
+            }
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            carry = 0;
+            for (int j = 0; j < 4; j++)
+            {
+                carry = _addcarry_u64(0, y_tmp->u64[i + j], carry, y_tmp->u64 + i + j);
+                carry += _addcarry_u64(0, y_tmp->u64[i + j], table[i][j], y_tmp->u64 + i + j);
+                carry += high[i][j];
+            }
+            y_tmp->u64[i + 4] = carry;
+        }
+
+        *y = *y_tmp;
+    }
+
 #else
 
     void UInt256_Mul(const UInt256* x, const UInt256* y, UInt512* z)
@@ -148,13 +210,10 @@ uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z)
         UInt512* z_tmp = &_z_tmp;
         uint64_t carry = 0;
 
-        uint32_t i;
-        uint32_t j;
-
-        for (i = 0; i < 8; i++)
+        for (int i = 0; i < 8; i++)
         {
             carry = 0;
-            for (j = 0; j < 8; j++)
+            for (int j = 0; j < 8; j++)
             {
                 carry += (uint64_t)z_tmp->u32[i + j] + (uint64_t)x->u32[i] * (uint64_t)y->u32[j];
                 z_tmp->u32[i + j] = (uint32_t)carry;
@@ -166,13 +225,37 @@ uint8_t UInt256_Sub(const UInt256* x, const UInt256* y, UInt256* z)
         *z = *z_tmp;
     }
 
-#endif
+    void UInt256_Sqr(const UInt256* x, UInt512* y)
+    {
+        UInt512 _y_tmp = { 0 };
+        UInt512* y_tmp = &_y_tmp;
+        uint64_t carry = 0;
+        uint64_t table[8][8] = { 0 };
+        for (int i = 0; i < 8; i++)
+        {
+            table[i][i] = (uint64_t)x->u32[i] * (uint64_t)x->u32[i];
+            for (int j = i + 1; j < 8; j++)
+            {
+                table[i][j] = table[j][i] = (uint64_t)x->u32[i] * (uint64_t)x->u32[j];
+            }
+        }
 
-void UInt256_Sqr(const UInt256* x, UInt512* y)
-{
-    // TODO: optimize
-    UInt256_Mul(x, x, y);
-}
+        for (int i = 0; i < 8; i++)
+        {
+            carry = 0;
+            for (int j = 0; j < 8; j++)
+            {
+                carry += (uint64_t)y_tmp->u32[i + j] + table[i][j];
+                y_tmp->u32[i + j] = (uint32_t)carry;
+                carry >>= 32;
+            }
+            y_tmp->u32[i + 8] = (uint32_t)carry;
+        }
+
+        *y = *y_tmp;
+    }
+
+#endif
 
 uint8_t UInt512_Add(const UInt512* x, const UInt512* y, UInt512* z)
 {
