@@ -699,7 +699,7 @@ static PyObject* PySM2_generate_keypair(PySM2Object* self, PyObject* Py_UNUSED(a
     return Py_BuildValue("y#y#", (char*)sk, (Py_ssize_t)SM2_SK_LENGTH, pk, (Py_ssize_t)SM2_GET_PK_LENGTH(self->sm2.pc_mode));
 }
 
-static PyObject* PySM2_get_entity_info(PySM2Object* self, PyObject* Py_UNUSED(args))
+static PyObject* PySM2_entity_info_getter(PySM2Object* self, PyObject* Py_UNUSED(args))
 {
     uint8_t entity_info[SM2_ENTITYINFO_LENGTH] = { 0 };
     if (SM2_GetEntityInfo(&self->sm2, entity_info) != 0)
@@ -1023,6 +1023,11 @@ cleanup:
     return ret;
 }
 
+static PyGetSetDef py_getset_def_SM2[] = {
+    {"entity_info", (getter)PySM2_entity_info_getter, NULL, PyDoc_STR("Entity info."), NULL},
+    {NULL}
+};
+
 static PyMethodDef py_methods_def_SM2[] = {
     {"is_sk_valid",         (PyCFunction)PySM2_is_sk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check sk is valid.")},
     {"is_pk_valid",         (PyCFunction)PySM2_is_pk_valid,         METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Check pk is valid.")},
@@ -1030,7 +1035,6 @@ static PyMethodDef py_methods_def_SM2[] = {
     {"get_pk",              (PyCFunction)PySM2_get_pk,              METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Get public key bytes.")},
     {"convert_pk",          (PyCFunction)PySM2_convert_pk,          METH_VARARGS | METH_KEYWORDS | METH_STATIC,     PyDoc_STR("Convert public key bytes to other pc_mode.")},
     {"generate_keypair",    (PyCFunction)PySM2_generate_keypair,    METH_NOARGS,                                    PyDoc_STR("Generate key pair.")},
-    {"get_entity_info",     (PyCFunction)PySM2_get_entity_info,     METH_NOARGS,                                    PyDoc_STR("Get entity info.")},
     {"sign_digest",         (PyCFunction)PySM2_sign_digest,         METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Sign on digest.")},
     {"verify_digest",       (PyCFunction)PySM2_verify_digest,       METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Verify on digest.")},
     {"sign",                (PyCFunction)PySM2_sign,                METH_VARARGS | METH_KEYWORDS,                   PyDoc_STR("Sign on full message.")},
@@ -1055,6 +1059,7 @@ static PyTypeObject py_type_SM2 = {
     .tp_clear = (inquiry)PySM2_clear,
     .tp_init = (initproc)PySM2_init,
     .tp_methods = py_methods_def_SM2,
+    .tp_getset = py_getset_def_SM2
 };
 
 static int PyModule_AddSM2(PyObject* py_module) 

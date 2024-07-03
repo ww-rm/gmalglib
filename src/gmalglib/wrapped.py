@@ -97,7 +97,7 @@ def sm2_generate_keypair(pc_mode: __T.Literal["raw", "compress", "mix"] = "raw")
 def sm2_get_entity_info(pk: bytes, uid: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:
     """获取实体信息."""
 
-    return __sm2.SM2(pk=pk, uid=uid).get_entity_info()
+    return __sm2.SM2(pk=pk, uid=uid).entity_info
 
 
 def sm2_sign_digest(sk: bytes, digest: bytes, uid: bytes = __sm2.SM2_DEFAULT_UID) -> bytes:

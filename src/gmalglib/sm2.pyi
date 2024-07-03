@@ -106,6 +106,10 @@ class SM2:
             rnd_fn: 可选的用于产生指定长度随机字节函数.
         """
 
+    @property
+    def entity_info(self) -> Optional[bytes]:
+        """获取实体信息."""
+
     def generate_keypair(self) -> Tuple[bytes, bytes]:
         """生成密钥对.
 
@@ -113,9 +117,6 @@ class SM2:
             sk: 私钥.
             pk: 公钥.
         """
-
-    def get_entity_info(self) -> bytes:
-        """获取实体信息."""
 
     def sign_digest(self, digest: bytes) -> bytes:
         """对摘要进行签名."""
