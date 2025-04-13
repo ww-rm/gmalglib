@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <gmalglib/sm9curve.h>
+#include <Windows.h>
 
 void test_curve1()
 {
@@ -285,38 +286,59 @@ void test_fp12()
     //SM9FP12Mont_Print(&x); printf("\n");
 }
 
+void SM9FP12_FromMont(const SM9FP12Mont* x, SM9FP12* y);
 void test_pairing()
 {
     SM9JacobPoint1Mont G1 = { 0 };
-    SM9JacobPoint1Mont_FromPoint(SM9_PARAMS_G1, &G1);
-    //SM9JacobPoint1Mont_Print(&G1);
 
     SM9JacobPoint2Mont G2 = { 0 };
-    SM9JacobPoint2Mont_FromPoint(SM9_PARAMS_G2, &G2);
-    //SM9JacobPoint2Mont_Print(&G2);
 
     SM9FP12Mont f = { 0 };
 
-    SM9Pairing_RAte(&G1, &G2, &f);
-    SM9FP12Mont_Print(&f);
+    LARGE_INTEGER s, e;
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&s);
+
+    SM9JacobPoint1Mont_FromPoint(SM9_PARAMS_G1, &G1);
+    SM9JacobPoint2Mont_FromPoint(SM9_PARAMS_G2, &G2);
+    //SM9JacobPoint1Mont_Dbl(&G1, &G1);
+    //SM9JacobPoint2Mont_Dbl(&G2, &G2);
+
+    //SM9JacobPoint1Mont_Print(&G1);
+    //SM9JacobPoint2Mont_Print(&G2);
+
+    for (int i = 0; i < 10000; i++)
+    {
+        SM9Pairing_RAte(&G1, &G2, &f);
+        //SM9FP12_FromMont(&f, &f);
+    }
+
+    QueryPerformanceCounter(&e);
+
+    double elapsed = (double)(e.QuadPart - s.QuadPart) / (double)freq.QuadPart;
+    printf("Elapsed: %.6f ms\n", elapsed);
+
+    //SM9Pairing_RAte(&G1, &G2, &f);
+    //SM9FP12Mont_Print(&f);
 }
 
 int main()
 {
-    test_curve1();
+    //test_curve1();
 
-    test_convert1();
+    //test_convert1();
 
-    //make_table1();
+    ////make_table1();
 
-    test_curve2();
+    //test_curve2();
 
-    test_convert2_1();
-    test_convert2_2();
+    //test_convert2_1();
+    //test_convert2_2();
 
-    //make_table2();
+    ////make_table2();
 
-    //test_fp12();
+    ////test_fp12();
 
     test_pairing();
 

@@ -12,20 +12,26 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\gmalglib\bignum.h" />
+    <ClInclude Include="..\include\gmalglib\random.h" />
+    <ClInclude Include="..\include\gmalglib\sm3.h" />
+    <ClInclude Include="..\include\gmalglib\sm9.h" />
     <ClInclude Include="..\include\gmalglib\sm9curve.h" />
     <ClInclude Include="..\include\gmalglib\sm9table.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gmalglib\core\bignum.c" />
+    <ClCompile Include="..\src\gmalglib\core\random.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm3.c" />
+    <ClCompile Include="..\src\gmalglib\core\sm9.c" />
     <ClCompile Include="..\src\gmalglib\core\sm9curve.c" />
     <ClCompile Include="..\src\gmalglib\core\sm9table.c" />
-    <ClCompile Include="..\src\test\sm9curvetest.c" />
+    <ClCompile Include="..\src\test\sm9test.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{4FD938C8-089E-45F3-B471-7A7AB7DBB526}</ProjectGuid>
-    <RootNamespace>sm9curvetest</RootNamespace>
+    <ProjectGuid>{05004A2A-A177-4161-81C6-8EE42AA9ABBD}</ProjectGuid>
+    <RootNamespace>sm9test</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -38,7 +44,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>ClangCL</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
